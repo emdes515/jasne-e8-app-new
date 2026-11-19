@@ -1,266 +1,104 @@
-'use client';
+﻿'use client';
 
-import React, { useEffect } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
-import confetti from 'canvas-confetti';
-import {
-  Trophy,
-  Coins,
-  CheckCircle2,
-  Flame,
-  ArrowRight,
-  RotateCcw,
-} from 'lucide-react';
-import {
-  SessionCompletionSummary,
-  useAppState,
-} from '../../context/AppStateContext';
+import { ArrowRight, RotateCcw } from 'lucide-react';
+import { type SessionCompletionSummary, useAppState } from '../../context/AppStateContext';
+import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
 import { getRankForXp } from '../../lib/gamification';
-import { SPRING_BOUNCY, STAGGER_CONTAINER_VARIANTS, STAGGER_ITEM_VARIANTS } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
-import { CountUpNumber } from '../ui/CountUpNumber';
 import { TactileButton } from '../ui/TactileButton';
 
-interface LessonSummaryModalProps {
-  summary: SessionCompletionSummary;
-}
+export function LessonSummaryModal({ summary }: { summary: SessionCompletionSummary }) {
+  const { state, clearSessionSummary, setActiveTab, openLessonTheory, startPracticeSession } = useAppState();
+  const rank = getRankForXp(state.xp);
+  const isLesson = summary.source === 'lesson';
+  const isRescue = summary.source === 'rescue';
+  const hasReview = isLesson && summary.reviewTaskIds.length > 0;
+  const assessedCount = summary.totalCount - summary.ungradedCount;
+  const reviewTopics = [...new Set(summary.reviewTaskIds.map((id) => ALL_TASKS_BY_ID[id]?.topicTag).filter(Boolean))];
 
-export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
-  const {
-    state,
-    clearSessionSummary,
-    setActiveTab,
-    openLessonTheory,
-    startPracticeSession,
-  } = useAppState();
-  const prefersReduced = useReducedMotion();
-
-  const rankInfo = getRankForXp(state.xp);
-  const isPractice =
-    summary.source === 'saved' ||
-    summary.source === 'bank' ||
-    summary.source === 'rescue';
-
-  useEffect(() => {
-    if (!prefersReduced) {
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 65,
-          origin: { y: 0.65 },
-          colors: ['#FFB800', '#10B981', '#38BDF8'],
-        });
-      } catch {
-        // Ignore in headless environments
-      }
-    }
-  }, [prefersReduced]);
+  function leaveSummary() {
+    clearSessionSummary();
+    setActiveTab(isLesson ? 'start' : summary.reviewLessonId ? 'learn' : 'vault');
+  }
 
   return (
-    <motion.div
-      variants={STAGGER_CONTAINER_VARIANTS}
-      initial={false}
-      animate="visible"
-      className="study-panel p-6 sm:p-8 text-center space-y-6"
-    >
-      <motion.div variants={STAGGER_ITEM_VARIANTS} className="flex justify-center">
-        <LumiMascot mood="celebrate" loadout={state.loadout} size="lg" />
-      </motion.div>
-
-      <motion.div variants={STAGGER_ITEM_VARIANTS}>
-        <div className="text-xs font-extrabold font-display text-[var(--accent-text)] mb-1">
-          {isPractice ? 'Powtórka ukończona' : 'Lekcja ukończona'}
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[var(--text-primary)]">
+    <section className="study-panel space-y-5 p-4 sm:space-y-6 sm:p-7" aria-labelledby="lesson-summary-title">
+      <header className="border-b border-[var(--border-subtle)] pb-4">
+        <p className="text-xs font-extrabold text-[var(--accent-text)]">
+          {isLesson ? 'Lekcja ukończona' : isRescue ? 'Koniec misji ratunkowej' : 'Powtórka ukończona'}
+        </p>
+        <h1 id="lesson-summary-title" className="mt-1 text-balance font-display text-xl font-extrabold sm:text-3xl">
           {summary.title}
         </h1>
-        {summary.isRepeatToday && !isPractice && (
-          <p className="text-xs font-bold text-[var(--accent-text)] mt-1.5">
-            Powtórka — monety przyznawane raz dziennie, XP 30%
-          </p>
+      </header>
+
+      <section aria-labelledby="lesson-diagnosis" className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 id="lesson-diagnosis" className="text-lg font-extrabold">Wynik i następny krok</h2>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              {assessedCount > 0
+                ? summary.correctCount + ' z ' + assessedCount + ' ocenionych zadań w pełni poprawnie · ' + summary.accuracyPercent + '% punktów'
+                : 'Rozwiązania porównane samodzielnie.'}
+            </p>
+          </div>
+          <div aria-hidden="true" className="shrink-0">
+            <LumiMascot mood={hasReview ? 'supportive' : 'happy'} loadout={state.loadout} size="sm" />
+          </div>
+        </div>
+        {summary.ungradedCount > 0 && assessedCount > 0 && (
+          <p className="text-xs text-[var(--text-secondary)]">Samodzielnie porównane zadania ({summary.ungradedCount}) są poza wynikiem punktowym.</p>
         )}
-        {isPractice && (
-          <p className="text-xs text-[var(--text-secondary)] mt-1">
-            Tryb powtórkowy: 50% bazowego XP zadań • 0 monet
-          </p>
+        {hasReview && (
+          <div className="space-y-3 rounded-xl border border-[var(--accent-primary)]/35 bg-[var(--accent-primary)]/8 p-3.5 sm:p-4">
+            <div>
+              <h3 className="font-extrabold">Zadania do poprawy · {summary.reviewTaskIds.length}</h3>
+              {reviewTopics.length > 0 && (
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  {reviewTopics.slice(0, 3).join(' · ')}
+                  {reviewTopics.length > 3 && ' · +' + (reviewTopics.length - 3)}
+                </p>
+              )}
+            </div>
+            <TactileButton fullWidth onClick={() => startPracticeSession('bank', 'all', summary.reviewTaskIds, summary.contentId)}>
+              <RotateCcw size={17} aria-hidden="true" /> Powtórz błędy
+            </TactileButton>
+          </div>
         )}
-      </motion.div>
-
-      {/* 3 Result Stat Tiles with CountUpNumber (700ms) + Spring Pop */}
-      <motion.div
-        variants={STAGGER_ITEM_VARIANTS}
-        className="grid grid-cols-3 gap-3"
-      >
-        {/* Tile 1: XP */}
-        <motion.div
-          initial={prefersReduced ? false : { scale: 0.86, y: 8 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={SPRING_BOUNCY}
-          className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--accent-primary)]/40 flex flex-col items-center"
-        >
-          <Trophy className="w-5 h-5 text-[var(--accent-text)] mb-1" />
-          <div className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
-            <CountUpNumber
-              value={summary.xpEarned}
-              durationMs={700}
-              prefix="+"
-              suffix=" XP"
-            />
-          </div>
-          <span className="text-[11px] font-bold text-[var(--text-secondary)]">
-            Zdobyte XP
-          </span>
-        </motion.div>
-
-        {/* Tile 2: Accuracy % */}
-        <motion.div
-          initial={prefersReduced ? false : { scale: 0.86, y: 8 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={{ ...SPRING_BOUNCY, delay: 0.08 }}
-          className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--success)]/40 flex flex-col items-center"
-        >
-          <CheckCircle2 className="w-5 h-5 text-[var(--success)] mb-1" />
-          <div className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
-            <CountUpNumber
-              value={summary.accuracyPercent}
-              durationMs={700}
-              suffix="%"
-            />
-          </div>
-          <span className="text-[11px] font-bold text-[var(--text-secondary)]">
-            Skuteczność
-          </span>
-        </motion.div>
-
-        {/* Tile 3: Coins */}
-        <motion.div
-          initial={prefersReduced ? false : { scale: 0.86, y: 8 }}
-          animate={{ scale: 1, y: 0 }}
-          transition={{ ...SPRING_BOUNCY, delay: 0.16 }}
-          className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--accent-primary)]/40 flex flex-col items-center"
-        >
-          <Coins className="w-5 h-5 text-[var(--accent-text)] mb-1" />
-          <div className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
-            <CountUpNumber
-              value={summary.coinsEarned}
-              durationMs={700}
-              prefix="+"
-            />
-          </div>
-          <span className="text-[11px] font-bold text-[var(--text-secondary)]">
-            Zdobyte Monety
-          </span>
-        </motion.div>
-      </motion.div>
-
-      {summary.ungradedCount > 0 && (
-        <p className="text-sm text-[var(--text-secondary)]">
-          Samodzielnie porównane zadania ({summary.ungradedCount}) nie wliczają się do skuteczności.
-        </p>
-      )}
-
-      {/* Streak Milestone Bonus if any */}
-      {summary.streakMilestoneCoins > 0 && (
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={SPRING_BOUNCY}
-          className="p-3.5 rounded-2xl bg-[var(--combo-fire)]/15 border-2 border-[var(--combo-fire)] text-xs font-extrabold font-display text-[var(--text-primary)] flex items-center justify-center gap-2"
-        >
-          <Flame className="w-4 h-4 text-[var(--combo-fire)]" />
-          <span>
-            Bonus za {state.streakDays} dni ciągłej serii: +
-            {summary.streakMilestoneCoins} monet!
-          </span>
-        </motion.div>
-      )}
-
-      {/* Rank E8 Progress Bar Fill */}
-      <motion.div
-        variants={STAGGER_ITEM_VARIANTS}
-        className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] text-left"
-      >
-        <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-          <span className="font-extrabold font-display text-[var(--text-primary)]">
-            Ranga: {rankInfo.currentRank.name}
-          </span>
-          <span className="tabular-nums text-[var(--accent-text)]">
-            {state.xp} XP
-          </span>
-        </div>
-        <div className="h-3 w-full rounded-full bg-[var(--bg-canvas)] overflow-hidden">
-          <motion.div
-            initial={{ width: '0%' }}
-            animate={{ width: `${rankInfo.progressPercent}%` }}
-            transition={{ duration: 0.7, ease: 'easeOut' }}
-            className="h-full bg-[var(--accent-primary)] rounded-full"
-          />
-        </div>
-        <div className="text-[11px] text-[var(--text-secondary)] mt-1 tabular-nums">
-          {rankInfo.nextRank
-            ? `Brakuje ${rankInfo.xpToNext} XP do rangi ${rankInfo.nextRank.name}`
-            : 'Najwyższa ranga Legenda E8 osiągnięta!'}
-        </div>
-      </motion.div>
-
-      {summary.source === 'lesson' && summary.reviewTaskIds.length > 0 && (
-        <section className="study-feature p-4 sm:p-5" aria-labelledby="lesson-review">
-          <h2 id="lesson-review" className="text-lg font-extrabold">Powtórz trudne zadania</h2>
-          <p className="mt-1 mb-3 text-sm text-[var(--text-secondary)]">
-            Zadania do poprawy: {summary.reviewTaskIds.length}.
-          </p>
-          <TactileButton fullWidth onClick={() => startPracticeSession('bank', 'all', summary.reviewTaskIds, summary.contentId)}>
-            <RotateCcw size={17} /> Powtórz błędy
-          </TactileButton>
-        </section>
-      )}
-
-      {/* Action Buttons */}
-      <motion.div
-        variants={STAGGER_ITEM_VARIANTS}
-        className="flex flex-col sm:flex-row gap-3"
-      >
-        {isPractice ? (
-          <TactileButton
-            variant="primary"
-            size="lg"
-            fullWidth
-            onClick={() => {
+        {isRescue && summary.rescueHeartEarned && <p className="text-sm font-bold text-[var(--success)]">Odzyskano serce.</p>}
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {isLesson && (
+            <TactileButton variant="secondary" onClick={() => {
               clearSessionSummary();
-              setActiveTab(summary.reviewLessonId ? 'learn' : 'vault');
-            }}
-          >
-            <span>{summary.reviewLessonId ? 'Wróć do ścieżki nauki' : 'Wróć do powtórek'}</span>
-            <ArrowRight className="w-5 h-5" />
+              openLessonTheory(summary.contentId, true);
+            }}>
+              <RotateCcw size={16} aria-hidden="true" /> Powtórz materiał
+            </TactileButton>
+          )}
+          <TactileButton variant={hasReview ? 'secondary' : 'primary'} onClick={leaveSummary}>
+            {isLesson ? 'Wróć na Start' : summary.reviewLessonId ? 'Wróć do ścieżki nauki' : 'Wróć do powtórek'}
+            <ArrowRight size={17} aria-hidden="true" />
           </TactileButton>
-        ) : (
-          <>
-            <TactileButton
-              variant="secondary"
-              size="lg"
-              onClick={() => {
-                clearSessionSummary();
-                openLessonTheory(summary.contentId, true);
-              }}
-            >
-              <RotateCcw className="w-4 h-4" />
-              <span>Powtórz materiał</span>
-            </TactileButton>
-            <TactileButton
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={() => {
-                clearSessionSummary();
-                setActiveTab('start');
-              }}
-            >
-              <span>Wróć na Start</span>
-              <ArrowRight className="w-5 h-5" />
-            </TactileButton>
-          </>
+        </div>
+      </section>
+
+      <section className="space-y-2 border-t border-[var(--border-subtle)] pt-4" aria-labelledby="lesson-rewards">
+        <h2 id="lesson-rewards" className="text-xs font-extrabold text-[var(--text-secondary)]">Nagrody i ranga</h2>
+        <p className="flex flex-wrap gap-x-3 gap-y-1 text-sm font-bold tabular-nums">
+          <span>+{summary.xpEarned} XP</span>
+          <span>+{summary.coinsEarned} monet</span>
+          <span className="text-[var(--accent-text)]">{rank.currentRank.name}</span>
+        </p>
+        <progress className="study-progress" aria-label="Postęp rangi E8" max={100} value={rank.progressPercent} />
+        <p className="text-xs text-[var(--text-secondary)]">
+          {state.xp} XP łącznie{rank.nextRank ? ' · ' + rank.xpToNext + ' XP do rangi ' + rank.nextRank.name : ' · Najwyższa ranga'}
+        </p>
+        {summary.streakMilestoneCoins > 0 && <p className="text-xs text-[var(--text-secondary)]">Bonus za serię: +{summary.streakMilestoneCoins} monet.</p>}
+        {isLesson && summary.isRepeatToday && (
+          <p className="text-xs text-[var(--text-secondary)]">Przy powtórce tej samej lekcji dziś zdobywasz 30% XP. Monety są przyznawane raz dziennie.</p>
         )}
-      </motion.div>
-    </motion.div>
+        {!isLesson && <p className="text-xs text-[var(--text-secondary)]">W trybie powtórkowym zdobywasz 50% bazowego XP zadań.</p>}
+      </section>
+    </section>
   );
 }

@@ -35,10 +35,9 @@ import { TactileButton } from '../ui/TactileButton';
 const MAGIC_EMAIL_KEY = 'jasne_e8_magic_link_email';
 
 const FREE_UNLOCK_BENEFITS = [
-  'Dostęp do wszystkich lekcji i teorii Bento (za darmo)',
-  'Dostęp do zadań zamkniętych E8 i miniarkuszy (za darmo)',
-  'Zapis postępów, serii i Tarczy Serii w chmurze',
-  'Sklep Lumi i synchronizacja nagród między urządzeniami',
+  'Odblokowanie kolejnych dostępnych lekcji',
+  'Teoria Bento z przykładami i pułapkami egzaminacyjnymi',
+  'Zadania E8 z podpowiedziami i rozwiązaniami',
 ] as const;
 
 export function useCloudAuthUser() {
@@ -276,7 +275,7 @@ export function CloudAccountModal({
       subtitle={
         user
           ? 'Twoje darmowe konto Firebase jest aktywne.'
-          : subtitleOverride ?? 'Załóż darmowe konto w 15 sekund, aby uczyć się dalej i zapisać postępy.'
+          : subtitleOverride ?? 'Zaloguj się lub załóż darmowe konto, aby odblokować kolejne lekcje.'
       }
     >
       {!configured ? (
