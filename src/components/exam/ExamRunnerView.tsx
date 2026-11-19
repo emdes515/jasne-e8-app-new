@@ -19,7 +19,6 @@ import {
   calculateTaskXp,
   getComboMultiplier,
 } from '../../lib/gamification';
-import { SPRING_BOUNCY } from '../../lib/motionPresets';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -60,7 +59,7 @@ export function ExamRunnerView({
   const [bookmarkAnimTick, setBookmarkAnimTick] = useState(0);
 
   // Deadline timestamp strictly in memory (F5 discards incomplete exam attempt per AC-X3!)
-  const deadlineRef = useRef<number>(Date.now() + EXAM_DURATION_MS);
+  const [deadline] = useState(() => Date.now() + EXAM_DURATION_MS);
   const warningPlayedRef = useRef<boolean>(false);
   const submittedRef = useRef<boolean>(false);
 
@@ -170,7 +169,7 @@ export function ExamRunnerView({
   // Timer strictly computed from `deadline - Date.now()` + visibilitychange listener (AC-X1, AC-X2)
   useEffect(() => {
     const updateClock = () => {
-      const remMs = deadlineRef.current - Date.now();
+      const remMs = deadline - Date.now();
       const remSec = Math.max(0, Math.ceil(remMs / 1000));
       setSecondsLeft(remSec);
 
@@ -197,7 +196,7 @@ export function ExamRunnerView({
       clearInterval(interval);
       window.removeEventListener('visibilitychange', onVis);
     };
-  }, [evaluateAndSubmitExam, playSound]);
+  }, [deadline, evaluateAndSubmitExam, playSound]);
 
   const isUrgent = secondsLeft <= 60;
   const isBookmarked = savedTaskKeys.has(
@@ -220,7 +219,7 @@ export function ExamRunnerView({
       <div className="space-y-4 pb-8">
         {/* Top Exam Bar: Exit | Timer (deadline - Date.now()) | Question Grid 1-5 */}
         {/* Note: "Wzory E8" button is STRICTLY OMITTED in Exam Mode per Section 6.6 & AC-X4! */}
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex items-center justify-between gap-2">
+        <div className="p-3.5 sm:p-4 study-panel flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={() => {
@@ -319,7 +318,7 @@ export function ExamRunnerView({
                 ? { scale: [1, 1.38, 1], rotate: [0, -14, 6, 0] }
                 : {}
             }
-            transition={SPRING_BOUNCY}
+            transition={{ duration: 0.36, ease: 'easeOut' }}
             onClick={() => {
               setBookmarkAnimTick(Date.now());
               toggleTaskSaved(currentTask.id, currentTask.subjectId);
@@ -345,7 +344,7 @@ export function ExamRunnerView({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.16 }}
-            className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 sm:p-6 space-y-5"
+            className="study-panel p-5 sm:p-6 space-y-5"
           >
             <div>
               <div className="text-xs font-bold text-[var(--text-secondary)] mb-1">
@@ -424,8 +423,7 @@ export function ExamRunnerView({
                   hideEvaluateButton
                 />
                 <p className="text-xs text-[var(--text-secondary)]">
-                  W trybie egzaminu zadanie otwarte zostanie ocenione przez AI
-                  Tutora zbiorczo po kliknięciu „Oddaj arkusz”.
+                  Po oddaniu arkusza zobaczysz ocenę symulowaną i rozwiązanie.
                 </p>
               </div>
             )}
@@ -499,8 +497,7 @@ export function ExamRunnerView({
       >
         <div className="space-y-4">
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-            Po oddaniu arkusza otrzymasz raport punktowy CKE, ocenę zadania
-            otwartego od AI Tutora oraz nagrodę za ukończenie.
+            Po oddaniu zobaczysz wynik i rozwiązania. Odpowiedzi nie będzie można zmienić.
           </p>
           <div className="flex gap-3">
             <TactileButton

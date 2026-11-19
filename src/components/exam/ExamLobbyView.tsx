@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Timer,
-  FileCheck2,
   Coins,
-  ShieldCheck,
   Lock,
   Play,
   History,
@@ -25,7 +23,7 @@ import {
   ExamTaskEvaluationDetail,
 } from './ExamSummaryView';
 
-export function ExamLobbyView() {
+export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: boolean) => void }) {
   const { state, playSound } = useAppState();
   const [examMode, setExamMode] = useState<'lobby' | 'running' | 'summary'>(
     'lobby'
@@ -34,6 +32,11 @@ export function ExamLobbyView() {
   const [lastDetails, setLastDetails] = useState<ExamTaskEvaluationDetail[]>(
     []
   );
+
+  useEffect(() => {
+    onRunningChange(examMode === 'running');
+    return () => onRunningChange(false);
+  }, [examMode, onRunningChange]);
 
   if (examMode === 'running') {
     return (
@@ -65,27 +68,22 @@ export function ExamLobbyView() {
   return (
     <motion.div
       variants={STAGGER_CONTAINER_VARIANTS}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-5"
     >
       {/* Top Header with Focused Lumi */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
-        className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5"
+        className="study-panel p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5"
       >
         <LumiMascot mood="focused" loadout={state.loadout} size="md" />
         <div className="text-center sm:text-left">
-          <div className="text-xs font-extrabold font-display text-[var(--accent-text)] mb-1">
-            Symulator Egzaminu Ósmoklasisty • Standard CKE
-          </div>
-          <h1 className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
-            Lobby Egzaminacyjne E8
+          <h1 className="page-heading">
+            Egzamin
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
-            Sprawdź się pod presją czasu bez ryzyka utraty serc. W trakcie
-            egzaminu ściąga „Wzory E8” oraz podpowiedzi AI są wyłączone — tak
-            jak na prawdziwej sali egzaminacyjnej!
+            Rozwiąż zadania na czas. Arkusz nie zużywa serc. Podpowiedzi i wzory są w nim wyłączone.
           </p>
         </div>
       </motion.section>
@@ -95,18 +93,18 @@ export function ExamLobbyView() {
         variants={STAGGER_ITEM_VARIANTS}
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
-        {/* Card 1: Mini-Arkusz Testowy E8 (ACTIVE) */}
+        {/* Card 1: Miniarkusz (ACTIVE) */}
         <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--accent-primary)] shadow-[0_6px_0_0_var(--accent-primary-edge)] p-5 sm:p-6 flex flex-col justify-between gap-5">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-                Aktywny w Fazie 1 • Matematyka E8
+                Matematyka
               </span>
               <Timer className="w-5 h-5 text-[var(--accent-text)]" />
             </div>
 
             <h2 className="text-xl font-extrabold font-display text-[var(--text-primary)]">
-              Mini-Arkusz Testowy E8
+              Miniarkusz
             </h2>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[var(--text-secondary)]">
@@ -120,8 +118,7 @@ export function ExamLobbyView() {
             </div>
 
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              Zestaw 4 zadań zamkniętych/liczbowych oraz 1 zadania otwartego (2
-              pkt) ocenianego przez AI Tutora po oddaniu arkusza.
+Cztery zadania zamknięte lub liczbowe i jedno otwarte. Po oddaniu zobaczysz wynik i rozwiązania.
             </p>
           </div>
 
@@ -135,22 +132,22 @@ export function ExamLobbyView() {
             }}
           >
             <Play className="w-5 h-5" />
-            <span>Rozpocznij Mini-Arkusz</span>
+            <span>Rozpocznij miniarkusz</span>
           </TactileButton>
         </div>
 
-        {/* Card 2: Pełny Próbny Arkusz E8 (COMING SOON — PHASE 2) */}
-        <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5 sm:p-6 flex flex-col justify-between gap-5 opacity-95">
+        {/* Card 2: Pełny arkusz próbny (COMING SOON — PHASE 2) */}
+        <div className="study-panel p-5 sm:p-6 flex flex-col justify-between gap-5 opacity-95">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-extrabold font-display text-[var(--text-secondary)]">
-                Wkrótce — Faza 2 • Formuła CKE
+                W przygotowaniu
               </span>
               <Lock className="w-4 h-4 text-[var(--text-secondary)]" />
             </div>
 
             <h2 className="text-xl font-extrabold font-display text-[var(--text-primary)]">
-              Pełny Próbny Arkusz E8
+              Pełny arkusz próbny
             </h2>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[var(--text-secondary)]">
@@ -169,29 +166,24 @@ export function ExamLobbyView() {
             </p>
           </div>
 
-          <div className="min-h-[48px] px-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center justify-center gap-2 text-xs font-extrabold font-display text-[var(--text-secondary)]">
-            <FileCheck2 className="w-4 h-4" />
-            <span>Dostępne w aktualizacji Fazy 2</span>
-          </div>
         </div>
       </motion.section>
 
       {/* Recent Mini-Exam Attempts History */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
-        className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5 space-y-3"
+        className="study-panel p-5 space-y-3"
       >
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-[var(--accent-text)]" />
           <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-            Historia Twoich podejść ({state.examHistory.length})
+            Historia podejść ({state.examHistory.length})
           </h2>
         </div>
 
         {state.examHistory.length === 0 ? (
           <p className="text-xs text-[var(--text-secondary)] py-2">
-            Nie masz jeszcze ukończonych podejść do Mini-Arkusza E8. Rozwiąż
-            pierwszy arkusz powyżej!
+            Wynik pojawi się tutaj po oddaniu pierwszego arkusza.
           </p>
         ) : (
           <div className="space-y-2">

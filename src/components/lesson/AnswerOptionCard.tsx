@@ -4,7 +4,7 @@ import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { X } from 'lucide-react';
 import { TaskOption } from '../../types/domain';
-import { SPRING_BOUNCY, SPRING_TACTILE } from '../../lib/motionPresets';
+import { SPRING_TACTILE } from '../../lib/motionPresets';
 import { MathText } from '../ui/MathText';
 
 interface AnswerOptionCardProps {
@@ -52,10 +52,10 @@ export function AnswerOptionCard({
 
   const getBadgeStyle = () => {
     if (checkedState === 'correct' || checkedState === 'missed_correct') {
-      return 'bg-[var(--success)] text-[#F8FAFC] border-[var(--success-edge)]';
+      return 'bg-[var(--success)] text-[var(--on-success)] border-[var(--success-edge)]';
     }
     if (checkedState === 'wrong') {
-      return 'bg-[var(--danger)] text-[#F8FAFC] border-[var(--danger-edge)]';
+      return 'bg-[var(--danger)] text-[var(--on-danger)] border-[var(--danger-edge)]';
     }
     if (selected) {
       return 'bg-[var(--accent-primary)] text-[var(--on-accent)] border-[var(--accent-primary-edge)]';
@@ -87,13 +87,13 @@ export function AnswerOptionCard({
         checkedState === 'wrong'
           ? { duration: 0.34 }
           : checkedState === 'correct'
-          ? SPRING_BOUNCY
+          ? { duration: 0.28, ease: 'easeOut' }
           : SPRING_TACTILE
       }
       className={`relative w-full min-h-[58px] px-4 py-3 rounded-2xl border-2 flex items-center justify-between gap-3.5 text-left select-none transition-colors ${getCardStyle()} ${
         disabled
           ? 'cursor-default'
-          : 'cursor-pointer active:translate-y-[4px] active:shadow-[0_1px_0_0_var(--border-3d-edge)]'
+          : 'cursor-pointer active:shadow-[0_1px_0_0_var(--border-3d-edge)]'
       }`}
     >
       <div className="flex items-center gap-3.5 min-w-0">

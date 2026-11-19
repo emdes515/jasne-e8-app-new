@@ -9,20 +9,20 @@ import 'katex/dist/katex.min.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'JASNE E8 — Grywalizowane przygotowanie do Egzaminu Ósmoklasisty',
+  title: 'JASNE E8 | Przygotowanie do egzaminu ósmoklasisty',
   description:
-    'Mobile-first aplikacja edukacyjno-gamingowa przygotowująca uczniów do Egzaminu Ósmoklasisty z Matematyki, Polskiego i Angielskiego z maskotką Lumi i AI Tutorem.',
+    'Krótkie lekcje, powtórki i próbny miniarkusz z matematyki do egzaminu ósmoklasisty.',
   openGraph: {
-    title: 'JASNE E8 — Grywalizowane przygotowanie do Egzaminu Ósmoklasisty',
+    title: 'JASNE E8 | Przygotowanie do egzaminu ósmoklasisty',
     description:
-      'Mobile-first aplikacja edukacyjno-gamingowa przygotowująca uczniów do Egzaminu Ósmoklasisty z Matematyki, Polskiego i Angielskiego z maskotką Lumi i AI Tutorem.',
+      'Krótkie lekcje, powtórki i próbny miniarkusz z matematyki do egzaminu ósmoklasisty.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'JASNE E8 — Grywalizowane przygotowanie do Egzaminu Ósmoklasisty',
+    title: 'JASNE E8 | Przygotowanie do egzaminu ósmoklasisty',
     description:
-      'Mobile-first aplikacja edukacyjno-gamingowa przygotowująca uczniów do Egzaminu Ósmoklasisty z Matematyki, Polskiego i Angielskiego z maskotką Lumi i AI Tutorem.',
+      'Krótkie lekcje, powtórki i próbny miniarkusz z matematyki do egzaminu ósmoklasisty.',
   },
 };
 

@@ -306,7 +306,7 @@ export function TaskRunner() {
     <>
       <div className="space-y-4 pb-8">
         {/* Session Top Progress & Combo Bar */}
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex items-center justify-between gap-3">
+        <div className="p-3.5 sm:p-4 study-panel flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => {
@@ -347,9 +347,6 @@ export function TaskRunner() {
                 animate={{ width: `${progressPct}%` }}
                 transition={SPRING_SNAPPY}
               >
-                {!prefersReduced && (
-                  <span className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/35 to-transparent animate-progress-shimmer" />
-                )}
               </motion.div>
             </div>
           </div>
@@ -408,7 +405,7 @@ export function TaskRunner() {
                     }
                   : {}
               }
-              transition={SPRING_BOUNCY}
+              transition={{ duration: 0.36, ease: 'easeOut' }}
               onClick={() => {
                 setBookmarkAnimTick(Date.now());
                 toggleTaskSaved(currentTask.id, currentTask.subjectId);
@@ -451,7 +448,7 @@ export function TaskRunner() {
               className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-[var(--info)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--info)] cursor-pointer"
             >
               <Lightbulb className="w-4 h-4" />
-              <span>Podpowiedź AI ({hintsUsed}/3)</span>
+              <span>Podpowiedzi ({hintsUsed}/3)</span>
             </button>
           </div>
         </div>
@@ -464,7 +461,7 @@ export function TaskRunner() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -28 }}
             transition={{ duration: 0.18 }}
-            className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 sm:p-6 space-y-5"
+            className="study-panel p-5 sm:p-6 space-y-5"
           >
             {/* Topic Kicker & Question Prompt */}
             <div>
@@ -653,8 +650,8 @@ export function TaskRunner() {
       <BottomSheet
         open={hintsSheetOpen}
         onClose={() => setHintsSheetOpen(false)}
-        title="Podpowiedzi Sokratyczne AI Tutora"
-        subtitle="Każdy odkryty poziom obniża maks. XP tego zadania o 33% (zawsze min. 1 XP, bez wpływu na Combo i Serca!)"
+        title="Podpowiedzi"
+        subtitle="Każda podpowiedź obniża nagrodę XP za to zadanie o 33%. Minimum to 1 XP."
       >
         <div className="space-y-3">
           {currentTask.hints.map((hintText, idx) => {

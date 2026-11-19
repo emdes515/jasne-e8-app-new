@@ -31,7 +31,7 @@ const TAB_CONFIG: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { id: 'essence', label: 'Esencja', icon: Lightbulb },
-  { id: 'formulas', label: 'Wzory E8', icon: BookOpen },
+  { id: 'formulas', label: 'Reguły', icon: BookOpen },
   { id: 'example', label: 'Przykład', icon: ListOrdered },
   { id: 'trap', label: 'Pułapka E8', icon: ShieldAlert },
 ];
@@ -60,7 +60,7 @@ export function BentoTheoryTabs({
   return (
     <div className="space-y-5 pb-6">
       {/* Top Bar */}
-      <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)]">
+      <div className="flex items-center justify-between gap-3 p-4 study-panel">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
@@ -72,9 +72,9 @@ export function BentoTheoryTabs({
           </button>
           <div className="min-w-0">
             <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-              Teoria Bento Core-4 • Lekcja {lesson.nodeNumber}
+              Lekcja {lesson.nodeNumber}
             </div>
-            <h1 className="text-base sm:text-lg font-extrabold font-display text-[var(--text-primary)] truncate">
+            <h1 className="text-base sm:text-lg font-extrabold font-display text-[var(--text-primary)] [overflow-wrap:anywhere]">
               {lesson.title}
             </h1>
           </div>
@@ -85,6 +85,7 @@ export function BentoTheoryTabs({
           <TactileButton
             variant="secondary"
             size="sm"
+            className="sm:hidden"
             onClick={() => {
               playSound('tap');
               setFormulasOpen(true);
@@ -99,7 +100,7 @@ export function BentoTheoryTabs({
       {/* 4 Pill Tabs with Shared layoutId Capsule */}
       <div
         role="tablist"
-        aria-label="Karty teorii Bento"
+        aria-label="Karty teorii"
         className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)]"
       >
         {TAB_CONFIG.map((tab) => {
@@ -153,7 +154,7 @@ export function BentoTheoryTabs({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.18 }}
-          className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 sm:p-6 space-y-4"
+          className="study-panel p-5 sm:p-6 space-y-4"
         >
           <div>
             <h2 className="text-lg sm:text-xl font-extrabold font-display text-[var(--text-primary)]">
@@ -268,7 +269,7 @@ export function BentoTheoryTabs({
       </AnimatePresence>
 
       {/* Bottom Sticky Action Area (Respects AC-H2 & AC-H3 when 0 hearts!) */}
-      <div className="p-4 rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] space-y-3">
+      <div className="p-4 study-panel space-y-3">
         {isZeroHearts && (
           <div className="p-3.5 rounded-2xl bg-[var(--danger)]/15 border border-[var(--danger)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 text-xs">

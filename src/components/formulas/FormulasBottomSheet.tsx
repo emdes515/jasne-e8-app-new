@@ -29,7 +29,7 @@ export function FormulasBottomSheet() {
       open={formulasOpen}
       onClose={() => setFormulasOpen(false)}
       title="Przydatne Wzory E8 — Matematyka"
-      subtitle="Podręczna ściąga do lekcji i sesji powtórkowych (przeciągnij w dół, aby zamknąć)"
+      subtitle="Wzory i przykłady użycia podczas nauki."
       maxWidthClass="max-w-2xl"
     >
       <div className="space-y-4">

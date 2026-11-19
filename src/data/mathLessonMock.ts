@@ -29,13 +29,13 @@ export const MATH_LESSON_1_1: LessonDefinition = {
   chapterNumber: 1,
   chapterTitle: 'Liczby, Potęgi i Pierwiastki',
   title: 'Potęgi i pierwiastki w zadaniach E8',
-  subtitle: '4 karty Bento • 5 zadań • +20 monet',
+  subtitle: 'Teoria i 5 zadań',
   rewardCoins: 20,
   theory: [
     {
       id: 'essence',
-      title: 'Esencja: O co chodzi na E8?',
-      subtitle: 'Sedno tematu w 4 szybkich punktach „z polskiego na nasze”',
+      title: 'Potęgi i pierwiastki w pigułce',
+      subtitle: 'Cztery zasady, których użyjesz w zadaniach.',
       bullets: [
         'Potęga $a^n$ to skrócony zapis mnożenia liczby $a$ przez samą siebie $n$ razy (np. $2^4 = 2 \\cdot 2 \\cdot 2 \\cdot 2 = 16$). Uwaga: $a^0 = 1$ dla każdego $a \\neq 0$.',
         'Gdy mnożysz potęgi o tej samej podstawie, wykładniki DODAJESZ ($3^8 \\cdot 3^4 = 3^{12}$). Gdy dzielisz — wykładniki ODEJMUJESZ ($3^{12} : 3^{10} = 3^2$).',
@@ -45,8 +45,8 @@ export const MATH_LESSON_1_1: LessonDefinition = {
     },
     {
       id: 'formulas',
-      title: 'Wzory E8 — Potęgi i Pierwiastki',
-      subtitle: 'Kluczowe prawa działań, które musisz mieć w małym palcu',
+      title: 'Wzory na potęgi i pierwiastki',
+      subtitle: 'Zasady działań z przykładami.',
       formulas: [
         {
           name: 'Iloczyn i iloraz potęg o tej samej podstawie',
@@ -213,7 +213,7 @@ export const MATH_CHAPTERS_MAP: ChapterMeta[] = [
         id: 'lesson:1.1',
         nodeNumber: '1.1',
         title: 'Potęgi i pierwiastki w zadaniach E8',
-        subtitle: '4 karty Bento • 5 zadań • +20 monet',
+        subtitle: 'Teoria i 5 zadań',
         unlocked: true,
         rewardCoins: 20,
       },

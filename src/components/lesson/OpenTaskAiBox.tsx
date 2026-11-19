@@ -46,7 +46,7 @@ export function OpenTaskAiBox({
           disabled={disabled || isEvaluating}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Np. Pole kwadratu to 49, więc bok ma pierwiastek z 49 czyli 7 cm. Objętość sześcianu to 27, więc krawędź ma 3 cm. Suma: 7 + 3 = 10 cm."
+          placeholder="Wpisz swoje obliczenia"
           className="w-full p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm font-medium text-[var(--text-primary)] leading-relaxed resize-y"
         />
       </div>
@@ -60,7 +60,7 @@ export function OpenTaskAiBox({
           onClick={onEvaluate}
         >
           <Bot className="w-5 h-5" />
-          <span>Oceń z AI Tutorem</span>
+          <span>Sprawdź odpowiedź</span>
         </TactileButton>
       )}
 
@@ -76,15 +76,15 @@ export function OpenTaskAiBox({
             <LumiMascot mood="thinking" loadout={loadout} size="xs" />
             <div className="flex-1">
               <div className="text-sm font-extrabold font-display text-[var(--info)] flex items-center gap-2">
-                <span>Lumi sprawdza tok rozumowania…</span>
+                <span>Sprawdzanie odpowiedzi…</span>
                 <span className="inline-flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] animate-bounce [animation-delay:300ms]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] motion-safe:animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] motion-safe:animate-bounce [animation-delay:150ms]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] motion-safe:animate-bounce [animation-delay:300ms]" />
                 </span>
               </div>
               <div className="text-xs text-[var(--text-secondary)] mt-0.5">
-                Weryfikacja słów kluczowych i wyniku według klucza CKE
+                Sprawdzamy wynik i pojęcia z klucza zadania.
               </div>
             </div>
           </motion.div>
@@ -120,7 +120,7 @@ export function OpenTaskAiBox({
                   />
                 )}
                 <span className="text-base font-extrabold font-display tabular-nums">
-                  Wynik CKE: {evaluation.score}/{evaluation.maxScore} pkt
+                  Wynik: {evaluation.score}/{evaluation.maxScore} pkt
                 </span>
               </div>
 

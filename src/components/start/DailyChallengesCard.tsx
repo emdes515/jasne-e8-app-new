@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { Check, Coins, Trophy } from 'lucide-react';
+import { Check, Coins } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { TactileButton } from '../ui/TactileButton';
 import { STAGGER_ITEM_VARIANTS } from '../../lib/motionPresets';
@@ -14,20 +14,18 @@ export function DailyChallengesCard() {
   return (
     <motion.section
       variants={STAGGER_ITEM_VARIANTS}
-      aria-label="Wyzwania Dzienne"
-      className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5"
+      aria-label="Wyzwania na dziś"
+      className="study-panel p-4 sm:p-5"
     >
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)] flex items-center justify-center text-[var(--accent-text)]">
-            <Trophy className="w-5 h-5" />
-          </div>
+
           <div>
             <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-              Wyzwania Dzienne
+              Wyzwania na dziś
             </h2>
             <p className="text-xs text-[var(--text-secondary)]">
-              Wspólne dla wszystkich przedmiotów • Reset o północy
+              Nowe wyzwania o północy.
             </p>
           </div>
         </div>
@@ -36,7 +34,7 @@ export function DailyChallengesCard() {
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="divide-y divide-[var(--border-subtle)]">
         {state.dailyChallenges.map((ch) => {
           const isCompleted = ch.current >= ch.target;
           const pct = Math.min(100, Math.round((ch.current / ch.target) * 100));
@@ -44,7 +42,7 @@ export function DailyChallengesCard() {
           return (
             <div
               key={ch.challengeId}
-              className="p-3.5 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-3"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -76,7 +74,7 @@ export function DailyChallengesCard() {
                 {ch.claimed ? (
                   <div className="min-h-[44px] px-3.5 rounded-xl bg-[var(--success)]/15 border-2 border-[var(--success)] text-[var(--success)] text-xs font-extrabold font-display inline-flex items-center gap-1.5">
                     <Check className="w-4 h-4" />
-                    <span>Odebrane ✓</span>
+                    <span>Odebrane</span>
                   </div>
                 ) : isCompleted ? (
                   <TactileButton

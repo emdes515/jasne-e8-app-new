@@ -29,14 +29,14 @@ import {
   MAX_HEARTS,
   MAX_STREAK_SHIELDS,
 } from '../../lib/gamification';
-import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
+import { SPRING_SNAPPY } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { CountUpNumber } from '../ui/CountUpNumber';
 import { TactileButton } from '../ui/TactileButton';
 
 const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string }> = [
   { id: 'mascot', label: 'Maskotka Lumi' },
-  { id: 'profile', label: 'Ramki & Tytuły' },
+  { id: 'profile', label: 'Ramki i tytuły' },
   { id: 'boosters', label: 'Wspomagacze' },
   { id: 'premium', label: 'Premium (Wkrótce)' },
 ];
@@ -165,7 +165,7 @@ export function MascotDressingRoom() {
                   ? { y: [0, -14, 0], scale: [1, 1.06, 1] }
                   : {}
               }
-              transition={SPRING_BOUNCY}
+              transition={{ duration: 0.42, ease: 'easeOut' }}
               className="relative p-3 rounded-3xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)]"
             >
               <LumiMascot
@@ -179,8 +179,8 @@ export function MascotDressingRoom() {
               <div className="inline-flex items-center gap-2 text-xs font-extrabold font-display text-[var(--accent-text)] mb-1">
                 <span>
                   {hasPreview
-                    ? `Tryb przymierzalni: ${previewItemName}`
-                    : 'Scena Przymierzalni Lumi na żywo'}
+                    ? `Przymierzasz: ${previewItemName}`
+                    : 'Przymierzalnia'}
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
@@ -193,8 +193,7 @@ export function MascotDressingRoom() {
               </div>
 
               <p className="text-xs text-[var(--text-secondary)] mt-2 max-w-md">
-                Kliknij przycisk <strong>„Podgląd”</strong> przy dowolnym
-                kosmetyku poniżej, aby przymierzyć go na Lumi przed zakupem!
+                Wybierz „Podgląd”, żeby przymierzyć akcesorium.
               </p>
 
               {hasPreview && (
@@ -222,7 +221,7 @@ export function MascotDressingRoom() {
               <CountUpNumber value={state.coins} durationMs={500} />
             </div>
             <span className="text-[11px] text-[var(--text-secondary)]">
-              monet E8
+              monet
             </span>
           </div>
         </div>
@@ -273,7 +272,7 @@ export function MascotDressingRoom() {
       {activeCategory === 'premium' && (
         <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--info)] text-xs text-[var(--text-secondary)] leading-relaxed">
           <strong className="text-[var(--info)] font-display">
-            Dostępne w Fazie 2 — bez prawdziwych płatności w prototypie.
+            Pakiety są zapowiedzią. Płatności są niedostępne.
           </strong>{' '}
           W JASNE E8 nauka nigdy nie jest blokowana paywallem, a wszystkie
           kosmetyki i Tarcze Serii zdobywasz za monety z lekcji, wyzwań i
@@ -309,7 +308,7 @@ export function MascotDressingRoom() {
           return (
             <div
               key={item.id}
-              className="relative overflow-hidden rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5 flex flex-col justify-between gap-4"
+              className="relative overflow-hidden study-panel p-5 flex flex-col justify-between gap-4"
             >
               {/* Diagonal Shine Sweep on Purchase (Choreography #9) */}
               {showShine && !prefersReduced && (
@@ -374,7 +373,7 @@ export function MascotDressingRoom() {
                     onClick={() => handleBuyOrEquip(item)}
                   >
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Wkrótce (Faza 2 • {item.pricePLN})</span>
+                    <span>Zapowiedź</span>
                   </TactileButton>
                 ) : isEquipped ? (
                   <div className="w-full min-h-[44px] px-4 rounded-xl bg-[var(--success)]/15 border-2 border-[var(--success)] text-[var(--success)] text-xs font-extrabold font-display flex items-center justify-center gap-1.5">

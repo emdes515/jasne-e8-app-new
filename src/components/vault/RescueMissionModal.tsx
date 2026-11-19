@@ -40,8 +40,8 @@ export function RescueMissionModal() {
     <BottomSheet
       open={rescueModalOpen}
       onClose={() => setRescueModalOpen(false)}
-      title="Misja Ratunkowa & Serca"
-      subtitle="Zero paywalla — w JASNE E8 zawsze możesz odzyskać serce nauką!"
+      title="Misja ratunkowa & Serca"
+      subtitle="Rozwiąż 2 zadania, żeby odzyskać serce."
     >
       <div className="space-y-4">
         {/* Top Status Header with Lumi */}
@@ -80,7 +80,7 @@ export function RescueMissionModal() {
                 Wariant darmowy • Nauka zamiast czekania
               </div>
               <h3 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                Misja Ratunkowa: 2 poprawne zadania = +1 Serce
+                Misja ratunkowa: 2 poprawne zadania = +1 Serce
               </h3>
             </div>
             <span className="text-xs font-extrabold font-display tabular-nums text-[var(--text-secondary)]">
@@ -102,7 +102,7 @@ export function RescueMissionModal() {
             <div className="space-y-2">
               <div className="p-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
                 Twój Bank Błędów i Zapisane są obecnie puste — zapisz dowolne
-                zadanie zakładką w lekcji lub przeglądaj Teorię Bento i Wzory E8
+                zadanie zakładką w lekcji lub przeglądaj teorię i Wzory E8
                 bez blokad!
               </div>
               <TactileButton
@@ -115,7 +115,7 @@ export function RescueMissionModal() {
                 }}
               >
                 <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
-                <span>Otwórz Teorię Bento (zawsze dostępna)</span>
+                <span>Otwórz teorię (zawsze dostępna)</span>
               </TactileButton>
             </div>
           ) : (

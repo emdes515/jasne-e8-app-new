@@ -50,13 +50,7 @@ export function ExamSummaryView({
   onRetryExam,
 }: ExamSummaryViewProps) {
   const { state, setActiveTab, playSound } = useAppState();
-  const [expandedTaskIds, setExpandedTaskIds] = useState<Record<string, boolean>>(
-    () =>
-      details.reduce((acc, d) => {
-        acc[d.task.id] = true;
-        return acc;
-      }, {} as Record<string, boolean>)
-  );
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Record<string, boolean>>({});
 
   const mistakesAddedCount = details.filter((d) => d.outcome === 'wrong').length;
 
@@ -71,14 +65,14 @@ export function ExamSummaryView({
   return (
     <motion.div
       variants={STAGGER_CONTAINER_VARIANTS}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-5 pb-8"
     >
       {/* Hero Summary Card with Circular Score Ring */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
-        className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8 text-center space-y-5"
+        className="study-panel p-6 sm:p-8 text-center space-y-5"
       >
         <div className="flex justify-center">
           <LumiMascot
@@ -90,7 +84,7 @@ export function ExamSummaryView({
 
         <div>
           <div className="text-xs font-extrabold font-display text-[var(--accent-text)] mb-1">
-            Raport Egzaminacyjny CKE • Mini-Arkusz E8
+            Miniarkusz z matematyki
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[var(--text-primary)]">
             Wynik arkusza:{' '}
@@ -101,8 +95,7 @@ export function ExamSummaryView({
             />
           </h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 tabular-nums">
-            Zdobyto {record.pointsEarned} z {record.pointsMax} punktów CKE •
-            Zaliczono dzisiejszy Dzień Gracza dla Serii!
+            Zadanie otwarte ma ocenę symulowaną. Porównaj swoje obliczenia z rozwiązaniem.
           </p>
         </div>
 
@@ -143,7 +136,7 @@ export function ExamSummaryView({
               {record.pointsEarned}/{record.pointsMax}
             </span>
             <span className="text-[11px] text-[var(--text-secondary)]">
-              Punkty CKE
+              Punkty
             </span>
           </div>
         </div>
@@ -155,7 +148,7 @@ export function ExamSummaryView({
           </div>
         ) : (
           <div className="p-3.5 rounded-2xl bg-[var(--success)]/12 border border-[var(--success)] text-xs font-bold text-[var(--success)]">
-            Zero błędnych zadań (0/2 pkt) — perfekcyjny arkusz!
+            Nie dodano nowych zadań do banku błędów.
           </div>
         )}
 
@@ -175,7 +168,7 @@ export function ExamSummaryView({
             fullWidth
             onClick={onBackToLobby}
           >
-            <span>Wróć do Lobby Egzaminu</span>
+            <span>Wróć do egzaminu</span>
             <ArrowRight className="w-4 h-4" />
           </TactileButton>
         </div>
@@ -188,7 +181,7 @@ export function ExamSummaryView({
       >
         <div className="flex items-center justify-between px-1">
           <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-            Szczegółowa analiza 5 zadań
+            Rozwiązania
           </h2>
           {mistakesAddedCount > 0 && (
             <button
@@ -196,7 +189,7 @@ export function ExamSummaryView({
               onClick={() => setActiveTab('vault')}
               className="text-xs font-extrabold font-display text-[var(--accent-text)] hover:underline cursor-pointer"
             >
-              Otwórz Bank Błędów →
+              Otwórz powtórki
             </button>
           )}
         </div>
@@ -207,11 +200,12 @@ export function ExamSummaryView({
           return (
             <div
               key={item.task.id}
-              className="rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] overflow-hidden"
+              className="study-panel overflow-hidden"
             >
               <button
                 type="button"
                 onClick={() => toggleExpand(item.task.id)}
+                aria-expanded={isOpen}
                 className="w-full p-4 flex items-center justify-between gap-3 text-left cursor-pointer hover:bg-[var(--bg-elevated)]/60 transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -223,12 +217,7 @@ export function ExamSummaryView({
                     <XCircle className="w-5 h-5 text-[var(--danger)] shrink-0" />
                   )}
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-[var(--text-secondary)]">
-                      Zadanie {idx + 1} · {item.task.topicTag}
-                    </div>
-                    <div className="text-sm font-extrabold font-display text-[var(--text-primary)] truncate">
-                      <MathText text={item.task.prompt} />
-                    </div>
+                    <div className="text-sm font-bold text-[var(--text-primary)]">Zadanie {idx + 1} · {item.task.topicTag}</div>
                   </div>
                 </div>
 
@@ -260,7 +249,7 @@ export function ExamSummaryView({
                       <div className="text-xs font-bold text-[var(--text-secondary)]">
                         Twoja odpowiedź:
                       </div>
-                      <div className="font-extrabold font-display text-[var(--text-primary)] mt-0.5">
+                      <div className="font-extrabold font-display text-[var(--text-primary)] mt-0.5 [overflow-wrap:anywhere]">
                         {item.userAnswer.trim() ? (
                           <MathText text={item.userAnswer} />
                         ) : (
@@ -273,7 +262,7 @@ export function ExamSummaryView({
 
                     <div className="p-3 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)]">
                       <div className="text-xs font-bold text-[var(--text-secondary)]">
-                        Klucz CKE:
+                        Poprawna odpowiedź
                       </div>
                       <div className="font-extrabold font-display text-[var(--success)] mt-0.5">
                         <MathText text={item.task.correctAnswer} />
@@ -286,7 +275,7 @@ export function ExamSummaryView({
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex items-center gap-1.5 font-extrabold font-display text-xs text-[var(--info)]">
                           <Bot className="w-4 h-4" />
-                          <span>Ocena AI Tutora ({item.aiEvaluation.score}/2 pkt)</span>
+                          <span>{item.aiEvaluation.score}/2 pkt</span>
                         </span>
                         <span className="text-[11px] font-extrabold text-[var(--info)]">
                           {item.aiEvaluation.label}
@@ -300,7 +289,7 @@ export function ExamSummaryView({
 
                   <div className="text-xs text-[var(--text-secondary)] leading-relaxed">
                     <strong className="text-[var(--text-primary)]">
-                      Wyjaśnienie CKE:
+                      Rozwiązanie
                     </strong>{' '}
                     <MathText text={item.task.explanation} />
                   </div>

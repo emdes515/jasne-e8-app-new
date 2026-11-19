@@ -43,26 +43,23 @@ const RANDOM_NICKNAMES = [
 const TOUR_SLIDES = [
   {
     id: 'bento',
-    title: '1. Mikronauka Bento & Zapisz do powtórki',
+    title: 'Lekcja i powtórki',
     description:
-      'Zamiast nudnych ścian tekstu dostajesz 4 konkretne karty teorii (Esencja, Wzory, Przykład 3 kroki, Pułapka E8), a potem 5 zadań z rosnącym Combo do x3.0. Trudniejsze zadanie? Kliknij zakładkę „Zapisz do powtórki”!',
-    badge: 'Combo x3.0 • Zakładki powtórek',
+      'Przejrzyj teorię i rozwiąż 5 zadań. Trudniejsze zadania możesz zapisać w Powtórkach.',
     icon: Bookmark,
   },
   {
     id: 'aitutor',
-    title: '2. AI Tutor do zadań otwartych & Wzory E8',
+    title: 'Zadania otwarte i wzory',
     description:
-      'W zadaniach otwartych AI Tutor prowadzi Cię 3-stopniowymi podpowiedziami i ocenia Twój tok obliczeń jak egzaminator CKE (0–2 pkt). W Matematyce zawsze masz pod ręką wysuwaną ściągę „Przydatne Wzory E8”.',
-    badge: 'Ocena 0–2 pkt CKE • Wzory KaTeX',
+      'W trakcie nauki możesz odsłonić podpowiedzi lub zajrzeć do Wzorów E8. Ocena zadań otwartych jest symulowana w skali 0–2 pkt.',
     icon: Bot,
   },
   {
     id: 'hearts',
-    title: '3. Serca, Monety i Sklep Kosmetyków Lumi',
+    title: 'Serca i monety',
     description:
-      'Startujesz z 5/5 serc i 120 monetami. Straciłeś serca? Odzyskasz je za darmo nauką w Misji Ratunkowej — zero paywalla! Za zdobyte monety kupujesz słuchawki, okulary i korony dla Lumi albo cenną Tarczę Serii.',
-    badge: 'Misja Ratunkowa • Sklep Lumi',
+      'Zaczynasz z 5 sercami i 120 monetami. Serca odzyskasz w misji ratunkowej. Za monety możesz kupić akcesoria Lumi lub tarczę serii.',
     icon: Heart,
   },
 ];
@@ -122,7 +119,7 @@ export function OnboardingFlow() {
   const progressPct = (step / 5) * 100;
 
   return (
-    <div className="min-h-screen w-full bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col justify-between px-4 py-6 sm:py-10 overflow-x-hidden">
+    <div className="min-h-dvh w-full bg-[var(--bg-canvas)] text-[var(--text-primary)] flex flex-col gap-5 px-4 py-6 sm:py-10 overflow-x-hidden">
       {/* Top Progress Bar */}
       <div className="w-full max-w-xl mx-auto">
         <div className="flex items-center justify-between text-xs font-bold text-[var(--text-secondary)] mb-2">
@@ -142,7 +139,7 @@ export function OnboardingFlow() {
       </div>
 
       {/* Main Step Card */}
-      <div className="w-full max-w-xl mx-auto my-6">
+      <div className="w-full max-w-xl mx-auto">
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div
@@ -151,7 +148,7 @@ export function OnboardingFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -14 }}
               transition={SPRING_SNAPPY}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8 text-center"
+              className="study-panel p-6 sm:p-8 text-center"
             >
               <div className="flex justify-center mb-4">
                 <LumiMascot
@@ -161,31 +158,10 @@ export function OnboardingFlow() {
                 />
               </div>
 
-              <motion.div
-                initial={{ scale: 0.92, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={SPRING_BOUNCY}
-                className="inline-block rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] px-4 py-3 text-sm font-medium text-[var(--text-primary)] mb-5 max-w-md"
-              >
-                „Cześć! Jestem <strong className="text-[var(--accent-text)]">Lumi</strong>.
-                Zrobimy z E8 grę, którą da się wygrać w 5 minut dziennie.”
-              </motion.div>
-
-              <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight mb-3 text-balance">
-                Egzamin Ósmoklasisty bez stresu i bez nudnych wykładów
-              </h1>
-              <p className="text-sm text-[var(--text-secondary)] mb-6">
-                Krótkie karty teorii Bento, interaktywne zadania CKE z Combo,
-                symulowany AI Tutor do otwartych i personalizacja Lumi.
+              <h1 className="page-heading mb-3">Cześć, tu Lumi.</h1>
+              <p className="mx-auto mb-6 max-w-xs text-sm leading-relaxed text-[var(--text-secondary)]">
+                Poćwicz matematykę przed egzaminem ósmoklasisty. Postępy zapiszą się na tym urządzeniu. Konto nie jest potrzebne.
               </p>
-
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[var(--text-secondary)] mb-7">
-                <span>Zero nudy</span>
-                <span aria-hidden="true">·</span>
-                <span>AI Tutor do otwartych</span>
-                <span aria-hidden="true">·</span>
-                <span>Zaczynasz od razu — bez konta</span>
-              </div>
 
               <TactileButton
                 variant="primary"
@@ -196,7 +172,7 @@ export function OnboardingFlow() {
                   setStep(2);
                 }}
               >
-                <span>Zaczynamy!</span>
+                <span>Zaczynamy</span>
                 <ArrowRight className="w-5 h-5" />
               </TactileButton>
             </motion.div>
@@ -209,7 +185,7 @@ export function OnboardingFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -14 }}
               transition={SPRING_SNAPPY}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8"
+              className="study-panel p-6 sm:p-8"
             >
               <div className="flex items-center gap-4 mb-6">
                 <LumiMascot
@@ -406,7 +382,7 @@ export function OnboardingFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -14 }}
               transition={SPRING_SNAPPY}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8"
+              className="study-panel p-6 sm:p-8"
             >
               <div className="flex items-center gap-4 mb-5">
                 <LumiMascot
@@ -416,10 +392,10 @@ export function OnboardingFlow() {
                 />
                 <div>
                   <h2 className="text-xl font-extrabold font-display">
-                    Przedmiot i Cel Dzienny
+                    Przedmiot i cel dzienny
                   </h2>
                   <p className="text-xs text-[var(--text-secondary)]">
-                    Lumi reaguje na Twój wybór celu!
+                    Cel możesz zmienić później w profilu.
                   </p>
                 </div>
               </div>
@@ -434,17 +410,17 @@ export function OnboardingFlow() {
                     {
                       id: 'math' as SubjectId,
                       name: 'Matematyka E8',
-                      note: 'Pełny prototyp Fazy 1 — Polecane',
+                      note: 'Lekcja i miniarkusz',
                     },
                     {
                       id: 'polish' as SubjectId,
                       name: 'Język Polski E8',
-                      note: 'Podgląd — wkrótce w Fazie 2',
+                      note: 'Plan działów',
                     },
                     {
                       id: 'english' as SubjectId,
                       name: 'Język Angielski E8',
-                      note: 'Podgląd — wkrótce w Fazie 2',
+                      note: 'Plan działów',
                     },
                   ].map((sub) => {
                     const selected = activeSubject === sub.id;
@@ -490,17 +466,17 @@ export function OnboardingFlow() {
                   {[
                     {
                       mins: 5 as DailyGoalMinutes,
-                      title: 'Rozgrzewka — 5 min / dzień',
+                      title: '5 minut dziennie',
                       desc: '1 lekcja lub 5 zadań dziennie',
                     },
                     {
                       mins: 10 as DailyGoalMinutes,
-                      title: 'Solidny trening — 10 min / dzień (Rekomendowane)',
+                      title: '10 minut dziennie',
                       desc: '2 lekcje lub 10 zadań dziennie',
                     },
                     {
                       mins: 15 as DailyGoalMinutes,
-                      title: 'Tryb Mistrza — 15 min / dzień',
+                      title: '15 minut dziennie',
                       desc: '3 lekcje lub 15 zadań dziennie',
                     },
                   ].map((g) => {
@@ -570,7 +546,7 @@ export function OnboardingFlow() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -14 }}
               transition={SPRING_SNAPPY}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8"
+              className="study-panel p-6 sm:p-8"
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold text-[var(--accent-text)]">
@@ -603,9 +579,6 @@ export function OnboardingFlow() {
                     >
                       <div className="w-12 h-12 rounded-2xl bg-[var(--accent-primary)] text-[var(--on-accent)] flex items-center justify-center mb-4">
                         <IconComp className="w-6 h-6" />
-                      </div>
-                      <div className="text-xs font-bold text-[var(--accent-text)] mb-1">
-                        {slide.badge}
                       </div>
                       <h3 className="text-lg font-extrabold font-display mb-2">
                         {slide.title}
@@ -666,7 +639,7 @@ export function OnboardingFlow() {
                     }
                   }}
                 >
-                  <span>{tourIndex < 2 ? 'Następny slajd' : 'Odbierz pakiet startowy!'}</span>
+                  <span>{tourIndex < 2 ? 'Następny slajd' : 'Odbierz pakiet startowy'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </TactileButton>
               </div>
@@ -680,7 +653,7 @@ export function OnboardingFlow() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={SPRING_BOUNCY}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8 text-center"
+              className="study-panel p-6 sm:p-8 text-center"
             >
               <div className="flex justify-center mb-3">
                 <LumiMascot
@@ -694,7 +667,7 @@ export function OnboardingFlow() {
                 Wszystko gotowe, {nickValidation.trimmed || 'BłyskLogiki'}!
               </h2>
               <p className="text-sm text-[var(--text-secondary)] mb-6">
-                Twój pakiet startowy został odblokowany. Powodzenia na ścieżce E8!
+                Możesz zacząć od lekcji z matematyki lub przejść do Startu.
               </p>
 
               {/* Starter Resource Cards */}
@@ -745,7 +718,7 @@ export function OnboardingFlow() {
                   }
                 >
                   <BookOpen className="w-5 h-5" />
-                  <span>Odpal pierwszą lekcję!</span>
+                  <span>Otwórz pierwszą lekcję</span>
                 </TactileButton>
 
                 <TactileButton
@@ -763,7 +736,7 @@ export function OnboardingFlow() {
                     })
                   }
                 >
-                  Wejdź na pulpit Start
+                  Przejdź do Startu
                 </TactileButton>
               </div>
             </motion.div>
@@ -771,9 +744,7 @@ export function OnboardingFlow() {
         </AnimatePresence>
       </div>
 
-      <div className="text-center text-xs text-[var(--text-secondary)]">
-        JASNE E8 • Tryb lokalny Fazy 1 (100% offline-ready)
-      </div>
+
     </div>
   );
 }
@@ -790,7 +761,6 @@ export function ProductTourModal() {
       open={productTourOpen}
       onClose={() => setProductTourOpen(false)}
       title="Przewodnik po JASNE E8"
-      subtitle="Poznaj 3 filary grywalizacji i nauki z maskotką Lumi"
     >
       <div className="space-y-4">
         {TOUR_SLIDES.map((s, idx) => {
@@ -815,9 +785,6 @@ export function ProductTourModal() {
                   <IconComp className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-[var(--accent-text)]">
-                    {s.badge}
-                  </div>
                   <h3 className="text-base font-extrabold font-display text-[var(--text-primary)] mt-0.5">
                     {s.title}
                   </h3>

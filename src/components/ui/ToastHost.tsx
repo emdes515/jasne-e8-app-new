@@ -36,7 +36,7 @@ export function ToastHost() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.95 }}
               transition={SPRING_SNAPPY}
-              className="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] text-sm font-medium text-[var(--text-primary)]"
+              className="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 study-panel text-sm font-medium text-[var(--text-primary)]"
             >
               <div className="flex items-center gap-2.5">
                 {iconMap[toast.tone]}

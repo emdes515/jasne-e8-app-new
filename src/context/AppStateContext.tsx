@@ -72,7 +72,9 @@ export interface SessionCompletionSummary {
 interface AppStateContextValue {
   state: AppState;
   activeTab: NavTabId;
-  setActiveTab: (tab: NavTabId) => void;
+  setActiveTab: (tab: NavTabId, profileSection?: 'profile' | 'shop') => void;
+  profileSection: 'profile' | 'shop';
+  setProfileSection: (section: 'profile' | 'shop') => void;
 
   // Modals & Overlays
   formulasOpen: boolean;
@@ -186,6 +188,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(() => createInitialAppState());
   const [hydrated, setHydrated] = useState(false);
   const [activeTab, setActiveTabState] = useState<NavTabId>('start');
+  const [profileSection, setProfileSection] = useState<'profile' | 'shop'>('profile');
   const [formulasOpen, setFormulasOpen] = useState(false);
   const [rescueModalOpen, setRescueModalOpen] = useState(false);
   const [productTourOpen, setProductTourOpen] = useState(false);
@@ -403,19 +406,20 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, [state.hearts, state.heartRefillAnchorAt, nowTick]);
 
   const setActiveTab = useCallback(
-    (tab: NavTabId) => {
+    (tab: NavTabId, section: 'profile' | 'shop' = 'profile') => {
       playSound('tabSwitch');
       setActiveTabState(tab);
+      if (tab === 'profile') setProfileSection(section);
       if (tab === 'exam') {
         setFormulasOpen(false);
       }
-      if (tab !== 'learn' && tab !== 'start' && tab !== 'vault') {
-        if (lessonViewStage === 'theory' || lessonViewStage === 'summary') {
+      if (tab !== activeTab || section === 'shop') {
+        if (lessonViewStage !== 'none') {
           setLessonViewStage('none');
         }
       }
     },
-    [playSound, lessonViewStage]
+    [activeTab, playSound, lessonViewStage]
   );
 
   // Remember to close FormulasBottomSheet when switching away from Math (AC-G4)
@@ -1505,6 +1509,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       state,
       activeTab,
       setActiveTab,
+      profileSection,
+      setProfileSection,
       formulasOpen,
       setFormulasOpen,
       rescueModalOpen,
@@ -1547,6 +1553,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       state,
       activeTab,
       setActiveTab,
+      profileSection,
+      setProfileSection,
       formulasOpen,
       rescueModalOpen,
       productTourOpen,

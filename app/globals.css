@@ -6,6 +6,7 @@
 /* Default: Nocturne Gaming (Dark) */
 :root,
 .dark {
+  color-scheme: dark;
   --bg-canvas: #080C16;
   --bg-surface: #11192B;
   --bg-elevated: #19243D;
@@ -19,16 +20,20 @@
   --accent-text: #FFC933;
   --success: #10B981;
   --success-edge: #047857;
+  --on-success: #080C16;
   --danger: #F43F5E;
   --danger-edge: #BE123C;
+  --on-danger: #080C16;
   --info: #38BDF8;
   --info-edge: #0284C7;
+  --on-info: #080C16;
   --combo-fire: #F97316;
   --rarity-epic: #A855F7;
 }
 
 /* Solar Gaming (Light) */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-canvas: #F4F6FB;
   --bg-surface: #FFFFFF;
   --bg-elevated: #F8FAFC;
@@ -40,22 +45,27 @@
   --accent-primary-edge: #92400E;
   --on-accent: #0F172A;
   --accent-text: #B45309;
-  --success: #059669;
+  --success: #047857;
   --success-edge: #065F46;
-  --danger: #E11D48;
+  --on-success: #FFFFFF;
+  --danger: #BE123C;
   --danger-edge: #9F1239;
-  --info: #0284C7;
+  --on-danger: #FFFFFF;
+  --info: #0369A1;
   --info-edge: #0369A1;
-  --combo-fire: #EA580C;
+  --on-info: #FFFFFF;
+  --combo-fire: #C2410C;
   --rarity-epic: #7E22CE;
 }
+
+html { scroll-padding-block: 4rem 5rem; }
 
 html,
 body {
   background-color: var(--bg-canvas);
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -81,23 +91,136 @@ h4,
   animation: shineSweep 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Progress bar subtle shimmer */
-@keyframes progressShimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-.animate-progress-shimmer {
-  animation: progressShimmer 1.6s ease-in-out infinite;
-}
-
 /* KaTeX horizontal scroll safety on mobile */
 .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.25rem 0;
+}
+
+/* Shared workspace surfaces. Depth is reserved for controls and active lessons. */
+.page-heading {
+  font-size: clamp(1.65rem, 1.35rem + 1.2vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.study-panel,
+.study-feature {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.125rem;
+}
+
+.study-feature {
+  border-color: color-mix(in srgb, var(--accent-text) 45%, var(--border-subtle));
+}
+
+.study-board {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.875rem;
+  background-color: var(--bg-canvas);
+  background-image:
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 1.375rem 1.375rem;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.study-board-mark {
+  position: absolute;
+  z-index: -1;
+  font: 800 clamp(1.2rem, 3vw, 2.1rem)/1 'Plus Jakarta Sans', sans-serif;
+  color: var(--accent-text);
+  opacity: 0.75;
+  inset: 21% auto auto 8%;
+  transform: rotate(-9deg);
+}
+
+.study-board-mark:last-child {
+  inset: auto 8% 18% auto;
+  transform: rotate(8deg);
+}
+
+.study-progress {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  overflow: hidden;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+}
+
+.study-progress::-webkit-progress-bar { background: var(--bg-elevated); }
+.study-progress::-webkit-progress-value { background: var(--accent-text); }
+.study-progress::-moz-progress-bar { background: var(--accent-text); }
+
+.study-stat {
+  margin-top: 0.25rem;
+  font: 800 1.375rem/1.2 'Plus Jakarta Sans', sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-link {
+  display: grid;
+  width: 100%;
+  min-height: 3.35rem;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto 1rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.study-link svg { color: var(--accent-text); }
+.study-link svg:last-child { grid-column: 4; color: var(--text-secondary); }
+.study-link small { color: var(--text-secondary); }
+
+@media (hover: hover) {
+  .study-link:hover { background: var(--bg-elevated); }
+}
+
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shine-sweep { display: none; }
+}
+
+
+.study-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.study-dialog[open] {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.study-dialog::backdrop { background: rgb(5 8 17 / 70%); }
+html:has(.study-dialog[open]) { overflow-y: hidden; }
+
+@media (min-width: 40rem) {
+  .study-dialog[open] { align-items: center; padding: 1rem; }
 }

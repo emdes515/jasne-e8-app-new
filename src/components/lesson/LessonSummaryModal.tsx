@@ -58,9 +58,9 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
   return (
     <motion.div
       variants={STAGGER_CONTAINER_VARIANTS}
-      initial="hidden"
+      initial={false}
       animate="visible"
-      className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8 text-center space-y-6"
+      className="study-panel p-6 sm:p-8 text-center space-y-6"
     >
       <motion.div variants={STAGGER_ITEM_VARIANTS} className="flex justify-center">
         <LumiMascot mood="celebrate" loadout={state.loadout} size="lg" />
@@ -68,7 +68,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
 
       <motion.div variants={STAGGER_ITEM_VARIANTS}>
         <div className="text-xs font-extrabold font-display text-[var(--accent-text)] mb-1">
-          {isPractice ? 'Sesja powtórkowa ukończona!' : 'Lekcja Bento ukończona!'}
+          {isPractice ? 'Powtórka ukończona' : 'Lekcja ukończona'}
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[var(--text-primary)]">
           {summary.title}

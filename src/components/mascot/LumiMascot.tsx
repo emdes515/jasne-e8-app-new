@@ -221,6 +221,7 @@ export function LumiMascot({
           rx="42"
           ry="9"
           fill="#050811"
+          initial={false}
           animate={getShadowAnimation()}
           style={{ transformOrigin: '100px 182px' }}
         />

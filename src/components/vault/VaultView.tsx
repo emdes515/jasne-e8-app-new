@@ -56,22 +56,19 @@ export function VaultView() {
   return (
     <motion.div
       variants={STAGGER_CONTAINER_VARIANTS}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-5"
     >
-      {/* Top 2-state Switcher with Shared layoutId Capsule: Zapisane (N) | Bank Błędów (M) */}
+      {/* Top 2-state Switcher with Shared layoutId Capsule: Zapisane (N) | Bank błędów (M) */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
-        className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 space-y-4"
+        className="study-panel p-5 space-y-4"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-              Centrum Retencji • Tryb Powtórkowy (50% XP)
-            </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
-              Powtórki & Bank Błędów
+            <h1 className="page-heading">
+              Powtórki
             </h1>
           </div>
 
@@ -83,7 +80,7 @@ export function VaultView() {
             >
               <Heart className="w-4 h-4" />
               <span>
-                Misja Ratunkowa ({state.rescueMissionCurrentProgress}/2 • Dziś{' '}
+                Misja ratunkowa ({state.rescueMissionCurrentProgress}/2 · dziś{' '}
                 {state.rescueMissionsCompletedToday}/{MAX_FREE_RESCUE_PER_DAY})
               </span>
             </TactileButton>
@@ -162,7 +159,7 @@ export function VaultView() {
                   : 'text-[var(--text-secondary)]'
               }`}
             >
-              Bank Błędów ({state.mistakeBank.length})
+              Bank błędów ({state.mistakeBank.length})
             </span>
           </button>
         </div>
@@ -207,10 +204,10 @@ export function VaultView() {
         >
           {filteredSaved.length > 0 ? (
             <>
-              <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 study-panel flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                    Gotowy na trening zapisanych zadań?
+                    Trening z zapisanych zadań
                   </h2>
                   <p className="text-xs text-[var(--text-secondary)]">
                     Uruchamia sesję wyłącznie z unikalnych zapisanych zadań (50%
@@ -238,7 +235,7 @@ export function VaultView() {
                   return (
                     <div
                       key={entry.key}
-                      className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex items-start justify-between gap-3"
+                      className="p-4 study-panel flex items-start justify-between gap-3"
                     >
                       <div className="space-y-1.5 min-w-0">
                         <div className="text-xs font-bold text-[var(--text-secondary)]">
@@ -267,7 +264,7 @@ export function VaultView() {
               </div>
             </>
           ) : (
-            <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-8 text-center space-y-4">
+            <div className="study-panel p-8 text-center space-y-4">
               <div className="flex justify-center">
                 <LumiMascot
                   mood="supportive"
@@ -308,7 +305,7 @@ export function VaultView() {
         >
           {filteredBank.length > 0 ? (
             <>
-              <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 study-panel flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
                     Opanuj swoje błędy (2 poprawne z rzędu = usunięcie z Banku!)
@@ -337,7 +334,7 @@ export function VaultView() {
                   return (
                     <div
                       key={entry.key}
-                      className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 study-panel flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div className="space-y-1.5 min-w-0">
                         <div className="text-xs font-bold text-[var(--text-secondary)]">
@@ -376,7 +373,7 @@ export function VaultView() {
               </div>
             </>
           ) : (
-            <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-8 text-center space-y-4">
+            <div className="study-panel p-8 text-center space-y-4">
               <div className="flex justify-center">
                 <LumiMascot
                   mood="celebrate"
@@ -386,7 +383,7 @@ export function VaultView() {
               </div>
               <div>
                 <h2 className="text-lg font-extrabold font-display text-[var(--text-primary)]">
-                  Bank Błędów jest czysty!
+                  Bank błędów jest czysty!
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 max-w-sm mx-auto">
                   Nie masz żadnych zaległych błędów. Każde potknięcie w lekcji

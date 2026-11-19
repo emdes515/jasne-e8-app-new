@@ -14,7 +14,7 @@ import { TactileButton } from '../ui/TactileButton';
  * Right companion panel (300px wide), rendered STRICTLY at >= 1440px (min-[1440px]:flex)
  * on Start and Learn screens so that 248 + 780 + 300 + 48 = 1376px <= 1440px (AC-M6).
  */
-export function DesktopCompanionPanel() {
+export function DesktopCompanionPanel({ showProgress }: { showProgress: boolean }) {
   const { state, claimDailyChallenge, setActiveTab } = useAppState();
 
   const dailyGoal = computeDailyGoalProgress({
@@ -31,7 +31,7 @@ export function DesktopCompanionPanel() {
       className="hidden min-[1440px]:flex flex-col gap-4 w-[300px] shrink-0"
     >
       {/* Lumi Companion Card */}
-      <div className="p-4 rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] flex flex-col items-center text-center space-y-2.5">
+      <div className="p-4 study-panel flex flex-col items-center text-center space-y-2.5">
         <LumiMascot
           mood={dailyGoal.percent >= 100 ? 'celebrate' : 'idle'}
           loadout={state.loadout}
@@ -39,26 +39,26 @@ export function DesktopCompanionPanel() {
         />
         <div>
           <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-            Maskotka Lumi • Twój kibic E8
+            Lumi
           </div>
           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             {dailyGoal.percent >= 100
-              ? 'Dzisiejszy cel osiągnięty! Sprawdź nowe akcesoria w Sklepie.'
-              : 'Każde sprawdzone zadanie przybliża Cię do celu dnia!'}
+              ? 'Dzisiejszy cel osiągnięty.'
+              : 'Przymierz akcesoria z kolekcji.'}
           </p>
         </div>
         <TactileButton
           variant="secondary"
           size="sm"
           fullWidth
-          onClick={() => setActiveTab('profile')}
+          onClick={() => setActiveTab('profile', 'shop')}
         >
           Przymierzalnia Lumi
         </TactileButton>
       </div>
 
-      {/* Daily Goal & Rank Progress */}
-      <div className="p-4 rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] space-y-3">
+      {showProgress && (<>{/* Cel i wyzwania są już widoczne na ekranie Start. */}
+      <div className="p-4 study-panel space-y-3">
         <div>
           <div className="flex items-center justify-between text-xs font-bold mb-1">
             <span className="text-[var(--text-secondary)]">
@@ -99,11 +99,11 @@ export function DesktopCompanionPanel() {
       </div>
 
       {/* Compact Daily Challenges */}
-      <div className="p-4 rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] space-y-2.5">
+      <div className="p-4 study-panel space-y-2.5">
         <div className="flex items-center gap-2">
           <Trophy className="w-4 h-4 text-[var(--accent-text)]" />
           <h3 className="text-xs font-extrabold font-display text-[var(--text-primary)]">
-            Wyzwania Dzienne
+            Wyzwania na dziś
           </h3>
         </div>
 
@@ -116,7 +116,7 @@ export function DesktopCompanionPanel() {
                 className="p-2.5 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-1.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs">
-                  <span className="font-bold text-[var(--text-primary)] truncate">
+                  <span className="font-bold text-[var(--text-primary)] [overflow-wrap:anywhere]">
                     {ch.title}
                   </span>
                   <span className="font-bold tabular-nums text-[var(--text-secondary)] shrink-0">
@@ -145,6 +145,7 @@ export function DesktopCompanionPanel() {
           })}
         </div>
       </div>
+      </>)}
     </aside>
   );
 }

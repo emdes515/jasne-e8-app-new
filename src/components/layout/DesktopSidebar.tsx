@@ -26,7 +26,7 @@ export function DesktopSidebar() {
   return (
     <aside
       aria-label="Panel nawigacji bocznej"
-      className="hidden lg:flex flex-col justify-between w-[248px] shrink-0 min-h-screen bg-[var(--bg-surface)] border-r-2 border-[var(--border-subtle)] p-4 sticky top-0 h-screen"
+      className="hidden lg:flex flex-col justify-between w-[248px] shrink-0 min-h-0 bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] p-4 sticky top-0 h-dvh overflow-y-auto gap-4"
     >
       <div className="space-y-6">
         {/* Brand Header */}
@@ -40,7 +40,7 @@ export function DesktopSidebar() {
                 JASNE E8
               </div>
               <div className="text-[11px] font-medium text-[var(--text-secondary)] mt-0.5">
-                Tactile Gaming Prep
+                Egzamin ósmoklasisty
               </div>
             </div>
           </div>
@@ -64,7 +64,7 @@ export function DesktopSidebar() {
                   <motion.span
                     layoutId="desktop-sidebar-capsule"
                     transition={SPRING_SNAPPY}
-                    className="absolute inset-0 rounded-2xl bg-[var(--accent-primary)]/15 border-2 border-[var(--accent-primary)]"
+                    className="absolute inset-0 rounded-xl bg-[var(--accent-primary)]/12"
                   />
                 )}
 
@@ -88,7 +88,7 @@ export function DesktopSidebar() {
                 </div>
 
                 {tab.id === 'vault' && mistakeCount > 0 && (
-                  <span className="relative z-10 min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--danger)] text-[#F8FAFC] text-xs font-extrabold flex items-center justify-center tabular-nums">
+                  <span className="relative z-10 min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--danger)] text-[var(--on-danger)] text-xs font-extrabold flex items-center justify-center tabular-nums">
                     {mistakeCount}
                   </span>
                 )}
@@ -109,7 +109,7 @@ export function DesktopSidebar() {
               className="w-full min-h-[46px] px-3.5 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] hover:border-[var(--accent-primary)] flex items-center gap-2.5 text-xs font-extrabold font-display text-[var(--accent-text)] transition-colors cursor-pointer"
             >
               <BookOpen className="w-4 h-4 shrink-0" />
-              <span>Przydatne Wzory E8</span>
+              <span>Wzory E8</span>
             </button>
           </div>
         )}
@@ -175,12 +175,12 @@ export function DesktopSidebar() {
             {state.sfxEnabled ? (
               <>
                 <Volume2 className="w-4 h-4 text-[var(--success)]" />
-                <span>SFX Wł.</span>
+                <span>Dźwięk</span>
               </>
             ) : (
               <>
                 <VolumeX className="w-4 h-4 text-[var(--text-secondary)]" />
-                <span>SFX Wył.</span>
+                <span>Cisza</span>
               </>
             )}
           </button>

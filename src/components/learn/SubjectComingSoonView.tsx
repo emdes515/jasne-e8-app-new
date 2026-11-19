@@ -19,14 +19,14 @@ export function SubjectComingSoonView() {
   const { state, setSubject } = useAppState();
   const isPolish = state.activeSubject === 'polish';
 
-  const subjectTitle = isPolish ? 'Język Polski E8' : 'Język Angielski E8';
+  const subjectTitle = isPolish ? 'Język polski' : 'Język angielski';
   const accentColor = isPolish ? '#F43F5E' : '#10B981';
   const contextPreviewTitle = isPolish
-    ? 'Ściąga Lektur & Form (Wkrótce)'
-    : 'Bank Zwrotów & Czasów (Wkrótce)';
+    ? 'Lektury i formy wypowiedzi'
+    : 'Zwroty i czasy';
   const contextPreviewDesc = isPolish
     ? 'Szybkie karty bohaterów, motywów literackich z lektur obowiązkowych (Kamienie na szaniec, Pan Tadeusz, Dziady cz. II, Mały Książę, Balladyna) oraz gotowe szablony rozprawki i przemówienia.'
-    : 'Podręczny zestaw czasów angielskich, reakcji językowych i zwrotów do e-maila egzaminacyjnego E8 — dostępny w tym miejscu zamiast matematycznych wzorów.';
+    : 'Czasy, reakcje językowe i zwroty przydatne przy pisaniu e-maila.';
 
   const chapters = isPolish
     ? POLISH_PREVIEW_CHAPTERS
@@ -37,14 +37,14 @@ export function SubjectComingSoonView() {
   return (
     <motion.div
       variants={STAGGER_CONTAINER_VARIANTS}
-      initial="hidden"
+      initial={false}
       animate="visible"
       className="space-y-5"
     >
       {/* Top Banner */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
-        className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 sm:p-6"
+        className="study-panel p-5 sm:p-6"
       >
         <div className="flex flex-col sm:flex-row items-center gap-5">
           <LumiMascot
@@ -59,18 +59,16 @@ export function SubjectComingSoonView() {
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: accentColor }}
               />
-              <span style={{ color: accentColor }}>
-                Moduł w budowie — Faza 2
+              <span className="text-[var(--text-secondary)]">
+                W przygotowaniu
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)] mb-2">
-              {subjectTitle} — Mapa Ścieżki
+            <h1 className="page-heading mb-2">
+              {subjectTitle}
             </h1>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
-              Moduł w budowie — w Fazie 1 wszystkie mechaniki (teorię Bento,
-              Combo, AI Tutora, Misję Ratunkową i Mini-Arkusz) testujemy na
-              pełnej ścieżce <strong>Matematyki E8</strong>.
+              Zobacz plan działów. Dziś możesz rozwiązać zadania z matematyki.
             </p>
 
             <TactileButton
@@ -78,7 +76,7 @@ export function SubjectComingSoonView() {
               size="md"
               onClick={() => setSubject('math')}
             >
-              <span>Przełącz na Matematykę E8</span>
+              <span>Przejdź do matematyki</span>
               <ArrowRight className="w-4 h-4" />
             </TactileButton>
           </div>
@@ -88,7 +86,7 @@ export function SubjectComingSoonView() {
       {/* Contextual Preview Slot (replaces "Wzory E8" which is strictly hidden for Polish/English!) */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
-        className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5"
+        className="study-panel p-5"
       >
         <div className="flex items-start gap-3.5">
           <div
@@ -99,7 +97,7 @@ export function SubjectComingSoonView() {
           </div>
           <div>
             <div className="text-xs font-bold text-[var(--accent-text)]">
-              Narzędzie kontekstowe przedmiotu (zamiast Wzorów E8)
+              Materiały w przygotowaniu
             </div>
             <h2 className="text-base font-extrabold font-display text-[var(--text-primary)] mt-0.5">
               {contextPreviewTitle}
@@ -118,7 +116,7 @@ export function SubjectComingSoonView() {
       >
         <div className="flex items-center justify-between px-1">
           <h2 className="text-sm font-extrabold font-display text-[var(--text-secondary)]">
-            Zapowiedź działów w {subjectTitle}
+            Plan działów
           </h2>
           <IconComp className="w-4 h-4 text-[var(--text-secondary)]" />
         </div>
@@ -126,7 +124,7 @@ export function SubjectComingSoonView() {
         {chapters.map((ch) => (
           <div
             key={ch.chapterNumber}
-            className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] flex items-center justify-between gap-4 opacity-90"
+            className="p-4 study-panel flex items-center justify-between gap-4 opacity-90"
           >
             <div className="flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-extrabold font-display text-sm text-[var(--text-secondary)] shrink-0">
@@ -134,7 +132,7 @@ export function SubjectComingSoonView() {
               </div>
               <div>
                 <div className="text-xs font-bold text-[var(--accent-text)]">
-                  Dział {ch.chapterNumber} · {ch.badge}
+                  {ch.badge}
                 </div>
                 <h3 className="text-base font-extrabold font-display text-[var(--text-primary)]">
                   {ch.title}

@@ -21,29 +21,29 @@ export const SUBJECT_META: Record<
 > = {
   math: {
     id: 'math',
-    name: 'Matematyka E8',
+    name: 'Matematyka',
     shortName: 'Mat.',
     mediumName: 'Matma',
     accentColor: '#FFB800',
-    statusLabel: 'Pełny prototyp Fazy 1',
+    statusLabel: 'Lekcja i miniarkusz',
     icon: Calculator,
   },
   polish: {
     id: 'polish',
-    name: 'Język Polski E8',
+    name: 'Język polski',
     shortName: 'Pol.',
     mediumName: 'Polski',
     accentColor: '#F43F5E',
-    statusLabel: 'Podgląd — Wkrótce (Faza 2)',
+    statusLabel: 'Plan działów',
     icon: BookType,
   },
   english: {
     id: 'english',
-    name: 'Język Angielski E8',
+    name: 'Język angielski',
     shortName: 'Ang.',
     mediumName: 'Angielski',
     accentColor: '#10B981',
-    statusLabel: 'Podgląd — Wkrótce (Faza 2)',
+    statusLabel: 'Plan działów',
     icon: Globe,
   },
 };
@@ -96,7 +96,7 @@ export function SubjectSwitcher() {
           setSheetOpen(true);
         }}
         aria-label={`Zmień przedmiot (obecnie ${currentMeta.name})`}
-        className="min-h-[44px] min-w-[44px] px-2.5 sm:px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center gap-1.5 text-xs sm:text-sm font-extrabold font-display text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors cursor-pointer shrink-0"
+        className="min-h-[44px] min-w-[44px] px-1.5 min-[360px]:px-2.5 sm:px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center gap-1.5 text-xs sm:text-sm font-extrabold font-display text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors cursor-pointer shrink-0"
       >
         <IconComp className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
         {/* Below 380px shows Mat./Pol./Ang., >= 380px shows Matma/Polski/Angielski */}
@@ -111,8 +111,8 @@ export function SubjectSwitcher() {
           setSheetOpen(false);
           setPendingSubject(null);
         }}
-        title="Wybierz przedmiot E8"
-        subtitle="Przełączaj się swobodnie między 3 obowiązkowymi przedmiotami"
+        title="Wybierz przedmiot"
+
       >
         {pendingSubject ? (
           <div className="space-y-4">

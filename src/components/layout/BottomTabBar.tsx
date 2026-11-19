@@ -26,7 +26,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="Główna nawigacja dolna"
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--bg-surface)]/95 backdrop-blur-md border-t-2 border-[var(--border-subtle)] px-2 pt-1.5 pb-[max(10px,env(safe-area-inset-bottom))]"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] px-2 pt-1.5 pb-[max(10px,env(safe-area-inset-bottom))]"
     >
       <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
         {NAV_TABS.map((tab) => {
@@ -45,7 +45,7 @@ export function BottomTabBar() {
                 <motion.span
                   layoutId="bottom-nav-capsule"
                   transition={SPRING_SNAPPY}
-                  className="absolute inset-0 rounded-2xl bg-[var(--accent-primary)]/15 border-2 border-[var(--accent-primary)]"
+                  className="absolute inset-0 rounded-xl bg-[var(--accent-primary)]/12"
                 />
               )}
 
@@ -64,7 +64,7 @@ export function BottomTabBar() {
                   }`}
                 />
                 {tab.id === 'vault' && mistakeCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--danger)] text-[#F8FAFC] text-[10px] font-extrabold flex items-center justify-center tabular-nums">
+                  <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-[var(--danger)] text-[var(--on-danger)] text-[10px] font-extrabold flex items-center justify-center tabular-nums">
                     {mistakeCount}
                   </span>
                 )}

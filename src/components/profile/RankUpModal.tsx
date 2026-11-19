@@ -83,7 +83,7 @@ export function RankUpModal() {
 
             <div>
               <div className="text-xs font-extrabold font-display text-[var(--accent-text)] mb-1">
-                AWANS RANGI E8!
+                Nowa ranga
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[var(--text-primary)]">
                 {rankUpModalRank.name}

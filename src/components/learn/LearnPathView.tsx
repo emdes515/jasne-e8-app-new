@@ -55,7 +55,7 @@ export function LearnPathView() {
   const isLesson1Completed = state.completedLessonIds.includes(
     MATH_LESSON_1_1.id
   );
-  const progressPercent = isLesson1Completed ? 33 : 10;
+  const progressPercent = isLesson1Completed ? Math.round(100 / MATH_CHAPTERS_MAP[0].nodes.length) : 0;
 
   const handleNodeClick = (node: ChapterNodeMeta) => {
     playSound('tap');
@@ -82,31 +82,30 @@ export function LearnPathView() {
     <>
       <motion.div
         variants={STAGGER_CONTAINER_VARIANTS}
-        initial="hidden"
+        initial={false}
         animate="visible"
         className="space-y-6"
       >
-        {/* Top Chapter Banner with Progress & "Przydatne Wzory E8" Button */}
+        {/* Top Chapter Banner with Progress & "Wzory E8" Button */}
         <motion.section
           variants={STAGGER_ITEM_VARIANTS}
           aria-label="Nagłówek ścieżki Matematyka E8"
-          className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-5 sm:p-6"
+          className="study-panel p-5 sm:p-6"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="text-xs font-extrabold font-display text-[var(--accent-text)] mb-1 tabular-nums">
-                Dział 1 z 7 • Postęp Działu 1: {progressPercent}%
+                Dział 1 z 7 · {progressPercent}%
               </div>
-              <h1 className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
-                1. Liczby, Potęgi i Pierwiastki
+              <h1 className="page-heading">
+                Liczby, potęgi i pierwiastki
               </h1>
               <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5">
-                Fundament każdego arkusza CKE — opanuj działania na potęgach i
-                wyłączanie czynnika przed pierwiastek.
+                Przećwicz działania na potęgach i wyłączanie czynnika przed pierwiastek.
               </p>
             </div>
 
-            <div className="shrink-0">
+            <div className="shrink-0 sm:hidden">
               <TactileButton
                 variant="secondary"
                 size="md"
@@ -116,7 +115,7 @@ export function LearnPathView() {
                 }}
               >
                 <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
-                <span>Przydatne Wzory E8</span>
+                <span>Wzory E8</span>
               </TactileButton>
             </div>
           </div>
@@ -126,7 +125,7 @@ export function LearnPathView() {
         <motion.section
           variants={STAGGER_ITEM_VARIANTS}
           aria-label="Mapa węzłów Działu 1"
-          className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)] p-6 sm:p-8 relative overflow-hidden"
+          className="study-panel p-6 sm:p-8 relative overflow-hidden"
         >
           <div className="max-w-lg mx-auto relative flex flex-col items-center space-y-8">
             {MATH_CHAPTERS_MAP[0].nodes.map((node, idx) => {
@@ -167,7 +166,7 @@ export function LearnPathView() {
                                   </span>
                                 </>
                               ) : (
-                                <span>Odblokowana lekcja</span>
+                                <span>Gotowa do rozpoczęcia</span>
                               )}
                             </div>
                             <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
@@ -185,7 +184,7 @@ export function LearnPathView() {
                       </div>
 
                       <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mb-4">
-                        <span>4 karty Bento · 5 zadań</span>
+                        <span>Teoria i 5 zadań</span>
                         <span className="inline-flex items-center gap-1 font-bold text-[var(--accent-text)] tabular-nums">
                           <Coins className="w-3.5 h-3.5" />
                           <span>+{node.rewardCoins} monet</span>
@@ -222,7 +221,7 @@ export function LearnPathView() {
                           <span>
                             {isLesson1Completed
                               ? 'Otwórz lekcję 1.1'
-                              : 'Start: Teoria & Zadania'}
+                              : 'Otwórz lekcję'}
                           </span>
                         </TactileButton>
                         <TactileButton
@@ -246,13 +245,13 @@ export function LearnPathView() {
                         </div>
                         <div>
                           <div className="text-xs font-bold text-[var(--text-secondary)]">
-                            Wkrótce — Faza 2
+                            W przygotowaniu
                           </div>
                           <h3 className="text-sm font-extrabold font-display text-[var(--text-primary)]">
                             {node.title}
                           </h3>
                           <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-                            Kliknij, aby zobaczyć podgląd zagadnień
+                            Zobacz zakres
                           </p>
                         </div>
                       </div>
@@ -267,14 +266,14 @@ export function LearnPathView() {
           </div>
         </motion.section>
 
-        {/* Subsequent Chapters 2 - 7 ("Wkrótce — Faza 2") */}
+        {/* Subsequent Chapters 2 - 7 ("W przygotowaniu") */}
         <motion.section
           variants={STAGGER_ITEM_VARIANTS}
           aria-label="Kolejne działy Matematyki E8"
           className="space-y-3"
         >
           <h2 className="text-sm font-extrabold font-display text-[var(--text-secondary)] px-1">
-            Kolejne działy na mapie E8 (Faza 2)
+            Kolejne działy
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -283,7 +282,7 @@ export function LearnPathView() {
                 key={ch.chapterNumber}
                 type="button"
                 onClick={() => handleLockedChapterClick(ch)}
-                className="text-left p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_4px_0_0_var(--border-3d-edge)] hover:border-[var(--text-secondary)] transition-colors flex items-center justify-between gap-3 cursor-pointer"
+                className="text-left p-4 study-panel hover:border-[var(--text-secondary)] transition-colors flex items-center justify-between gap-3 cursor-pointer"
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center font-extrabold font-display text-sm text-[var(--text-secondary)] shrink-0 tabular-nums">
@@ -291,7 +290,7 @@ export function LearnPathView() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-[11px] font-bold text-[var(--text-secondary)]">
-                      Dział {ch.chapterNumber} · Wkrótce — Faza 2
+                      Dział {ch.chapterNumber} · W przygotowaniu
                     </div>
                     <h3 className="text-sm font-extrabold font-display text-[var(--text-primary)] truncate">
                       {ch.title}
@@ -313,7 +312,7 @@ export function LearnPathView() {
         open={node1ActionSheetOpen}
         onClose={() => setNode1ActionSheetOpen(false)}
         title={`Lekcja ${MATH_LESSON_1_1.nodeNumber}: ${MATH_LESSON_1_1.title}`}
-        subtitle="Wybierz tryb nauki — teoria Bento jest zawsze dostępna bez ograniczeń!"
+        subtitle="Teoria jest dostępna także bez serc."
       >
         <div className="space-y-4">
           {state.hearts <= 0 && (
@@ -324,7 +323,7 @@ export function LearnPathView() {
                   Masz 0/5 serc — start zadań jest zablokowany
                 </div>
                 <p className="text-[var(--text-secondary)] mt-0.5">
-                  Możesz swobodnie przeglądać <strong>Teorię Bento</strong> i{' '}
+                  Możesz swobodnie przeglądać <strong>teorię</strong> i{' '}
                   <strong>Wzory E8</strong>, albo odzyskać serce za darmo w
                   Misji Ratunkowej!
                 </p>
@@ -343,7 +342,7 @@ export function LearnPathView() {
               }}
             >
               <BookOpen className="w-5 h-5 text-[var(--accent-text)]" />
-              <span>Otwórz 4 karty Teorii Bento (zawsze dostępne)</span>
+              <span>Otwórz teorię</span>
             </TactileButton>
 
             <TactileButton
@@ -399,7 +398,7 @@ export function LearnPathView() {
         open={Boolean(lockedPreviewModal)}
         onClose={() => setLockedPreviewModal(null)}
         title={lockedPreviewModal?.title ?? 'Moduł w przygotowaniu'}
-        subtitle="Zapowiedź zawartości — Faza 2"
+        subtitle="Lekcja w przygotowaniu."
       >
         {lockedPreviewModal && (
           <div className="space-y-4">

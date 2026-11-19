@@ -47,6 +47,8 @@ export function ProfileShopView() {
   const {
     state,
     setTheme,
+    profileSection: sectionTab,
+    setProfileSection: setSectionTab,
     setSfxEnabled,
     updateProfileSettings,
     purchaseOrEquipShopItem,
@@ -55,7 +57,7 @@ export function ProfileShopView() {
     playSound,
   } = useAppState();
 
-  const [sectionTab, setSectionTab] = useState<'profile' | 'shop'>('profile');
+
   const [nickInput, setNickInput] = useState(state.nickname);
   const [nickError, setNickError] = useState<string | null>(null);
 
@@ -93,11 +95,11 @@ export function ProfileShopView() {
     <>
       <motion.div
         variants={STAGGER_CONTAINER_VARIANTS}
-        initial="hidden"
+        initial={false}
         animate="visible"
         className="space-y-5"
       >
-        {/* Top Segmented Switcher: Profil & Ustawienia | Sklep Lumi */}
+        {/* Top Segmented Switcher: Profil | Sklep Lumi */}
         <motion.div
           variants={STAGGER_ITEM_VARIANTS}
           role="tablist"
@@ -135,7 +137,7 @@ export function ProfileShopView() {
                   : 'text-[var(--text-secondary)]'
               }`}
             >
-              Profil & Ustawienia
+              Profil
             </span>
           </button>
 
@@ -261,10 +263,10 @@ export function ProfileShopView() {
             {/* Quick Starter Color Switcher */}
             <motion.section
               variants={STAGGER_ITEM_VARIANTS}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5 space-y-3"
+              className="study-panel p-5 space-y-3"
             >
               <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                Szybka zmiana koloru korpusu Lumi
+                Kolor Lumi
               </h2>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {(
@@ -344,10 +346,10 @@ export function ProfileShopView() {
             {/* Ranks E8 Ladder Reference */}
             <motion.section
               variants={STAGGER_ITEM_VARIANTS}
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5 space-y-3"
+              className="study-panel p-5 space-y-3"
             >
               <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                Drabinka Rang E8 (Progi XP)
+                Rangi i progi XP
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 {RANKS_E8.map((r) => {
@@ -377,20 +379,20 @@ export function ProfileShopView() {
             <motion.section
               variants={STAGGER_ITEM_VARIANTS}
               aria-label="Ustawienia aplikacji"
-              className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] shadow-[0_5px_0_0_var(--border-3d-edge)] p-5 space-y-5"
+              className="study-panel p-5 space-y-5"
             >
               <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                Ustawienia Aplikacji
+                Ustawienia
               </h2>
 
               {/* 1. Theme Switcher: Nocturne Dark / Solar Light */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
                 <div>
                   <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">
-                    Motyw wizualny (Dual-Theme)
+                    Motyw
                   </div>
                   <div className="text-xs text-[var(--text-secondary)]">
-                    Przełączaj natychmiast między Nocturne Dark a Solar Light
+
                   </div>
                 </div>
 
@@ -418,10 +420,10 @@ export function ProfileShopView() {
               <div className="flex items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
                 <div>
                   <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">
-                    Dźwięki SFX (Web Audio)
+                    Dźwięki
                   </div>
                   <div className="text-xs text-[var(--text-secondary)]">
-                    Synteza efektów kliknięć, rosnącego tonu Combo i fanfar
+                    Kliknięcia, poprawne odpowiedzi i awanse
                   </div>
                 </div>
 
@@ -516,7 +518,7 @@ export function ProfileShopView() {
                   }}
                 >
                   <Compass className="w-4 h-4 text-[var(--accent-text)]" />
-                  <span>Powtórz intro / Product Tour</span>
+                  <span>Pokaż przewodnik</span>
                 </TactileButton>
 
                 <TactileButton
@@ -530,7 +532,7 @@ export function ProfileShopView() {
                   }}
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>Resetuj postępy lokalne</span>
+                  <span>Zresetuj postępy</span>
                 </TactileButton>
               </div>
             </motion.section>
@@ -547,7 +549,7 @@ export function ProfileShopView() {
             ? 'Usunąć wszystkie postępy?'
             : 'Potwierdź reset wpisując słowo RESET'
         }
-        subtitle="Ta operacja wyczyści klucz jasne-e8-app:state i uruchomi ponownie onboarding"
+        subtitle="Usuniesz postępy i zakupy z tego urządzenia. Po resecie wrócisz do kreatora profilu."
       >
         {resetStep === 1 ? (
           <div className="space-y-4">
