@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
+  ArrowLeft,
+  ArrowRight,
   Lightbulb,
   BookOpen,
   ListOrdered,
@@ -25,16 +27,15 @@ interface BentoTheoryTabsProps {
   onStartTasks: () => void;
 }
 
-const TAB_CONFIG: Array<{
-  id: BentoTheoryCard['id'];
+const TAB_CONFIG: Record<BentoTheoryCard['id'], {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-}> = [
-  { id: 'essence', label: 'Esencja', icon: Lightbulb },
-  { id: 'formulas', label: 'Reguły', icon: BookOpen },
-  { id: 'example', label: 'Przykład', icon: ListOrdered },
-  { id: 'trap', label: 'Pułapka E8', icon: ShieldAlert },
-];
+}> = {
+  essence: { label: 'Esencja', icon: Lightbulb },
+  formulas: { label: 'Reguły', icon: BookOpen },
+  example: { label: 'Przykład', icon: ListOrdered },
+  trap: { label: 'Pułapka E8', icon: ShieldAlert },
+};
 
 export function BentoTheoryTabs({
   lesson,
@@ -49,11 +50,25 @@ export function BentoTheoryTabs({
     playSound,
   } = useAppState();
 
-  const [activeCardId, setActiveCardId] =
-    useState<BentoTheoryCard['id']>('essence');
+  const [cardIndex, setCardIndex] = useState(0);
+  const focusNextHeading = useRef(false);
+  const currentCard = lesson.theory[cardIndex];
+  const isLastCard = cardIndex === lesson.theory.length - 1;
 
-  const currentCard =
-    lesson.theory.find((c) => c.id === activeCardId) ?? lesson.theory[0];
+  const selectCard = (index: number, moveFocus = false) => {
+    if (index === cardIndex) return;
+    focusNextHeading.current = moveFocus;
+    playSound('tabSwitch');
+    setCardIndex(index);
+  };
+
+  const focusCardHeading = useCallback((heading: HTMLHeadingElement | null) => {
+    if (heading && focusNextHeading.current) {
+      focusNextHeading.current = false;
+      heading.focus({ preventScroll: true });
+      heading.scrollIntoView({ block: 'start' });
+    }
+  }, []);
 
   const isZeroHearts = state.hearts <= 0;
 
@@ -103,19 +118,17 @@ export function BentoTheoryTabs({
         aria-label="Karty teorii"
         className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)]"
       >
-        {TAB_CONFIG.map((tab) => {
+        {lesson.theory.map((card, index) => {
+          const tab = TAB_CONFIG[card.id];
           const IconComp = tab.icon;
-          const isSelected = activeCardId === tab.id;
+          const isSelected = index === cardIndex;
           return (
             <button
-              key={tab.id}
+              key={card.id}
               type="button"
               role="tab"
               aria-selected={isSelected}
-              onClick={() => {
-                playSound('tabSwitch');
-                setActiveCardId(tab.id);
-              }}
+              onClick={() => selectCard(index)}
               className="relative min-h-[46px] px-3 py-2 rounded-xl flex items-center justify-center gap-2 text-xs sm:text-sm font-extrabold font-display cursor-pointer select-none"
             >
               {isSelected && (
@@ -157,7 +170,7 @@ export function BentoTheoryTabs({
           className="study-panel p-5 sm:p-6 space-y-4"
         >
           <div>
-            <h2 className="text-lg sm:text-xl font-extrabold font-display text-[var(--text-primary)]">
+            <h2 ref={focusCardHeading} tabIndex={-1} className="text-lg sm:text-xl font-extrabold font-display text-[var(--text-primary)]">
               <MathText text={currentCard.title} />
             </h2>
             <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
@@ -270,7 +283,7 @@ export function BentoTheoryTabs({
 
       {/* Bottom Sticky Action Area (Respects AC-H2 & AC-H3 when 0 hearts!) */}
       <div className="p-4 study-panel space-y-3">
-        {isZeroHearts && (
+        {isLastCard && isZeroHearts && (
           <div className="p-3.5 rounded-2xl bg-[var(--danger)]/15 border border-[var(--danger)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 text-xs">
               <HeartCrack className="w-5 h-5 text-[var(--danger)] shrink-0" />
@@ -291,7 +304,7 @@ export function BentoTheoryTabs({
                 size="sm"
                 onClick={() => {
                   onClose();
-                  setActiveTab('profile');
+                  setActiveTab('profile', 'shop');
                 }}
               >
                 Sklep (80 monet)
@@ -300,16 +313,28 @@ export function BentoTheoryTabs({
           </div>
         )}
 
-        <TactileButton
-          variant="primary"
-          size="lg"
-          fullWidth
-          disabled={isZeroHearts}
-          onClick={onStartTasks}
-        >
-          <Play className="w-5 h-5" />
-          <span>Przejdź do zadań (5 zadań)</span>
-        </TactileButton>
+        <p className="text-sm tabular-nums text-[var(--text-secondary)]">
+          Karta {cardIndex + 1} z {lesson.theory.length}
+        </p>
+        <div className="flex gap-3">
+          {cardIndex > 0 && (
+            <TactileButton variant="secondary" onClick={() => selectCard(cardIndex - 1, true)}>
+              <ArrowLeft className="size-4 shrink-0" />
+              <span>Wstecz</span>
+            </TactileButton>
+          )}
+          {isLastCard ? (
+            <TactileButton variant="primary" fullWidth disabled={isZeroHearts} onClick={onStartTasks}>
+              <Play className="size-4 shrink-0" />
+              <span>Przejdź do zadań</span>
+            </TactileButton>
+          ) : (
+            <TactileButton variant="primary" fullWidth onClick={() => selectCard(cardIndex + 1, true)}>
+              <span>Dalej</span>
+              <ArrowRight className="size-4 shrink-0" />
+            </TactileButton>
+          )}
+        </div>
       </div>
     </div>
   );
