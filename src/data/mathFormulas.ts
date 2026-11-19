@@ -3,6 +3,7 @@
 export interface FormulaCategory {
   id: string;
   label: string;
+  keywords: string[];
   items: Array<{
     title: string;
     latex: string;
@@ -15,6 +16,7 @@ export const MATH_FORMULAS_CATALOG: FormulaCategory[] = [
   {
     id: 'powers_roots',
     label: 'Potęgi i pierwiastki',
+    keywords: ['potęg', 'poteg', 'pierwiast', 'notacj', 'wykładnik', '1.1', 'math_1_1'],
     items: [
       {
         title: 'Mnożenie i dzielenie potęg o tej samej podstawie',
@@ -37,8 +39,34 @@ export const MATH_FORMULAS_CATALOG: FormulaCategory[] = [
     ],
   },
   {
+    id: 'fractions_numbers',
+    label: 'Ułamki i liczby',
+    keywords: ['ułamk', 'ulamk', 'liczb', 'dziesięt', 'podzieln', 'nwd', 'nww', '1.2', 'math_1_2'],
+    items: [
+      {
+        title: 'Dodawanie i odejmowanie ułamków',
+        latex: '\\frac{a}{c} \\pm \\frac{b}{c} = \\frac{a \\pm b}{c}, \\qquad \\frac{a}{b} \\pm \\frac{c}{d} = \\frac{a \\cdot d \\pm c \\cdot b}{b \\cdot d}',
+        whenToUse: 'Zawsze sprowadzaj ułamki do wspólnego mianownika przed dodaniem lub odjęciem.',
+        example: '$\\frac{2}{3} + \\frac{1}{4} = \\frac{8}{12} + \\frac{3}{12} = \\frac{11}{12}$',
+      },
+      {
+        title: 'Mnożenie i dzielenie ułamków',
+        latex: '\\frac{a}{b} \\cdot \\frac{c}{d} = \\frac{a \\cdot c}{b \\cdot d}, \\qquad \\frac{a}{b} : \\frac{c}{d} = \\frac{a}{b} \\cdot \\frac{d}{c}',
+        whenToUse: 'Przy dzieleniu ułamków mnożymy przez odwrotność drugiego ułamka.',
+        example: '$\\frac{3}{5} : \\frac{2}{7} = \\frac{3}{5} \\cdot \\frac{7}{2} = \\frac{21}{10} = 2{,}1$',
+      },
+      {
+        title: 'Ułamek z liczby i skracanie',
+        latex: '\\frac{a}{b} \\text{ z } x = \\frac{a}{b} \\cdot x',
+        whenToUse: 'Gdy szukasz części całości (np. $\\frac{3}{4}$ kwoty lub długości).',
+        example: '$\\frac{3}{4} \\text{ z } 80 = \\frac{3}{4} \\cdot 80 = 60$',
+      },
+    ],
+  },
+  {
     id: 'percentages',
     label: 'Procenty i proporcje',
+    keywords: ['procent', 'rabat', 'obniżk', 'podwyżk', 'proporcj', 'prędkoś', 'predkosc', 'drog', '1.3', 'math_1_3'],
     items: [
       {
         title: 'Ułamek z liczby i zamiana procentu',
@@ -63,6 +91,7 @@ export const MATH_FORMULAS_CATALOG: FormulaCategory[] = [
   {
     id: 'geometry_2d',
     label: 'Geometria i Pitagoras',
+    keywords: ['geometr', 'pitagoras', 'trójkąt', 'trojkat', 'kwadrat', 'trapez', 'romb', 'kąt', 'kat', 'pole', 'obwód'],
     items: [
       {
         title: 'Twierdzenie Pitagorasa',
@@ -87,6 +116,7 @@ export const MATH_FORMULAS_CATALOG: FormulaCategory[] = [
   {
     id: 'solids_3d',
     label: 'Pola i objętości brył',
+    keywords: ['brył', 'bryl', 'sześcian', 'szescian', 'graniastosłup', 'ostrosłup', 'objętoś', 'objetosc', 'prostopadłościan'],
     items: [
       {
         title: 'Sześcian o krawędzi a',
@@ -109,3 +139,14 @@ export const MATH_FORMULAS_CATALOG: FormulaCategory[] = [
     ],
   },
 ];
+
+export function resolveFormulaCategoryForContext(contextText?: string | null): string | null {
+  if (!contextText) return null;
+  const normalized = contextText.toLowerCase();
+  for (const cat of MATH_FORMULAS_CATALOG) {
+    if (cat.keywords.some((kw) => normalized.includes(kw))) {
+      return cat.id;
+    }
+  }
+  return null;
+}
