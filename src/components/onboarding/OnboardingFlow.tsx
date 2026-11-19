@@ -164,7 +164,7 @@ export function OnboardingFlow() {
 
               <h1 className="page-heading mb-3">Cześć, tu Lumi.</h1>
               <p className="mx-auto mb-6 max-w-xs text-sm leading-relaxed text-[var(--text-secondary)]">
-                Poćwicz matematykę przed egzaminem ósmoklasisty. Postępy zapiszą się na tym urządzeniu. Konto nie jest potrzebne.
+                Poćwicz matematykę przed egzaminem ósmoklasisty. Pierwszą lekcję przetestujesz od razu, a darmowe konto odblokuje całość.
               </p>
 
               <TactileButton

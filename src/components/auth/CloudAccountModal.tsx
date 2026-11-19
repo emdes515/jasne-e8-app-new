@@ -27,6 +27,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { getFirebaseAuthClient, isFirebaseConfigured } from '../../lib/firebase';
+import { useAppState } from '../../context/AppStateContext';
+import { initializeCloudUserProfile } from '../../services/storage/cloudUserSync';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
 
@@ -91,6 +93,7 @@ export function CloudAccountModal({
   subtitleOverride?: string;
 }) {
   const { user, configured } = useCloudAuthUser();
+  const { state } = useAppState();
   const [email, setEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'entry' | 'login' | 'register' | 'fallback'>('entry');
   const [fallbackMode, setFallbackMode] = useState<'login' | 'register'>('login');
@@ -106,6 +109,10 @@ export function CloudAccountModal({
   }, [open]);
 
   const handleSuccess = () => {
+    const auth = getFirebaseAuthClient();
+    if (auth?.currentUser) {
+      void initializeCloudUserProfile(auth.currentUser, state);
+    }
     onSuccess?.();
     onClose();
   };

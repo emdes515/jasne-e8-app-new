@@ -267,10 +267,14 @@ function TaskRunnerQuestion() {
     ((session.currentIndex + (checkedFeedback ? 1 : 0)) / totalTasks) * 100
   );
 
-  // Active combo count (0 if 90s expired)
+  // Active combo count (0 if 90s expired) + live remaining % bar
   const comboExpired = isComboExpired(session.lastAnsweredAt, nowMs, false);
   const activeComboCount = comboExpired ? 0 : session.comboCount;
   const comboMultiplier = getComboMultiplier(activeComboCount);
+  const comboRemainingPct =
+    !comboExpired && session.lastAnsweredAt && comboMultiplier > 1.0
+      ? Math.max(0, Math.min(100, Math.round(((90_000 - (nowMs - session.lastAnsweredAt)) / 90_000) * 100)))
+      : 0;
 
   const isBookmarked = state.savedTasks.some(
     (s) => s.key === `${currentTask.id}:${currentTask.subjectId}`
@@ -471,6 +475,17 @@ function TaskRunnerQuestion() {
                   )}
                   <Flame className="w-3.5 h-3.5 fill-current" />
                   <span>x{comboMultiplier.toFixed(1)}</span>
+                  {comboRemainingPct > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-0.5 left-2 right-2 h-[2px] rounded-full bg-[var(--bg-canvas)] overflow-hidden"
+                    >
+                      <span
+                        className="block h-full bg-[var(--combo-fire)] transition-[width] duration-500 ease-linear"
+                        style={{ width: `${comboRemainingPct}%` }}
+                      />
+                    </span>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

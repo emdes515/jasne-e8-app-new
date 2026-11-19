@@ -17,6 +17,7 @@ import {
   Flame,
   Cloud,
   ShieldCheck,
+  Trophy,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import {
@@ -52,6 +53,7 @@ export function ProfileShopView() {
     setTheme,
     profileSection: sectionTab,
     setProfileSection: setSectionTab,
+    setActiveTab,
     setSfxEnabled,
     updateProfileSettings,
     purchaseOrEquipShopItem,
@@ -249,17 +251,31 @@ export function ProfileShopView() {
                       <span>Tarcze Serii: {state.streakShields}/2</span>
                     </div>
 
-                    <TactileButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => {
-                        playSound('tap');
-                        setSectionTab('shop');
-                      }}
-                    >
-                      <ShoppingBag className="w-4 h-4" />
-                      <span>Przejdź do Sklepu Lumi</span>
-                    </TactileButton>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <TactileButton
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          playSound('tap');
+                          setActiveTab('ranking');
+                        }}
+                      >
+                        <Trophy className="w-4 h-4 text-[var(--accent-text)]" />
+                        <span>Ranking E8</span>
+                      </TactileButton>
+
+                      <TactileButton
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          playSound('tap');
+                          setSectionTab('shop');
+                        }}
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Przejdź do Sklepu Lumi</span>
+                      </TactileButton>
+                    </div>
                   </div>
                 </div>
               </div>
