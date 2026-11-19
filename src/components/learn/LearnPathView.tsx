@@ -135,7 +135,7 @@ export function LearnPathView() {
       <CloudAccountModal
         open={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-        titleOverride="Odblokuj wszystkie lekcje za darmo"
+        titleOverride="Odblokuj kolejne lekcje"
         subtitleOverride="Pierwsza lekcja jest otwarta dla Gościa. Zaloguj się za darmo, aby odblokować kolejne lekcje."
       />
     </div>

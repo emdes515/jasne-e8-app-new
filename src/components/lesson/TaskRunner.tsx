@@ -18,7 +18,7 @@ import { AiTutorEvaluationResult } from '../../types/repositories';
 import { TaskEvalOutcome } from '../../types/domain';
 import {
   getComboMultiplier,
-  HEART_REFILL_PRICE,
+  MAX_HEARTS,
   isComboExpired,
 } from '../../lib/gamification';
 import { SPRING_BOUNCY } from '../../lib/motionPresets';
@@ -52,7 +52,6 @@ function TaskRunnerQuestion() {
     toggleTaskSaved,
     setFormulasOpen,
     setRescueModalOpen,
-    buyHeartWithCoins,
     resumeActiveTasks,
     playSound,
   } = useAppState();
@@ -164,19 +163,17 @@ function TaskRunnerQuestion() {
           <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--danger)]/12 border border-[var(--danger)]/40 px-3 py-1 text-xs font-extrabold font-display text-[var(--danger)] tabular-nums">
             <TactileHeartIcon size={15} variant="cracked" />
             <span>
-              Stan Serc: {state.hearts}/5
-              {state.hearts < 5 && secondsToNextHeart !== null
+              Serca {state.hearts}/{MAX_HEARTS}
+              {state.hearts < MAX_HEARTS && secondsToNextHeart !== null
                 ? ` · +1 serce za ${formatHeartCountdown(secondsToNextHeart)}`
                 : ''}
             </span>
           </div>
           <h2 className="text-2xl font-extrabold font-display text-[var(--text-primary)]">
-            Serca się skończyły!
+            {state.hearts > 0 ? 'Możesz wrócić do zadań' : 'Odzyskaj serce i wróć do ćwiczeń'}
           </h2>
           <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
-            Twój dotychczasowy postęp w lekcji ({Object.keys(session.answers).length}{' '}
-            z {session.taskIds.length} zadań) jest bezpiecznie zapisany.
-            Odzyskaj serce, aby kontynuować dokładnie od kolejnego zadania!
+            Twój postęp jest zapisany. {Object.keys(session.answers).length} z {session.taskIds.length} zadań za Tobą.
           </p>
         </div>
 
@@ -193,58 +190,9 @@ function TaskRunnerQuestion() {
             <span>Wznów zadania</span>
           </TactileButton>
         ) : (
-          <div className="space-y-3 text-left">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <TactileButton
-                variant="info"
-                size="lg"
-                fullWidth
-                onClick={() => setRescueModalOpen(true)}
-              >
-                Misja Ratunkowa (+1 Serce)
-              </TactileButton>
-              <TactileButton
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={() => {
-                  buyHeartWithCoins();
-                }}
-              >
-                Sklep — {HEART_REFILL_PRICE} monet (+1 Serce)
-              </TactileButton>
-            </div>
-
-            {/* Pass E8 Pro ("Kup Pro") card */}
-            <div className="rounded-2xl border-2 border-[var(--accent-primary)]/45 bg-[var(--accent-primary)]/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-extrabold font-display text-[var(--accent-text)]">
-                    Pass E8 Pro
-                  </span>
-                  <span className="rounded-full bg-[var(--accent-primary)] px-2 py-0.5 text-[10px] font-extrabold font-display text-[var(--on-accent)]">
-                    WKRÓTCE
-                  </span>
-                </div>
-                <p className="text-xs text-[var(--text-secondary)] leading-snug">
-                  Nielimitowane serca bez czekania + pełny AI Tutor do zadań otwartych.
-                </p>
-              </div>
-              <TactileButton
-                variant="secondary"
-                size="sm"
-                className="shrink-0"
-                onClick={() =>
-                  pushToast(
-                    'Pass E8 Pro będzie dostępny wkrótce — teraz możesz odzyskać serce darmową Misją Ratunkową!',
-                    'info'
-                  )
-                }
-              >
-                Kup Pro
-              </TactileButton>
-            </div>
-          </div>
+          <TactileButton variant="info" size="lg" fullWidth onClick={() => setRescueModalOpen(true)}>
+            Zobacz, jak odzyskać serce
+          </TactileButton>
         )}
 
         <TactileButton

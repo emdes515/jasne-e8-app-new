@@ -794,8 +794,8 @@ export function OnboardingFlow() {
       <CloudAccountModal
         open={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
-        titleOverride="Zaloguj się za darmo i odblokuj całość"
-        subtitleOverride="Pierwsza lekcja działa bez konta. Zaloguj się za darmo, aby odblokować wszystkie lekcje i zadania zamknięte E8."
+        titleOverride="Odblokuj kolejne lekcje"
+        subtitleOverride="Pierwsza lekcja działa bez konta. Zaloguj się za darmo, aby odblokować kolejne lekcje i zadania zamknięte E8."
         onSuccess={() => {
           completeOnboarding({
             nickname: nickValidation.trimmed,

@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
 import confetti from 'canvas-confetti';
 import {
+  ArrowRight,
   Eye,
   Coins,
   Check,
@@ -38,7 +40,7 @@ const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string }> = [
   { id: 'mascot', label: 'Maskotka Lumi' },
   { id: 'profile', label: 'Ramki i tytuły' },
   { id: 'boosters', label: 'Wspomagacze' },
-  { id: 'premium', label: 'Pakiety Pro' },
+  { id: 'premium', label: 'Pass E8 Pro' },
 ];
 
 const FRAME_PREVIEW_CLASSES: Record<string, string> = {
@@ -226,7 +228,7 @@ export function MascotDressingRoom() {
   };
 
   const categoryItems = SHOP_CATALOG.filter(
-    (item) => item.category === activeCategory
+    (item) => item.category === activeCategory && item.category !== 'premium'
   );
 
   const getFrameBorderClass = (frame: LumiLoadout['profileFrame']) => {
@@ -373,13 +375,14 @@ export function MascotDressingRoom() {
         })}
       </div>
 
-      {/* Category Notice for Premium Phase 2 */}
       {activeCategory === 'premium' && (
-        <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--info)] text-xs text-[var(--text-secondary)] leading-relaxed">
-          <strong className="text-[var(--info)] font-display">
-            Pakiety w przygotowaniu. Płatności są niedostępne.
-          </strong>
-        </div>
+        <section className="study-panel space-y-2 p-5">
+          <h2 className="text-lg font-extrabold">Pass E8 Pro jest w przygotowaniu</h2>
+          <p className="text-sm text-[var(--text-secondary)]">Sprawdź obecny zakres darmowego konta i zobacz, jakie funkcje planujemy w Pro.</p>
+          <Link href="/pro" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[var(--info)] hover:underline">
+            Porównaj plany <ArrowRight size={17} aria-hidden="true" />
+          </Link>
+        </section>
       )}
 
       {/* Shop Items Grid */}

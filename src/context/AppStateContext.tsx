@@ -49,6 +49,7 @@ import {
   validateNickname,
 } from '../lib/gamification';
 import { ALL_TASKS_BY_ID } from '../data/mathExamMock';
+import { getRescueTaskIds } from '../lib/rescueMission';
 import { findMathLesson, getLessonAttempt, getRecommendedMathLesson, MATH_LESSON_1_1 } from '../data/mathLessonMock';
 
 
@@ -706,9 +707,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       } else if (source === 'bank') {
         addEntries(cur.mistakeBank);
       } else {
-        // rescue uses mistakeBank first, then savedTasks
-        addEntries(cur.mistakeBank);
-        addEntries(cur.savedTasks);
+        taskIds.push(...getRescueTaskIds(cur, filterSubject));
       }
 
       if (taskIds.length === 0) {

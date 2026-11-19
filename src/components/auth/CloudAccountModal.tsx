@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
+import Link from 'next/link';
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -35,9 +36,9 @@ import { TactileButton } from '../ui/TactileButton';
 const MAGIC_EMAIL_KEY = 'jasne_e8_magic_link_email';
 
 const FREE_UNLOCK_BENEFITS = [
-  'Odblokowanie kolejnych dostępnych lekcji',
+  'Dostęp do kolejnych lekcji',
   'Teoria Bento z przykładami i pułapkami egzaminacyjnymi',
-  'Zadania E8 z podpowiedziami i rozwiązaniami',
+  'Zadania zamknięte ze wskazówkami i rozwiązaniami',
 ] as const;
 
 export function useCloudAuthUser() {
@@ -84,15 +85,18 @@ export function CloudAccountModal({
   onSuccess,
   titleOverride,
   subtitleOverride,
+  showPlanLink = true,
 }: {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   titleOverride?: string;
   subtitleOverride?: string;
+  showPlanLink?: boolean;
 }) {
   const { user, configured } = useCloudAuthUser();
   const { state } = useAppState();
+  const emailId = useId();
   const [email, setEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'entry' | 'login' | 'register' | 'fallback'>('entry');
   const [fallbackMode, setFallbackMode] = useState<'login' | 'register'>('login');
@@ -131,7 +135,7 @@ export function CloudAccountModal({
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('auth/operation-not-allowed')) {
         setError(
-          'Logowanie Google wymaga włączenia w konsoli Firebase (Authentication → Sign-in method → Google). Możesz teraz użyć e-maila.'
+          'Logowanie przez Google jest teraz niedostępne. Możesz zalogować się e-mailem.'
         );
       } else if (msg.includes('auth/popup-closed-by-user')) {
         setError('Zamknięto okno logowania Google.');
@@ -270,11 +274,11 @@ export function CloudAccountModal({
       title={
         user
           ? 'Konto w chmurze JASNE E8'
-          : titleOverride ?? 'Odblokuj pełny dostęp za darmo'
+          : titleOverride ?? 'Darmowe konto JASNE E8'
       }
       subtitle={
         user
-          ? 'Twoje darmowe konto Firebase jest aktywne.'
+          ? 'Twoje darmowe konto jest aktywne.'
           : subtitleOverride ?? 'Zaloguj się lub załóż darmowe konto, aby odblokować kolejne lekcje.'
       }
     >
@@ -304,16 +308,8 @@ export function CloudAccountModal({
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Free Benefits Checklist */}
-          <div className="rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] p-3.5 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider font-display text-[var(--accent-text)]">
-                Co odblokujesz po zalogowaniu
-              </span>
-              <span className="rounded-full bg-[var(--success)]/15 border border-[var(--success)]/40 px-2 py-0.5 text-[10px] font-extrabold font-display text-[var(--success)]">
-                100% ZA DARMO
-              </span>
-            </div>
+          <div className="space-y-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3.5">
+            <h3 className="text-sm font-extrabold">Co daje darmowe konto?</h3>
             <ul className="space-y-1.5">
               {FREE_UNLOCK_BENEFITS.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-2 text-xs text-[var(--text-primary)] leading-snug">
@@ -346,15 +342,18 @@ export function CloudAccountModal({
               </div>
 
               <form onSubmit={handleCheckEmail} className="space-y-2.5">
+                <label htmlFor={emailId} className="block text-xs font-bold text-[var(--text-secondary)]">Adres e-mail</label>
                 <input
+                  id={emailId}
                   type="email"
+                  autoComplete="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Wpisz swój adres e-mail…"
                   className="w-full min-h-[44px] px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
                 />
-                <TactileButton type="submit" variant="info" size="md" fullWidth disabled={busy}>
+                <TactileButton type="submit" variant="secondary" size="md" fullWidth disabled={busy}>
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
                   <span>Dalej z e-mailem</span>
                 </TactileButton>
@@ -419,6 +418,8 @@ export function CloudAccountModal({
               <form onSubmit={(e) => handlePasswordSubmit(e, activePasswordMode)} className="space-y-2.5">
                 <input
                   type="password"
+                  aria-label="Hasło"
+                  autoComplete={activePasswordMode === 'register' ? 'new-password' : 'current-password'}
                   required
                   minLength={6}
                   autoFocus
@@ -466,14 +467,21 @@ export function CloudAccountModal({
           )}
 
           {error && (
-            <p className="rounded-xl bg-[var(--danger)]/12 border border-[var(--danger)]/40 px-3 py-2 text-xs font-semibold text-[var(--danger)]">
+            <p role="alert" className="rounded-xl bg-[var(--danger)]/12 border border-[var(--danger)]/40 px-3 py-2 text-xs font-semibold text-[var(--danger)]">
               {error}
             </p>
           )}
           {info && (
-            <p className="rounded-xl bg-[var(--success)]/12 border border-[var(--success)]/40 px-3 py-2 text-xs font-semibold text-[var(--success)]">
+            <p role="status" className="rounded-xl bg-[var(--success)]/12 border border-[var(--success)]/40 px-3 py-2 text-xs font-semibold text-[var(--success)]">
               {info}
             </p>
+          )}
+          {showPlanLink && emailStep === 'entry' && (
+            <div className="border-t border-[var(--border-subtle)] text-center">
+              <Link href="/pro" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-[var(--info)] hover:underline">
+                Porównaj darmowe konto i Pro <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
           )}
         </div>
       )}
