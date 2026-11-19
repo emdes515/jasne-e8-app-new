@@ -359,7 +359,13 @@ Serce doświadczenia edukacyjnego, podzielone na 2 płynne etapy:
   3. **Zadanie Otwarte z AI Tutorem (`Open Task`):**
      - Czytelne pole `textarea` z licznikiem znaków i małą podpowiedzią „Zapisz obliczenia lub rozumowanie — AI Tutor oceni je jak egzaminator CKE (0–2 pkt)”.
      - Przycisk 3D **„Oceń z AI Tutorem”** -> uruchamia 700 ms animację analizy z maskotką Lumi w trybie `thinking` -> rozwija rozbudowaną kartę oceny z punktacją `0/2`, `1/2` lub `2/2`, wykazem kryteriów, informacją zwrotną krok po kroku i stałą etykietą **„Ocena symulowana (Faza 1)”**.
-- **Dolny panel informacji zwrotnej (Feedback Sheet):** po sprawdzeniu zadania wysuwa się u dołu zwięzłe wyjaśnienie rozwiązania, zdobyte `+XP` (z uwzględnieniem Combo i ewentualnych podpowiedzi), reakcja maskotki Lumi oraz przycisk 3D **„Dalej”**.
+- **Dwufazowy feedback po sprawdzeniu i ustrukturyzowane wyjaśnienia (`TaskRunner` + `TaskResult`):**
+  1. *Faza 1 — Natychmiastowe zaznaczenie na karcie (~540 ms, pomijane przy `prefers-reduced-motion`):* wybrana karta odpowiedzi wykonuje sprężysty podskok z cząsteczkami XP i szmaragdowym wypełnieniem (przy `correct` + krótkie konfetti dla Combo $\ge 1{,}5$) albo wyraźny wstrząs poziomy i oznaczenie poprawnej opcji jako `missed_correct` (przy `wrong`).
+  2. *Faza 2 — Karta wyniku (`TaskResult`, sprężynowe wejście `SPRING_SNAPPY`):* nagłówek z reakcją maskotki **Lumi** (`happy`/`celebrate` przy sukcesie; `surprised` → `supportive` po 900 ms przy błędzie), pigułka `+XP` i badge Combo, porównanie `Twoja odpowiedź` vs `Poprawna odpowiedź` (przy błędzie) oraz **3-sekcyjne wyjaśnienie**:
+     - **1. Rozwiązanie krok po kroku:** ponumerowane kroki z czystym KaTeX (`explanationSteps` lub automatyczny podział bez rozcinania `$...$`).
+     - **2. Pułapka E8 — na co uważać:** wyjaśnienie typowego błędu CKE / dlaczego błędna opcja kusi (`ckeTrapNote` lub kontekstowy blok przy błędzie).
+     - **3. Złoty odruch egzaminacyjny:** krótka reguła zapamiętywania do wykorzystania na arkuszu (`goldenHabit` lub wskazówka bazowa).
+  - *Ikona serca w HUD (`TactileHeartIcon`):* autorski wektor SVG w stylu Tactile 3D Gaming (gradient + połysk 3D dla pełnych serc, wariant pęknięty/pusty przy `0` serc) zamiast płaskiej ikony bibliotecznej.
 - **Ekran Podsumowania Lekcji:** animowany ekran zwycięstwa z Lumi (`celebrate`), odliczaniem `useCountUp` dla XP, Monet (`+20 monet`) i Skuteczności %, aktualizacją Dziennej Serii i Wyzwań Dziennych oraz opcjonalnym pełnoekranowym modalem **Awansu Rangi** (z konfetti!).
 
 #### Etap C: Reguły brzegowe sesji zadaniowej (obowiązkowe)

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Heart, Coins, Clock, Play, BookOpen } from 'lucide-react';
+import { Coins, Clock, Play, BookOpen } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import {
   HEART_REFILL_PRICE,
@@ -11,6 +11,7 @@ import {
 import { LumiMascot } from '../mascot/LumiMascot';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 
 function formatCountdown(seconds: number | null): string {
   if (seconds === null) return 'Pełne (5/5)';
@@ -53,7 +54,10 @@ export function RescueMissionModal() {
           />
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-[var(--danger)] fill-[var(--danger)]" />
+              <TactileHeartIcon
+                size={22}
+                variant={state.hearts > 0 ? 'full' : 'cracked'}
+              />
               <span className="text-lg font-extrabold font-display tabular-nums">
                 Serca {state.hearts} / {MAX_HEARTS}
               </span>

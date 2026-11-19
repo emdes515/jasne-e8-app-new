@@ -8,7 +8,6 @@ import {
   Coins,
   Check,
   Shield,
-  Heart,
   RotateCcw,
   Lock,
 } from 'lucide-react';
@@ -33,6 +32,7 @@ import { SPRING_SNAPPY } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { CountUpNumber } from '../ui/CountUpNumber';
 import { TactileButton } from '../ui/TactileButton';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 
 const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string }> = [
   { id: 'mascot', label: 'Maskotka Lumi' },
@@ -334,7 +334,10 @@ export function MascotDressingRoom() {
 
                   {isHeartRefill && (
                     <span className="inline-flex items-center gap-1 text-xs font-extrabold font-display text-[var(--danger)] tabular-nums">
-                      <Heart className="w-3.5 h-3.5 fill-current" />
+                      <TactileHeartIcon
+                        size={16}
+                        variant={state.hearts > 0 ? 'full' : 'cracked'}
+                      />
                       <span>Serca: {state.hearts}/5</span>
                     </span>
                   )}

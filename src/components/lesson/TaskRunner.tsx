@@ -2,12 +2,12 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import confetti from 'canvas-confetti';
 import {
   X,
   Bookmark,
   BookOpen,
   Lightbulb,
-  Heart,
   Flame,
   ArrowRight,
   Play,
@@ -27,6 +27,7 @@ import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 import { BottomSheet } from '../ui/BottomSheet';
 import { AnswerOptionCard } from './AnswerOptionCard';
 import { SmartMathKeyboard } from './SmartMathKeyboard';
@@ -88,6 +89,19 @@ function TaskRunnerQuestion() {
     outcome: priorAnswer.outcome,
     xpAwarded: priorAnswer.xpAwarded,
   } : null);
+  const [revealPhase, setRevealPhase] = useState<{
+    outcome: TaskEvalOutcome;
+    xpAwarded: number;
+  } | null>(null);
+  const revealTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (revealTimerRef.current !== null) {
+        window.clearTimeout(revealTimerRef.current);
+      }
+    };
+  }, []);
 
   const hasResult = Boolean(checkedFeedback);
   useLayoutEffect(() => {
@@ -221,7 +235,27 @@ function TaskRunnerQuestion() {
   );
 
   const handleCheckClosedOrNumeric = () => {
-    if (checkedFeedback) return;
+    if (checkedFeedback || revealPhase) return;
+
+    const finalizeCheck = (outcome: TaskEvalOutcome, xpAwarded: number) => {
+      if (outcome === 'correct' && !prefersReduced && comboMultiplier >= 1.5) {
+        confetti({
+          particleCount: 28,
+          spread: 58,
+          origin: { y: 0.72 },
+          disableForReducedMotion: true,
+        });
+      }
+      if (prefersReduced) {
+        setCheckedFeedback({ outcome, xpAwarded });
+        return;
+      }
+      setRevealPhase({ outcome, xpAwarded });
+      revealTimerRef.current = window.setTimeout(() => {
+        setRevealPhase(null);
+        setCheckedFeedback({ outcome, xpAwarded });
+      }, 540);
+    };
 
     if (
       currentTask.type === 'abcd' ||
@@ -237,10 +271,7 @@ function TaskRunnerQuestion() {
         outcome,
         hintsUsed,
       });
-      setCheckedFeedback({
-        outcome,
-        xpAwarded: res.xpAwarded,
-      });
+      finalizeCheck(outcome, res.xpAwarded);
       return;
     }
 
@@ -256,10 +287,7 @@ function TaskRunnerQuestion() {
         outcome,
         hintsUsed,
       });
-      setCheckedFeedback({
-        outcome,
-        xpAwarded: res.xpAwarded,
-      });
+      finalizeCheck(outcome, res.xpAwarded);
     }
   };
 
@@ -403,8 +431,11 @@ function TaskRunnerQuestion() {
               )}
             </AnimatePresence>
 
-            <div className="min-h-[40px] px-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center gap-1 text-xs font-extrabold font-display tabular-nums">
-              <Heart className="w-4 h-4 text-[var(--danger)] fill-[var(--danger)]" />
+            <div className="min-h-[40px] px-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center gap-1.5 text-xs font-extrabold font-display tabular-nums">
+              <TactileHeartIcon
+                size={17}
+                variant={state.hearts > 0 ? 'full' : 'cracked'}
+              />
               <span>{state.hearts}</span>
             </div>
           </div>
@@ -416,6 +447,8 @@ function TaskRunnerQuestion() {
             headingRef={resultHeading}
             outcome={checkedFeedback.outcome}
             xpAwarded={checkedFeedback.xpAwarded}
+            comboMultiplier={comboMultiplier}
+            loadout={state.loadout}
             userAnswer={priorAnswer?.userAnswer}
             tutorScore={aiEvaluation?.score ?? priorAnswer?.aiScore}
             tutorFeedback={aiEvaluation?.feedback ?? priorAnswer?.aiFeedback}
@@ -526,13 +559,30 @@ function TaskRunnerQuestion() {
                     <div className="space-y-3">
                       {currentTask.options.map((opt) => {
                         const isSelected = selectedOption === opt.id;
+                        const checkedState = revealPhase
+                          ? isSelected && revealPhase.outcome === 'correct'
+                            ? 'correct'
+                            : isSelected && revealPhase.outcome === 'wrong'
+                            ? 'wrong'
+                            : !isSelected &&
+                              revealPhase.outcome === 'wrong' &&
+                              opt.id === currentTask.correctAnswer
+                            ? 'missed_correct'
+                            : 'idle'
+                          : 'idle';
+
                         return (
                           <AnswerOptionCard
                             key={opt.id}
                             option={opt}
                             selected={isSelected}
-                            checkedState="idle"
-                            disabled={false}
+                            checkedState={checkedState}
+                            showParticles={Boolean(
+                              revealPhase &&
+                                isSelected &&
+                                revealPhase.outcome === 'correct'
+                            )}
+                            disabled={Boolean(revealPhase) || Boolean(checkedFeedback)}
                             onSelect={(id) => {
                               playSound('tap');
                               setSelectedOption(id);
@@ -548,7 +598,7 @@ function TaskRunnerQuestion() {
                   <SmartMathKeyboard
                     value={numericAnswer}
                     onChange={setNumericAnswer}
-                    disabled={Boolean(checkedFeedback)}
+                    disabled={Boolean(checkedFeedback) || Boolean(revealPhase)}
                     onSubmit={handleCheckClosedOrNumeric}
                   />
                 )}
@@ -577,12 +627,13 @@ function TaskRunnerQuestion() {
                       size="lg"
                       fullWidth
                       disabled={
-                        (currentTask.type === 'abcd' ||
+                        Boolean(revealPhase) ||
+                        ((currentTask.type === 'abcd' ||
                           currentTask.type === 'true_false') &&
                         !selectedOption
                           ? true
                           : currentTask.type === 'numeric' &&
-                            !numericAnswer.trim()
+                            !numericAnswer.trim())
                       }
                       onClick={handleCheckClosedOrNumeric}
                     >

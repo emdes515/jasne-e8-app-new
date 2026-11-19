@@ -20,6 +20,7 @@ const COLOR_PALETTES: Record<
     edge: string;
     cheek: string;
     coreLight: string;
+    rimLight: string;
   }
 > = {
   gold_spark: {
@@ -28,6 +29,7 @@ const COLOR_PALETTES: Record<
     edge: '#B45309',
     cheek: '#FB7185',
     coreLight: '#FEF08A',
+    rimLight: '#FDE68A',
   },
   blue_wave: {
     primary: '#38BDF8',
@@ -35,6 +37,7 @@ const COLOR_PALETTES: Record<
     edge: '#0369A1',
     cheek: '#F472B6',
     coreLight: '#E0F2FE',
+    rimLight: '#BAE6FD',
   },
   emerald_pulse: {
     primary: '#34D399',
@@ -42,6 +45,7 @@ const COLOR_PALETTES: Record<
     edge: '#065F46',
     cheek: '#FBBF24',
     coreLight: '#D1FAE5',
+    rimLight: '#A7F3D0',
   },
   ice_crystal: {
     primary: '#7DD3FC',
@@ -49,6 +53,7 @@ const COLOR_PALETTES: Record<
     edge: '#075985',
     cheek: '#A78BFA',
     coreLight: '#F0F9FF',
+    rimLight: '#E0F2FE',
   },
   crimson_comet: {
     primary: '#FB7185',
@@ -56,6 +61,7 @@ const COLOR_PALETTES: Record<
     edge: '#9F1239',
     cheek: '#FBBF24',
     coreLight: '#FFE4E6',
+    rimLight: '#FECDD3',
   },
 };
 
@@ -84,8 +90,9 @@ export function LumiMascot({
 
   const palette = COLOR_PALETTES[colorScheme] ?? COLOR_PALETTES.gold_spark;
   const pxSize = SIZE_MAP[size];
+  const hideFlameCrest = headgear === 'street_cap' || headgear === 'master_crown';
 
-  // Automatic blinking every 3.4 - 4.8s
+  // Automatic blinking every 3.2 - 5.0s
   useEffect(() => {
     if (prefersReduced) return;
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -103,7 +110,6 @@ export function LumiMascot({
     return () => clearTimeout(timeoutId);
   }, [prefersReduced]);
 
-  // Body animation variants by mood
   const getBodyAnimation = () => {
     if (prefersReduced) {
       return { y: 0, rotate: 0, scaleX: 1, scaleY: 1 };
@@ -111,29 +117,29 @@ export function LumiMascot({
     switch (mood) {
       case 'idle':
         return {
-          y: [0, -6, 0],
-          rotate: [0, 1, -1, 0],
+          y: [0, -5, 0],
+          rotate: [0, 1.2, -1.2, 0],
           transition: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' as const },
         };
       case 'happy':
         return {
-          y: [0, -11, 0],
-          scaleX: [1, 0.95, 1.04, 1],
-          scaleY: [1, 1.06, 0.95, 1],
+          y: [0, -10, 0],
+          scaleX: [1, 0.96, 1.04, 1],
+          scaleY: [1, 1.05, 0.96, 1],
           transition: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' as const },
         };
       case 'celebrate':
         return {
-          y: [0, -16, 0],
-          rotate: [0, -10, 10, 0],
+          y: [0, -14, 0],
+          rotate: [0, -8, 8, 0],
           scaleX: [1, 0.94, 1.05, 1],
-          scaleY: [1, 1.08, 0.94, 1],
+          scaleY: [1, 1.07, 0.95, 1],
           transition: { duration: 1.1, repeat: Infinity, ease: 'easeInOut' as const },
         };
       case 'thinking':
         return {
           y: [0, -4, 0],
-          rotate: -7,
+          rotate: -6,
           transition: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const },
         };
       case 'surprised':
@@ -157,13 +163,12 @@ export function LumiMascot({
       case 'cool':
         return {
           y: [0, -5, 0],
-          rotate: [-4, 4, -4],
+          rotate: [-3, 3, -3],
           transition: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' as const },
         };
     }
   };
 
-  // Shadow scale inversely proportional to jump height
   const getShadowAnimation = () => {
     if (prefersReduced) return { scaleX: 1, opacity: 0.28 };
     if (mood === 'celebrate') {
@@ -187,46 +192,66 @@ export function LumiMascot({
     };
   };
 
+  const getHandsAnimation = () => {
+    if (prefersReduced) return { y: 0 };
+    if (mood === 'celebrate' || mood === 'happy') {
+      return {
+        y: [0, -4, 0],
+        transition: { duration: 0.7, repeat: Infinity, ease: 'easeInOut' as const },
+      };
+    }
+    return {
+      y: [0, 2, 0],
+      transition: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const },
+    };
+  };
+
   return (
     <div
       className={`relative inline-flex items-center justify-center select-none shrink-0 ${className}`}
       style={{ width: pxSize, height: pxSize }}
       aria-label={`Maskotka Lumi (${mood})`}
     >
+      {/* Expanded viewBox keeps jump, aura, stars & thinking bulb safely inside bounds */}
       <svg
-        viewBox="0 0 200 200"
-        className="w-full h-full overflow-visible"
+        viewBox="-14 -12 228 218"
+        className="w-full h-full"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient
+          <radialGradient
             id={`lumiBody-${uid}`}
-            x1="100"
-            y1="30"
-            x2="100"
-            y2="165"
-            gradientUnits="userSpaceOnUse"
+            cx="38%"
+            cy="30%"
+            r="68%"
+            fx="36%"
+            fy="26%"
           >
             <stop offset="0%" stopColor={palette.coreLight} />
-            <stop offset="32%" stopColor={palette.primary} />
+            <stop offset="42%" stopColor={palette.primary} />
             <stop offset="100%" stopColor={palette.secondary} />
-          </linearGradient>
+          </radialGradient>
+
+          <radialGradient id={`lumiCheek-${uid}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={palette.cheek} stopOpacity="0.65" />
+            <stop offset="100%" stopColor={palette.cheek} stopOpacity="0" />
+          </radialGradient>
         </defs>
 
-        {/* Ground Shadow (scales inversely with jump height!) */}
+        {/* Ground Shadow (scales inversely with jump height) */}
         <motion.ellipse
           cx="100"
-          cy="182"
+          cy="184"
           rx="42"
-          ry="9"
+          ry="8.5"
           fill="#050811"
           initial={false}
           animate={getShadowAnimation()}
-          style={{ transformOrigin: '100px 182px' }}
+          style={{ transformOrigin: '100px 184px' }}
         />
 
-        {/* Layer 1: Static/Subtle Vector Aura behind character (opacity <= 0.15 as mandated) */}
+        {/* Layer 1: Static Vector Aura behind character (opacity <= 0.15) */}
         {(aura === 'plasma_ring' || mood === 'celebrate') && (
           <g opacity="0.15">
             <circle
@@ -252,41 +277,57 @@ export function LumiMascot({
           transition={SPRING_BOUNCY}
           style={{ transformOrigin: '100px 115px' }}
         >
-          {/* Floating Left & Right Spark Hands / Wings */}
-          <ellipse
-            cx="36"
-            cy={mood === 'celebrate' || mood === 'happy' ? '88' : '112'}
-            rx="13"
-            ry="9"
-            transform={
-              mood === 'celebrate'
-                ? 'rotate(-32 36 88)'
-                : 'rotate(-15 36 112)'
-            }
-            fill={palette.primary}
-            stroke={palette.edge}
-            strokeWidth="4"
-          />
-          <ellipse
-            cx="164"
-            cy={
-              mood === 'celebrate' || mood === 'happy'
-                ? '88'
-                : mood === 'thinking'
-                ? '124'
-                : '112'
-            }
-            rx="13"
-            ry="9"
-            transform={
-              mood === 'celebrate'
-                ? 'rotate(32 164 88)'
-                : 'rotate(15 164 112)'
-            }
-            fill={palette.primary}
-            stroke={palette.edge}
-            strokeWidth="4"
-          />
+          {/* Floating Left & Right Spark Hands */}
+          <motion.g animate={getHandsAnimation()}>
+            <ellipse
+              cx={mood === 'supportive' ? '68' : '36'}
+              cy={
+                mood === 'celebrate' || mood === 'happy'
+                  ? '88'
+                  : mood === 'supportive'
+                  ? '142'
+                  : '112'
+              }
+              rx="13"
+              ry="9"
+              transform={
+                mood === 'celebrate'
+                  ? 'rotate(-32 36 88)'
+                  : mood === 'supportive'
+                  ? 'rotate(24 68 142)'
+                  : 'rotate(-15 36 112)'
+              }
+              fill={palette.primary}
+              stroke={palette.edge}
+              strokeWidth="4"
+            />
+            <ellipse
+              cx={mood === 'supportive' ? '132' : mood === 'thinking' ? '136' : '164'}
+              cy={
+                mood === 'celebrate' || mood === 'happy'
+                  ? '88'
+                  : mood === 'thinking'
+                  ? '132'
+                  : mood === 'supportive'
+                  ? '142'
+                  : '112'
+              }
+              rx="13"
+              ry="9"
+              transform={
+                mood === 'celebrate'
+                  ? 'rotate(32 164 88)'
+                  : mood === 'supportive'
+                  ? 'rotate(-24 132 142)'
+                  : mood === 'thinking'
+                  ? 'rotate(-22 136 132)'
+                  : 'rotate(15 164 112)'
+              }
+              fill={palette.primary}
+              stroke={palette.edge}
+              strokeWidth="4"
+            />
+          </motion.g>
 
           {/* Main Spark Teardrop / Bulb Body with 3D Tactile Edge */}
           <path
@@ -297,14 +338,32 @@ export function LumiMascot({
             strokeLinejoin="round"
           />
 
-          {/* Top Flame Crest */}
+          {/* Subtle Bottom 3D Rim-Light */}
           <path
-            d="M100 18 C107 28 112 36 100 44 C88 36 93 28 100 18 Z"
-            fill={palette.coreLight}
-            stroke={palette.edge}
+            d="M66 144 C76 156 124 156 134 144"
+            stroke={palette.rimLight}
+            strokeOpacity="0.55"
             strokeWidth="3.5"
-            strokeLinejoin="round"
+            strokeLinecap="round"
           />
+
+          {/* Top Flame Crest (hidden under cap or crown so cosmetics never collide) */}
+          {!hideFlameCrest && (
+            <motion.path
+              d="M100 16 C108 27 112 36 100 44 C88 36 92 27 100 16 Z"
+              fill={palette.coreLight}
+              stroke={palette.edge}
+              strokeWidth="3.5"
+              strokeLinejoin="round"
+              animate={
+                prefersReduced
+                  ? undefined
+                  : { rotate: [-4, 4, -4], scaleY: [1, 1.06, 1] }
+              }
+              transition={{ duration: 1.9, repeat: Infinity, ease: 'easeInOut' }}
+              style={{ transformOrigin: '100px 42px' }}
+            />
+          )}
 
           {/* 3D Specular Forehead Highlight */}
           <ellipse
@@ -317,27 +376,24 @@ export function LumiMascot({
             opacity="0.55"
           />
 
-          {/* Warm Rosy Cheeks */}
+          {/* Soft Radial Rosy Cheeks */}
           <ellipse
             cx="68"
             cy="118"
-            rx="8"
-            ry="4.5"
-            fill={palette.cheek}
-            opacity="0.55"
+            rx="11"
+            ry="6.5"
+            fill={`url(#lumiCheek-${uid})`}
           />
           <ellipse
             cx="132"
             cy="118"
-            rx="8"
-            ry="4.5"
-            fill={palette.cheek}
-            opacity="0.55"
+            rx="11"
+            ry="6.5"
+            fill={`url(#lumiCheek-${uid})`}
           />
 
-          {/* Eyes Layer */}
-          {blinking || mood === 'happy' || mood === 'celebrate' ? (
-            // Happy Arched Eyes ^ ^
+          {/* Eyes Layer: Happy/Celebrate arches vs Blinking closed lids vs Open eyes */}
+          {mood === 'happy' || mood === 'celebrate' ? (
             <g
               stroke="#0F172A"
               strokeWidth="5"
@@ -346,6 +402,16 @@ export function LumiMascot({
             >
               <path d="M70 104 Q80 92 90 104" />
               <path d="M110 104 Q120 92 130 104" />
+            </g>
+          ) : blinking ? (
+            <g
+              stroke="#0F172A"
+              strokeWidth="4.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M70 102 Q80 108 90 102" />
+              <path d="M110 102 Q120 108 130 102" />
             </g>
           ) : (
             <g>
@@ -369,7 +435,6 @@ export function LumiMascot({
               />
               <circle cx="123" cy="105" r="1.8" fill="#FFFFFF" />
 
-              {/* Focused / Cool Eyebrows */}
               {mood === 'focused' && (
                 <g stroke="#0F172A" strokeWidth="4.5" strokeLinecap="round">
                   <path d="M68 87 L90 92" />
@@ -419,24 +484,24 @@ export function LumiMascot({
             />
           ) : (
             <path
-              d="M89 120 Q100 130 111 120"
+              d="M89 120 Q100 129 111 120"
               stroke="#0F172A"
               strokeWidth="4.5"
               strokeLinecap="round"
             />
           )}
 
-          {/* Supportive Heart Badge held in front when mood === 'supportive' */}
+          {/* Supportive Heart Badge held cleanly at chest level below mouth */}
           {mood === 'supportive' && (
             <path
-              d="M100 152 C100 152 84 141 84 132 C84 127 88 123 93 123 C96 123 99 125 100 128 C101 125 104 123 107 123 C112 123 116 127 116 132 C116 141 100 152 100 152 Z"
+              d="M100 162 C100 162 85 152 85 144 C85 139.5 88.5 136 93 136 C96 136 98.8 137.8 100 140.2 C101.2 137.8 104 136 107 136 C111.5 136 115 139.5 115 144 C115 152 100 162 100 162 Z"
               fill="#F43F5E"
-              stroke="#FFFFFF"
-              strokeWidth="2.5"
+              stroke="#FFE4E6"
+              strokeWidth="2.2"
             />
           )}
 
-          {/* Thinking Floating Idea Bulb when mood === 'thinking' */}
+          {/* Thinking Floating Idea Bulb */}
           {mood === 'thinking' && (
             <g transform="translate(148, 42)">
               <circle
@@ -467,7 +532,6 @@ export function LumiMascot({
           {/* Cosmetic Layer: Eyewear */}
           {eyewear === 'pixel_glasses' && (
             <g>
-              {/* 8-bit Pixel Deal-With-It Glasses */}
               <rect
                 x="58"
                 y="91"
@@ -496,7 +560,6 @@ export function LumiMascot({
 
           {eyewear === 'cyber_goggles' && (
             <g>
-              {/* Cyber Alchemist Visor Goggles */}
               <rect
                 x="56"
                 y="89"

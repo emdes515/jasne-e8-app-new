@@ -8,7 +8,6 @@ import {
   Play,
   Trash2,
   Star,
-  Heart,
   BookOpen,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -24,6 +23,7 @@ import { SUBJECT_META } from '../layout/SubjectSwitcher';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 
 export function VaultView() {
   const {
@@ -78,7 +78,10 @@ export function VaultView() {
               size="sm"
               onClick={() => setRescueModalOpen(true)}
             >
-              <Heart className="w-4 h-4" />
+              <TactileHeartIcon
+                size={16}
+                variant={state.hearts > 0 ? 'full' : 'cracked'}
+              />
               <span>
                 Misja ratunkowa ({state.rescueMissionCurrentProgress}/2 · dziś{' '}
                 {state.rescueMissionsCompletedToday}/{MAX_FREE_RESCUE_PER_DAY})

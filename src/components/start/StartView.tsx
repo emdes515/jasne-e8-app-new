@@ -41,7 +41,11 @@ export function StartView() {
         <div className="welcome-orbit" aria-hidden="true">
           <span className="welcome-track" />
           <span className="welcome-spark">✦</span>
-          <LumiMascot mood="focused" loadout={state.loadout} size="sm" />
+          <LumiMascot
+            mood={state.totalTasksSolved > 0 ? 'happy' : 'idle'}
+            loadout={state.loadout}
+            size="sm"
+          />
         </div>
       </header>
 

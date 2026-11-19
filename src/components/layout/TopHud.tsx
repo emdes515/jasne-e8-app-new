@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Flame, Shield, Heart, Coins, BookOpen } from 'lucide-react';
+import { Flame, Shield, Coins, BookOpen } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { SubjectSwitcher } from './SubjectSwitcher';
 import { CountUpNumber } from '../ui/CountUpNumber';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 
 function formatCompactCoins(coins: number): string {
   if (coins >= 1000) {
@@ -120,12 +121,9 @@ export function TopHud() {
             aria-label={`Serca: ${state.hearts} z 5`}
             className="relative min-h-[44px] min-w-[44px] px-1.5 min-[360px]:px-2.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center justify-center gap-1 min-[360px]:gap-1.5 text-xs sm:text-sm font-extrabold font-display tabular-nums cursor-pointer hover:border-[var(--danger)] transition-colors"
           >
-            <Heart
-              className={`w-4 h-4 shrink-0 ${
-                state.hearts > 0
-                  ? 'text-[var(--danger)] fill-[var(--danger)]'
-                  : 'text-[var(--text-secondary)]'
-              }`}
+            <TactileHeartIcon
+              size={18}
+              variant={state.hearts > 0 ? 'full' : 'cracked'}
             />
             <span className="inline min-[380px]:hidden">{state.hearts}</span>
             <span className="hidden min-[380px]:inline">

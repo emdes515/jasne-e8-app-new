@@ -89,6 +89,9 @@ export interface TaskDefinition {
   correctAnswer: string; // option id for abcd/true_false, numeric string for numeric, expectedResult for open
   rubric?: OpenTaskRubric;
   explanation: string;
+  explanationSteps?: string[];
+  ckeTrapNote?: string;
+  goldenHabit?: string;
   hints: [string, string, string]; // 3 levels, never containing the final answer
 }
 
