@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   X,
@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
-import { aiTutorService } from '../../services/ai/aiTutorMock';
+import { loadLessonDraftPhoto, saveLessonDraftPhoto } from '../../services/storage/lessonDraftPhoto';
+import { aiTutorService, MOCK_AI_LATENCY_MS } from '../../services/ai/aiTutorMock';
 import { AiTutorEvaluationResult } from '../../types/repositories';
 import { LumiMood, TaskEvalOutcome } from '../../types/domain';
 import {
@@ -33,7 +34,7 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { AnswerOptionCard } from './AnswerOptionCard';
 import { SmartMathKeyboard } from './SmartMathKeyboard';
 import { OpenTaskAiBox } from './OpenTaskAiBox';
-import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult } from '../../lib/openWork';
+import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult, type OpenWorkDraft } from '../../lib/openWork';
 
 export function TaskRunner() {
   const { state: { activeSession: session } } = useAppState();
@@ -45,6 +46,8 @@ function TaskRunnerQuestion() {
   const {
     state,
     submitSessionTaskAnswer,
+    saveTaskDraft,
+    pushToast,
     advanceSessionTaskOrFinish,
     abortActiveSession,
     toggleTaskSaved,
@@ -61,11 +64,15 @@ function TaskRunnerQuestion() {
   const currentTask = ALL_TASKS_BY_ID[currentTaskId];
   const priorAnswer = session?.answers[currentTaskId];
 
-  const [selectedOption, setSelectedOption] = useState<string>('');
-  const [numericAnswer, setNumericAnswer] = useState<string>('');
-  const [openAnswer, setOpenAnswer] = useState<string>('');
-  const [openWork, setOpenWork] = useState(EMPTY_OPEN_WORK);
-  const [hintsUsed, setHintsUsed] = useState(priorAnswer?.hintsUsed ?? 0);
+  const savedDraft = session?.draft?.taskId === currentTaskId ? session.draft : undefined;
+  const [selectedOption, setSelectedOption] = useState(priorAnswer?.userAnswer ?? savedDraft?.value ?? '');
+  const [numericAnswer, setNumericAnswer] = useState(priorAnswer?.userAnswer ?? savedDraft?.value ?? '');
+  const [openAnswer, setOpenAnswer] = useState(priorAnswer?.userAnswer ?? savedDraft?.value ?? '');
+  const [openWork, setOpenWork] = useState({ ...EMPTY_OPEN_WORK, ...savedDraft?.work });
+  const [hintsUsed, setHintsUsed] = useState(priorAnswer?.hintsUsed ?? savedDraft?.hintsUsed ?? 0);
+  const [comparing, setComparing] = useState(false);
+  const evaluationVersion = useRef(0);
+  const photoEdited = useRef(false);
   const [hintsSheetOpen, setHintsSheetOpen] = useState<boolean>(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState<boolean>(false);
   const [bookmarkAnimTick, setBookmarkAnimTick] = useState<number>(0);
@@ -85,6 +92,35 @@ function TaskRunnerQuestion() {
   } : null);
 
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
+
+  const sessionId = session?.sessionId;
+  const taskType = currentTask?.type;
+  useEffect(() => {
+    if (!sessionId || taskType !== 'open' || priorAnswer) return;
+    let active = true;
+    void loadLessonDraftPhoto(sessionId).then((photo) => {
+      if (active && photo && !photoEdited.current) setOpenWork((work) => ({ ...work, photo }));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [sessionId, taskType, priorAnswer]);
+
+  useEffect(() => () => { evaluationVersion.current += 1; }, []);
+
+  function changeOpenWork(patch: Partial<OpenWorkDraft>) {
+    if ('photo' in patch && sessionId) {
+      photoEdited.current = true;
+      void saveLessonDraftPhoto(sessionId, patch.photo ?? null).catch(() => {
+        pushToast('Zdjęcie jest widoczne teraz, ale nie udało się zapisać go do wznowienia.', 'warning');
+      });
+    }
+    setOpenWork((work) => ({ ...work, ...patch }));
+  }
+  useLayoutEffect(() => {
+    if (!sessionId || !taskType || priorAnswer) return;
+    const value = taskType === 'open' ? openAnswer : taskType === 'numeric' ? numericAnswer : selectedOption;
+    const work = taskType === 'open' ? { mode: openWork.mode, strokes: openWork.strokes, result: openWork.result } : undefined;
+    saveTaskDraft(sessionId, { taskId: currentTaskId, value, hintsUsed, work });
+  }, [sessionId, currentTaskId, taskType, priorAnswer, openAnswer, numericAnswer, selectedOption, openWork, hintsUsed, saveTaskDraft]);
 
   // Tick every second to check 90s combo expiration in lesson/practice
   useEffect(() => {
@@ -249,13 +285,18 @@ function TaskRunnerQuestion() {
 
   const handleEvaluateOpenTask = async () => {
     const answer = getOpenAnswer(openWork, openAnswer);
-    if (checkedFeedback || isAiEvaluating || !currentTask.rubric || !answer) return;
+    const rubric = currentTask.rubric;
+    if (checkedFeedback || isAiEvaluating || !rubric || !answer) return;
+    const version = ++evaluationVersion.current;
     playSound('tap');
     setIsAiEvaluating(true);
 
     const evalRes = openWork.mode === 'text'
-      ? await aiTutorService.evaluateOpenTask(answer, currentTask.rubric)
-      : evaluateVisualWork(answer, currentTask.rubric.expectedResult, currentTask.rubric.resultOnly);
+      ? await aiTutorService.evaluateOpenTask(answer, rubric)
+      : await new Promise<AiTutorEvaluationResult>((resolve) => window.setTimeout(() => {
+          resolve(evaluateVisualWork(answer, rubric.expectedResult, rubric.resultOnly));
+        }, MOCK_AI_LATENCY_MS));
+    if (version !== evaluationVersion.current) return;
     setIsAiEvaluating(false);
     setAiEvaluation(evalRes);
 
@@ -288,6 +329,20 @@ function TaskRunnerQuestion() {
           ? 'happy'
           : 'surprised',
     });
+  };
+
+  const finishSelfReview = (reviewRequested: boolean) => {
+    if (checkedFeedback || !comparing) return;
+    submitSessionTaskAnswer({
+      sessionId: session.sessionId,
+      taskId: currentTask.id,
+      userAnswer: '',
+      outcome: 'ungraded',
+      hintsUsed,
+      reviewRequested,
+    });
+    setComparing(false);
+    setCheckedFeedback({ outcome: 'ungraded', xpAwarded: 0, lumiMood: 'focused' });
   };
 
   const taskTypeLabel =
@@ -529,13 +584,14 @@ function TaskRunnerQuestion() {
             {currentTask.type === 'open' && (
               <OpenTaskAiBox
                 work={openWork}
-                onWorkChange={(patch) => setOpenWork((work) => ({ ...work, ...patch }))}
+                onWorkChange={changeOpenWork}
                 value={openAnswer}
                 onChange={setOpenAnswer}
                 isEvaluating={isAiEvaluating}
                 evaluation={aiEvaluation}
-                disabled={Boolean(checkedFeedback)}
+                disabled={Boolean(checkedFeedback) || comparing}
                 onEvaluate={handleEvaluateOpenTask}
+                onCompare={() => setComparing(true)}
                 loadout={state.loadout}
               />
             )}
@@ -564,6 +620,17 @@ function TaskRunnerQuestion() {
           </motion.div>
         </AnimatePresence>
 
+        {comparing && !checkedFeedback && (
+          <section className="study-panel space-y-3 p-4" aria-labelledby="self-review-heading">
+            <h3 id="self-review-heading" className="font-extrabold">Porównaj swoje obliczenia</h3>
+            <p className="text-sm text-[var(--text-secondary)]"><MathText text={currentTask.explanation} /></p>
+            <div className="flex flex-wrap gap-2">
+              <TactileButton variant="secondary" onClick={() => finishSelfReview(true)}>Chcę powtórzyć</TactileButton>
+              <TactileButton onClick={() => finishSelfReview(false)}>Rozumiem rozwiązanie</TactileButton>
+            </div>
+          </section>
+        )}
+
         {/* Feedback Sheet / Card after checking answer */}
         <AnimatePresence>
           {checkedFeedback && (
@@ -575,7 +642,7 @@ function TaskRunnerQuestion() {
               className={`rounded-3xl border-2 p-5 sm:p-6 space-y-4 ${
                 checkedFeedback.outcome === 'correct'
                   ? 'bg-[var(--bg-surface)] border-[var(--success)] shadow-[0_6px_0_0_var(--success-edge)]'
-                  : checkedFeedback.outcome === 'partial'
+                  : checkedFeedback.outcome !== 'wrong'
                   ? 'bg-[var(--bg-surface)] border-[var(--accent-primary)] shadow-[0_6px_0_0_var(--accent-primary-edge)]'
                   : 'bg-[var(--bg-surface)] border-[var(--danger)] shadow-[0_6px_0_0_var(--danger-edge)]'
               }`}
@@ -591,7 +658,7 @@ function TaskRunnerQuestion() {
                     <div className="flex items-center gap-2">
                       {checkedFeedback.outcome === 'correct' ? (
                         <CheckCircle2 className="w-5 h-5 text-[var(--success)]" />
-                      ) : checkedFeedback.outcome === 'partial' ? (
+                      ) : checkedFeedback.outcome !== 'wrong' ? (
                         <AlertCircle className="w-5 h-5 text-[var(--accent-text)]" />
                       ) : (
                         <XCircle className="w-5 h-5 text-[var(--danger)]" />
@@ -601,6 +668,8 @@ function TaskRunnerQuestion() {
                           ? 'Świetna robota!'
                           : checkedFeedback.outcome === 'partial'
                           ? 'Częściowe punkty'
+                          : checkedFeedback.outcome === 'ungraded'
+                          ? 'Rozwiązanie porównane bez punktów'
                           : 'Tym razem pudło — zadanie trafiło do Banku Błędów'}
                       </h3>
                     </div>
@@ -625,7 +694,7 @@ function TaskRunnerQuestion() {
                 variant={
                   checkedFeedback.outcome === 'correct'
                     ? 'success'
-                    : checkedFeedback.outcome === 'partial'
+                    : checkedFeedback.outcome !== 'wrong'
                     ? 'primary'
                     : 'danger'
                 }
@@ -721,9 +790,7 @@ function TaskRunnerQuestion() {
       >
         <div className="space-y-4">
           <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-            Możesz wrócić do swoich rozwiązanych zadań w każdej chwili z ekranu
-            Start. Monety i pełne podsumowanie otrzymasz po rozwiązaniu
-            wszystkich zadań w sesji.
+            Wrócisz do bieżącego zadania po wznowieniu. Nagrody za lekcję otrzymasz po jej ukończeniu.
           </p>
           <div className="flex gap-3">
             <TactileButton

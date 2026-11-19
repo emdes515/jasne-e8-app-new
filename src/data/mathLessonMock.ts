@@ -74,17 +74,20 @@ export const MATH_LESSON_1_1: LessonDefinition = {
         {
           stepNumber: 1,
           title: 'Uprość licznik (mnożenie potęg)',
-          content: 'Dodajemy wykładniki o tej samej podstawie $2$: $2^7 \\cdot 2^5 = 2^{7+5} = 2^{12}$.',
+          content: 'Podstawa jest taka sama, więc dodajemy wykładniki.',
+          equations: ['2^7 \\cdot 2^5 = 2^{7+5} = 2^{12}'],
         },
         {
           stepNumber: 2,
           title: 'Uprość mianownik (potęgowanie potęgi)',
-          content: 'Mnożymy wykładniki przez siebie: $(2^3)^3 = 2^{3 \\cdot 3} = 2^9$.',
+          content: 'Potęgę podnosimy do potęgi, więc mnożymy wykładniki.',
+          equations: ['(2^3)^3 = 2^{3 \\cdot 3} = 2^9'],
         },
         {
           stepNumber: 3,
           title: 'Podziel licznik przez mianownik',
-          content: 'Odejmujemy wykładniki: $\\frac{2^{12}}{2^9} = 2^{12-9} = 2^3 = 8$. Wynik końcowy to $8$.',
+          content: 'Przy dzieleniu potęg o tej samej podstawie odejmujemy wykładniki.',
+          equations: ['\\frac{2^{12}}{2^9} = 2^{12-9}', '2^3 = 8'],
         },
       ],
     },
@@ -218,8 +221,9 @@ export function getLessonAttempt(state: AppState, id: string) {
 
 export function getRecommendedMathLesson(state: AppState) {
   const activeId = state.activeSession?.source === 'lesson' ? state.activeSession.contentId : '';
-  return findMathLesson(activeId) ??
-    MATH_LESSONS.find((lesson) => getLessonAttempt(state, lesson.id)) ??
+  return findMathLesson(state.openTheory?.lessonId ?? '') ??
+    findMathLesson(activeId) ??
+    MATH_LESSONS.find((lesson) => getLessonAttempt(state, lesson.id) || state.theoryCards?.[lesson.id]) ??
     MATH_LESSONS.find((lesson) => !state.completedLessonIds.includes(lesson.id)) ??
     MATH_LESSON_1_1;
 }

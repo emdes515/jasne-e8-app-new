@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bot, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Bot, BookOpen, CheckCircle2, AlertCircle } from 'lucide-react';
 import { AiTutorEvaluationResult } from '../../types/repositories';
 import { LumiLoadout } from '../../types/domain';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
-import { getOpenAnswer, type OpenWorkDraft } from '../../lib/openWork';
+import { getOpenAnswer, hasVisualWork, type OpenWorkDraft } from '../../lib/openWork';
 import { OpenWorkInput } from './OpenWorkInput';
 
 interface OpenTaskAiBoxProps {
@@ -19,6 +19,7 @@ interface OpenTaskAiBoxProps {
   evaluation: AiTutorEvaluationResult | null;
   disabled: boolean;
   onEvaluate: () => void;
+  onCompare?: () => void;
   loadout: LumiLoadout;
   hideEvaluateButton?: boolean; // true during exam mode where open task is evaluated after submission
 }
@@ -32,9 +33,11 @@ export function OpenTaskAiBox({
   evaluation,
   disabled,
   onEvaluate,
+  onCompare,
   loadout,
   hideEvaluateButton = false,
 }: OpenTaskAiBoxProps) {
+  const canCompare = Boolean(onCompare) && hasVisualWork(work) && !getOpenAnswer(work, value);
   return (
     <div className="space-y-4">
       <OpenWorkInput
@@ -43,6 +46,7 @@ export function OpenTaskAiBox({
         text={value}
         onTextChange={onChange}
         disabled={disabled || isEvaluating}
+        optionalResult={Boolean(onCompare)}
       />
 
       {!hideEvaluateButton && !evaluation && !isEvaluating && (
@@ -50,40 +54,28 @@ export function OpenTaskAiBox({
           variant="primary"
           size="lg"
           fullWidth
-          disabled={disabled || !getOpenAnswer(work, value)}
-          onClick={onEvaluate}
+          disabled={disabled || (!canCompare && !getOpenAnswer(work, value))}
+          onClick={canCompare ? onCompare : onEvaluate}
         >
-          <Bot className="w-5 h-5" />
-          <span>Sprawdź odpowiedź</span>
+          {canCompare ? <BookOpen className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+          <span>{canCompare ? 'Porównaj z rozwiązaniem' : 'Sprawdź odpowiedź'}</span>
         </TactileButton>
       )}
 
-      {/* 700ms Thinking Shimmer State (Choreography #11) */}
-      <AnimatePresence>
-        {isEvaluating && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--info)] flex items-center gap-4"
-          >
+      {isEvaluating && (
+        <div className="tutor-analysis" role="status">
+          <div className="tutor-analysis-figure" aria-hidden="true">
             <LumiMascot mood="thinking" loadout={loadout} size="xs" />
-            <div className="flex-1">
-              <div className="text-sm font-extrabold font-display text-[var(--info)] flex items-center gap-2">
-                <span>Sprawdzanie odpowiedzi…</span>
-                <span className="inline-flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] motion-safe:animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] motion-safe:animate-bounce [animation-delay:150ms]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--info)] motion-safe:animate-bounce [animation-delay:300ms]" />
-                </span>
-              </div>
-              <div className="text-xs text-[var(--text-secondary)] mt-0.5">
-                Sprawdzamy wynik i pojęcia z klucza zadania.
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <span className="tutor-scan" />
+          </div>
+          <div>
+            <p className="text-sm font-extrabold">Lumi sprawdza odpowiedź…</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
+              {work.mode === 'text' ? 'Porównuje Twój zapis z kluczem.' : 'Porównuje wpisaną liczbę z wynikiem.'}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* AI Tutor Evaluation Card */}
       <AnimatePresence>

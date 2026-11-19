@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,7 +23,10 @@ import { TactileButton } from '../ui/TactileButton';
 
 interface BentoTheoryTabsProps {
   lesson: LessonDefinition;
-  onClose: () => void;
+  savedCard?: BentoTheoryCard['id'];
+  review: boolean;
+  onCardChange: (id: BentoTheoryCard['id']) => void;
+  onClose: (completed?: boolean) => void;
   onStartTasks: () => void;
 }
 
@@ -39,6 +42,9 @@ const TAB_CONFIG: Record<BentoTheoryCard['id'], {
 
 export function BentoTheoryTabs({
   lesson,
+  savedCard,
+  review,
+  onCardChange,
   onClose,
   onStartTasks,
 }: BentoTheoryTabsProps) {
@@ -50,7 +56,11 @@ export function BentoTheoryTabs({
     playSound,
   } = useAppState();
 
-  const [cardIndex, setCardIndex] = useState(0);
+  const [cardIndex, setCardIndex] = useState(() =>
+    Math.max(0, lesson.theory.findIndex((card) => card.id === savedCard))
+  );
+  const reducedMotion = useReducedMotion();
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const focusNextHeading = useRef(false);
   const currentCard = lesson.theory[cardIndex];
   const isLastCard = cardIndex === lesson.theory.length - 1;
@@ -60,15 +70,16 @@ export function BentoTheoryTabs({
     focusNextHeading.current = moveFocus;
     playSound('tabSwitch');
     setCardIndex(index);
+    onCardChange(lesson.theory[index].id);
   };
 
-  const focusCardHeading = useCallback((heading: HTMLHeadingElement | null) => {
-    if (heading && focusNextHeading.current) {
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (focusNextHeading.current) {
       focusNextHeading.current = false;
-      heading.focus({ preventScroll: true });
-      heading.scrollIntoView({ block: 'start' });
+      headingRef.current?.focus({ preventScroll: true });
     }
-  }, []);
+  }, [cardIndex]);
 
   const isZeroHearts = state.hearts <= 0;
 
@@ -79,7 +90,7 @@ export function BentoTheoryTabs({
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose()}
             aria-label="Wróć z lekcji"
             className="min-w-[44px] min-h-[44px] rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer shrink-0"
           >
@@ -160,130 +171,123 @@ export function BentoTheoryTabs({
       </div>
 
       {/* Active Bento Card Content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentCard.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.18 }}
-          className="study-panel p-5 sm:p-6 space-y-4"
-        >
-          <div>
-            <h2 ref={focusCardHeading} tabIndex={-1} className="text-lg sm:text-xl font-extrabold font-display text-[var(--text-primary)]">
-              <MathText text={currentCard.title} />
-            </h2>
-            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
-              <MathText text={currentCard.subtitle} />
-            </p>
+      <motion.div
+        key={currentCard.id}
+        initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.18 }}
+        className="study-panel p-5 sm:p-6 space-y-4"
+      >
+        <div>
+          <h2 ref={headingRef} tabIndex={-1} className="text-lg sm:text-xl font-extrabold font-display text-[var(--text-primary)]">
+            <MathText text={currentCard.title} />
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
+            <MathText text={currentCard.subtitle} />
+          </p>
+        </div>
+
+        {/* 1. Essence Bullets */}
+        {currentCard.bullets && (
+          <div className="space-y-3">
+            {currentCard.bullets.map((b, i) => (
+              <div
+                key={i}
+                className="p-4 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-start gap-3 text-sm sm:text-base text-[var(--text-primary)]"
+              >
+                <span className="w-6 h-6 rounded-lg bg-[var(--accent-primary)] text-[var(--on-accent)] font-extrabold font-display text-xs flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
+                  {i + 1}
+                </span>
+                <div className="leading-relaxed">
+                  <MathText text={b} />
+                </div>
+              </div>
+            ))}
           </div>
+        )}
 
-          {/* 1. Essence Bullets */}
-          {currentCard.bullets && (
-            <div className="space-y-3">
-              {currentCard.bullets.map((b, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-start gap-3 text-sm sm:text-base text-[var(--text-primary)]"
-                >
-                  <span className="w-6 h-6 rounded-lg bg-[var(--accent-primary)] text-[var(--on-accent)] font-extrabold font-display text-xs flex items-center justify-center shrink-0 mt-0.5 tabular-nums">
-                    {i + 1}
-                  </span>
-                  <div className="leading-relaxed">
-                    <MathText text={b} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 2. Formulas Cassetons */}
-          {currentCard.formulas && (
-            <div className="space-y-3">
-              {currentCard.formulas.map((f, i) => (
-                <div
-                  key={i}
-                  className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] space-y-2"
-                >
-                  <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">
-                    {f.name}
-                  </div>
-                  <div className="p-3 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-center">
-                    <MathText text={f.latex} block />
-                  </div>
-                  <div className="text-xs text-[var(--text-secondary)]">
-                    <strong className="text-[var(--accent-text)]">
-                      Kiedy użyć:
-                    </strong>{' '}
-                    <MathText text={f.whenToUse} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 3. Example 3 Steps */}
-          {currentCard.steps && (
-            <div className="space-y-3">
-              {currentCard.steps.map((st) => (
-                <div
-                  key={st.stepNumber}
-                  className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-start gap-3.5"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-[var(--accent-primary)] text-[var(--on-accent)] font-extrabold font-display text-sm flex items-center justify-center shrink-0 tabular-nums">
-                    {st.stepNumber}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-extrabold font-display text-[var(--text-primary)]">
-                      {st.title}
-                    </h3>
-                    <p className="text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
-                      <MathText text={st.content} />
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 4. Trap E8 (ŹLE vs DOBRZE) */}
-          {currentCard.trap && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* WRONG */}
-              <div className="p-4 rounded-2xl bg-[var(--danger)]/10 border-2 border-[var(--danger)] space-y-2.5">
-                <div className="flex items-center gap-2 text-sm font-extrabold font-display text-[var(--danger)]">
-                  <XCircle className="w-5 h-5 shrink-0" />
-                  <span>{currentCard.trap.wrongTitle}</span>
+        {/* 2. Formulas Cassetons */}
+        {currentCard.formulas && (
+          <div className="space-y-3">
+            {currentCard.formulas.map((f, i) => (
+              <div
+                key={i}
+                className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] space-y-2"
+              >
+                <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">
+                  {f.name}
                 </div>
                 <div className="p-3 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-center">
-                  <MathText text={currentCard.trap.wrongMath} block />
+                  <MathText text={f.latex} block />
                 </div>
-                <p className="text-xs text-[var(--text-primary)] leading-relaxed">
-                  {currentCard.trap.wrongNote}
-                </p>
+                <div className="text-xs text-[var(--text-secondary)]">
+                  <strong className="text-[var(--accent-text)]">
+                    Kiedy użyć:
+                  </strong>{' '}
+                  <MathText text={f.whenToUse} />
+                </div>
               </div>
+            ))}
+          </div>
+        )}
 
-              {/* RIGHT */}
-              <div className="p-4 rounded-2xl bg-[var(--success)]/10 border-2 border-[var(--success)] space-y-2.5">
-                <div className="flex items-center gap-2 text-sm font-extrabold font-display text-[var(--success)]">
-                  <CheckCircle2 className="w-5 h-5 shrink-0" />
-                  <span>{currentCard.trap.rightTitle}</span>
+        {/* 3. Example 3 Steps */}
+        {currentCard.steps && (
+          <ol className="worked-example" aria-label="Rozwiązanie krok po kroku">
+            {currentCard.steps.map((step, index, steps) => (
+              <li key={step.stepNumber} className="worked-example-step">
+                <span className="worked-example-number" aria-hidden="true">{step.stepNumber}</span>
+                <div className="min-w-0">
+                  <h3 className="font-extrabold">{step.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)] sm:text-base">
+                    <MathText text={step.content} />
+                  </p>
+                  {step.equations?.map((equation) => (
+                    <MathText key={equation} text={equation} block className={index === steps.length - 1 ? 'worked-equation worked-equation-result' : 'worked-equation'} />
+                  ))}
                 </div>
-                <div className="p-3 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-center">
-                  <MathText text={currentCard.trap.rightMath} block />
-                </div>
-                <p className="text-xs text-[var(--text-primary)] leading-relaxed">
-                  {currentCard.trap.rightNote}
-                </p>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        {/* 4. Trap E8 (ŹLE vs DOBRZE) */}
+        {currentCard.trap && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* WRONG */}
+            <div className="p-4 rounded-2xl bg-[var(--danger)]/10 border-2 border-[var(--danger)] space-y-2.5">
+              <div className="flex items-center gap-2 text-sm font-extrabold font-display text-[var(--danger)]">
+                <XCircle className="w-5 h-5 shrink-0" />
+                <span>{currentCard.trap.wrongTitle}</span>
               </div>
+              <div className="p-3 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-center">
+                <MathText text={currentCard.trap.wrongMath} block />
+              </div>
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                {currentCard.trap.wrongNote}
+              </p>
             </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
+
+            {/* RIGHT */}
+            <div className="p-4 rounded-2xl bg-[var(--success)]/10 border-2 border-[var(--success)] space-y-2.5">
+              <div className="flex items-center gap-2 text-sm font-extrabold font-display text-[var(--success)]">
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <span>{currentCard.trap.rightTitle}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-[var(--bg-canvas)] border border-[var(--border-subtle)] text-center">
+                <MathText text={currentCard.trap.rightMath} block />
+              </div>
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                {currentCard.trap.rightNote}
+              </p>
+            </div>
+          </div>
+        )}
+      </motion.div>
 
       {/* Bottom Sticky Action Area (Respects AC-H2 & AC-H3 when 0 hearts!) */}
       <div className="p-4 study-panel space-y-3">
-        {isLastCard && isZeroHearts && (
+        {isLastCard && isZeroHearts && !review && (
           <div className="p-3.5 rounded-2xl bg-[var(--danger)]/15 border border-[var(--danger)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 text-xs">
               <HeartCrack className="w-5 h-5 text-[var(--danger)] shrink-0" />
@@ -323,10 +327,12 @@ export function BentoTheoryTabs({
               <span>Wstecz</span>
             </TactileButton>
           )}
-          {isLastCard ? (
+          {isLastCard && review ? (
+            <TactileButton fullWidth onClick={() => onClose(true)}>Zakończ powtórkę materiału</TactileButton>
+          ) : isLastCard ? (
             <TactileButton variant="primary" fullWidth disabled={isZeroHearts} onClick={onStartTasks}>
               <Play className="size-4 shrink-0" />
-              <span>Przejdź do zadań</span>
+              <span>{state.completedLessonIds.includes(lesson.id) ? 'Rozwiąż zadania ponownie' : 'Przejdź do zadań'}</span>
             </TactileButton>
           ) : (
             <TactileButton variant="primary" fullWidth onClick={() => selectCard(cardIndex + 1, true)}>

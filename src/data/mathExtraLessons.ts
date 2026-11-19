@@ -51,8 +51,8 @@ export const MATH_LESSON_1_2: LessonDefinition = {
       subtitle: 'W butelce jest 1 litr wody. Rano wypito $\\frac{1}{4}$ litra, po południu $\\frac{1}{3}$ litra.',
       steps: [
         { stepNumber: 1, title: 'Znajdź wspólny mianownik', content: 'Najmniejsza wspólna wielokrotność 4 i 3 to 12.' },
-        { stepNumber: 2, title: 'Zapisz ułamki w dwunastych', content: '$\\frac{1}{4}=\\frac{3}{12}$ oraz $\\frac{1}{3}=\\frac{4}{12}$.' },
-        { stepNumber: 3, title: 'Dodaj liczniki', content: 'Wypito $\\frac{7}{12}$ litra. Zostało $\\frac{5}{12}$ litra.' },
+        { stepNumber: 2, title: 'Zapisz ułamki w dwunastych', content: 'Zamień obie porcje na części tej samej wielkości.', equations: ['\\frac{1}{4}=\\frac{3}{12}', '\\frac{1}{3}=\\frac{4}{12}'] },
+        { stepNumber: 3, title: 'Odejmij wypitą część od całości', content: 'Wypito siedem dwunastych litra.', equations: ['1 - \\frac{7}{12} = \\frac{5}{12}\\,\\mathrm{l}'] },
       ],
     },
     {
@@ -112,9 +112,9 @@ export const MATH_LESSON_1_3: LessonDefinition = {
       title: 'Dwie obniżki jednej ceny',
       subtitle: 'Buty kosztowały 250 zł. Cenę obniżono najpierw o 20%, a potem o 10%.',
       steps: [
-        { stepNumber: 1, title: 'Policz cenę po pierwszej obniżce', content: '$250\\cdot 0{,}8=200$ zł.' },
+        { stepNumber: 1, title: 'Policz cenę po pierwszej obniżce', content: 'Po obniżce o 20% płacisz 80% ceny.', equations: ['250\\cdot 0{,}8=200\\,\\mathrm{zł}'] },
         { stepNumber: 2, title: 'Zmień podstawę', content: 'Druga obniżka to 10% z 200 zł.' },
-        { stepNumber: 3, title: 'Policz cenę końcową', content: '$200\\cdot 0{,}9=180$ zł. Łącznie cena spadła o 70 zł, czyli o 28%.' },
+        { stepNumber: 3, title: 'Policz cenę końcową', content: 'Od ceny po pierwszej obniżce odejmij kolejne 10%. Łącznie cena spadła o 70 zł, czyli o 28%.', equations: ['200\\cdot 0{,}9=180\\,\\mathrm{zł}'] },
       ],
     },
     {

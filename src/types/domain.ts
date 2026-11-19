@@ -66,7 +66,7 @@ export interface LumiLoadout {
 
 export type TaskType = 'abcd' | 'true_false' | 'numeric' | 'open';
 
-export type TaskEvalOutcome = 'correct' | 'partial' | 'wrong';
+export type TaskEvalOutcome = 'correct' | 'partial' | 'wrong' | 'ungraded';
 
 export interface TaskOption {
   id: string; // 'A' | 'B' | 'C' | 'D' | 'TRUE' | 'FALSE'
@@ -106,6 +106,7 @@ export interface BentoTheoryCard {
     stepNumber: number;
     title: string;
     content: string;
+    equations?: string[];
   }>;
   trap?: {
     wrongTitle: string;
@@ -151,10 +152,17 @@ export interface ActiveTaskSession {
   sessionId: string;
   source: SessionSource;
   contentId: string; // e.g. 'lesson:1.1' or 'practice:saved'
+  reviewLessonId?: string;
   subjectId: SubjectId;
   title: string;
   taskIds: string[];
   currentIndex: number;
+  draft?: {
+    taskId: string;
+    value: string;
+    hintsUsed: number;
+    work?: { mode: 'draw' | 'photo' | 'text'; strokes: string[]; result: string };
+  };
   answers: Record<
     string,
     {
@@ -164,6 +172,7 @@ export interface ActiveTaskSession {
       hintsUsed: number;
       aiScore?: 0 | 1 | 2;
       aiFeedback?: string;
+      reviewRequested?: boolean;
       matchedKeywords?: string[];
     }
   >;
@@ -290,6 +299,10 @@ export interface AppState {
   activeSession: ActiveTaskSession | null;
   pausedLessonSession?: ActiveTaskSession;
   pausedLessons?: Record<string, ActiveTaskSession>;
+  theoryCards?: Record<string, BentoTheoryCard['id']>;
+  openTheory?: { lessonId: string; review: boolean };
+  taskSessionPaused?: boolean;
+  lessonReviewTasks?: Record<string, string[]>;
 
   // Exam history
   examHistory: ExamAttemptRecord[];

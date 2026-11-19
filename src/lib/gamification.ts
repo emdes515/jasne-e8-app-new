@@ -108,7 +108,7 @@ export function getTaskBaseXp(
   outcome: TaskEvalOutcome,
   openScore?: 0 | 1 | 2
 ): number {
-  if (outcome === 'wrong') return 0;
+  if (outcome === 'wrong' || outcome === 'ungraded') return 0;
   if (type === 'open') {
     if (openScore === 2 || outcome === 'correct') return 25;
     if (openScore === 1 || outcome === 'partial') return 12;
@@ -140,7 +140,7 @@ export function calculateTaskXp(params: {
     source = 'lesson',
   } = params;
 
-  if (outcome === 'wrong') return 0;
+  if (outcome === 'wrong' || outcome === 'ungraded') return 0;
 
   let baseXp = getTaskBaseXp(type, outcome, openScore);
   if (baseXp <= 0) return 0;

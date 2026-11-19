@@ -22,9 +22,11 @@ import {
   StudyStageId,
   SubjectId,
   TaskEvalOutcome,
+  BentoTheoryCard,
   ThemeMode,
 } from '../types/domain';
 import { appStateRepository } from '../services/storage/firebaseReadyStub';
+import { clearLessonDraftPhotos, saveLessonDraftPhoto } from '../services/storage/lessonDraftPhoto';
 import { createInitialAppState } from '../services/storage/localStateRepo';
 import { soundEngine, SoundEvent } from '../services/audio/soundEngine';
 import { getWarsawPlayerDay } from '../lib/playerDay';
@@ -97,10 +99,12 @@ export interface SessionCompletionSummary {
   source: SessionSource;
   contentId: string;
   reviewTaskIds: string[];
+  reviewLessonId?: string;
   title: string;
   xpEarned: number;
   coinsEarned: number;
   accuracyPercent: number;
+  ungradedCount: number;
   correctCount: number;
   totalCount: number;
   isRepeatToday: boolean;
@@ -165,12 +169,16 @@ interface AppStateContextValue {
 
   // Lesson & Practice Sessions
   selectedLessonId: string;
-  openLessonTheory: (lessonId?: string) => void;
+  openLessonTheory: (lessonId?: string, review?: boolean) => void;
+  saveTheoryCard: (lessonId: string, cardId: BentoTheoryCard['id']) => void;
+  closeLessonTheory: (completed?: boolean) => void;
+  saveTaskDraft: (sessionId: string, draft: ActiveTaskSession['draft']) => void;
   startLessonTasks: (lessonId?: string) => boolean;
   startPracticeSession: (
     source: 'saved' | 'bank' | 'rescue',
     filterSubject?: SubjectId | 'all',
-    taskIds?: readonly string[]
+    taskIds?: readonly string[],
+    reviewLessonId?: string
   ) => boolean;
   submitSessionTaskAnswer: (params: {
     sessionId: string;
@@ -180,6 +188,7 @@ interface AppStateContextValue {
     hintsUsed: number;
     aiScore?: 0 | 1 | 2;
     aiFeedback?: string;
+    reviewRequested?: boolean;
     matchedKeywords?: string[];
   }) => {
     xpAwarded: number;
@@ -333,7 +342,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
 
     // If there was an active lesson/practice session before F5, restore view
-    if (current.activeSession && current.onboardingCompleted) {
+    const restoredTheory = current.openTheory && findMathLesson(current.openTheory.lessonId);
+    if (current.onboardingCompleted && restoredTheory) {
+      setSelectedLessonId(restoredTheory.id);
+      setLessonViewStage('theory');
+    } else if (current.activeSession && current.onboardingCompleted && !current.taskSessionPaused) {
       setLessonViewStage('tasks');
       setTimeout(() => {
         pushToast('Wróciliśmy do Twojej przerwanej sesji!', 'info');
@@ -376,8 +389,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         appStateRepository.flush();
       }
     };
-    window.addEventListener('visibilitychange', handleVis);
-    return () => window.removeEventListener('visibilitychange', handleVis);
+    const flush = () => appStateRepository.flush();
+    document.addEventListener('visibilitychange', handleVis);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVis);
+      window.removeEventListener('pagehide', flush);
+    };
   }, []);
 
   // Periodic 1s timer to update heart regeneration countdown and auto-grant hearts
@@ -539,14 +557,45 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
 
-  const openLessonTheory = useCallback((lessonId?: string) => {
+  const openLessonTheory = useCallback((lessonId?: string, review = false) => {
     const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(stateRef.current);
     if (!lesson) return;
     playSound('tap');
     setSelectedLessonId(lesson.id);
-    setState((prev) => ({ ...prev, activeSubject: lesson.subjectId }));
+    setState((prev) => ({
+      ...prev,
+      activeSubject: lesson.subjectId,
+      openTheory: { lessonId: lesson.id, review },
+      taskSessionPaused: true,
+      theoryCards: { ...prev.theoryCards, [lesson.id]: prev.theoryCards?.[lesson.id] ?? lesson.theory[0].id },
+    }));
     setLessonViewStage('theory');
   }, [playSound]);
+
+  const saveTheoryCard = useCallback((lessonId: string, cardId: BentoTheoryCard['id']) => {
+    setState((previous) => ({
+      ...previous,
+      theoryCards: { ...previous.theoryCards, [lessonId]: cardId },
+    }));
+  }, []);
+
+  const closeLessonTheory = useCallback((completed = false) => {
+    setState((previous) => {
+      const theoryCards = { ...previous.theoryCards };
+      if (completed && previous.openTheory) delete theoryCards[previous.openTheory.lessonId];
+      return { ...previous, openTheory: undefined, theoryCards };
+    });
+    setLessonViewStage('none');
+  }, []);
+
+  const saveTaskDraft = useCallback((sessionId: string, draft: ActiveTaskSession['draft']) => {
+    setState((previous) => {
+      const session = previous.activeSession;
+      if (!session || session.sessionId !== sessionId || !draft ||
+          session.taskIds[session.currentIndex] !== draft.taskId || session.answers[draft.taskId]) return previous;
+      return { ...previous, activeSession: { ...session, draft } };
+    });
+  }, []);
 
   const startLessonTasks = useCallback((lessonId?: string): boolean => {
     const current = stateRef.current;
@@ -558,12 +607,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
+    if (current.activeSession && current.activeSession.source !== 'lesson') {
+      void saveLessonDraftPhoto(current.activeSession.sessionId, null).catch(() => {});
+    }
     const savedAttempt = getLessonAttempt(current, lesson.id);
     const nextIndex = savedAttempt?.taskIds.findIndex((taskId) => !savedAttempt.answers[taskId]) ?? 0;
     const nextSession: ActiveTaskSession = savedAttempt
       ? {
           ...savedAttempt,
-          currentIndex: nextIndex >= 0 ? nextIndex : savedAttempt.taskIds.length - 1,
+          currentIndex: savedAttempt.interruptedByZeroHearts && nextIndex >= 0 ? nextIndex : savedAttempt.currentIndex,
           interruptedByZeroHearts: false,
         }
       : {
@@ -582,13 +634,20 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     playSound('tap');
     setSelectedLessonId(lesson.id);
-    setState((previous) => ({
-      ...previous,
-      activeSubject: lesson.subjectId,
-      pausedLessonSession: undefined,
-      pausedLessons: parkActiveLesson(previous, lesson.id),
-      activeSession: nextSession,
-    }));
+    setState((previous) => {
+      const theoryCards = { ...previous.theoryCards };
+      delete theoryCards[lesson.id];
+      return {
+        ...previous,
+        activeSubject: lesson.subjectId,
+        openTheory: undefined,
+        taskSessionPaused: false,
+        theoryCards,
+        pausedLessonSession: undefined,
+        pausedLessons: parkActiveLesson(previous, lesson.id),
+        activeSession: nextSession,
+      };
+    });
     setLessonViewStage('tasks');
     return true;
   }, [playSound]);
@@ -597,7 +656,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     (
       source: 'saved' | 'bank' | 'rescue',
       filterSubject: SubjectId | 'all' = 'all',
-      reviewTaskIds?: readonly string[]
+      reviewTaskIds?: readonly string[],
+      reviewLessonId?: string
     ): boolean => {
       const cur = stateRef.current;
 
@@ -633,6 +693,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
+      if (reviewLessonId && cur.activeSession?.reviewLessonId === reviewLessonId) {
+        setState((previous) => ({ ...previous, taskSessionPaused: false }));
+        setLessonViewStage('tasks');
+        return true;
+      }
+
       if (reviewTaskIds) {
         taskIds.push(...new Set(reviewTaskIds.filter((id) => ALL_TASKS_BY_ID[id])));
       } else if (source === 'saved') {
@@ -662,12 +728,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         rescue: 'Misja Ratunkowa (+1 Serce za 2 poprawne)',
       };
 
+      if (cur.activeSession && cur.activeSession.source !== 'lesson') {
+        void saveLessonDraftPhoto(cur.activeSession.sessionId, null).catch(() => {});
+      }
       const newSession: ActiveTaskSession = {
         sessionId: `sess-${source}-${Date.now()}`,
         source,
         contentId: `practice:${source}`,
         subjectId: 'math',
         title: titleMap[source],
+        reviewLessonId,
         taskIds,
         currentIndex: 0,
         answers: {},
@@ -680,6 +750,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         pausedLessonSession: undefined,
         pausedLessons: parkActiveLesson(prev),
+        openTheory: undefined,
+        taskSessionPaused: false,
         activeSession: newSession,
       }));
       setLessonViewStage('tasks');
@@ -706,6 +778,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       hintsUsed: number;
       aiScore?: 0 | 1 | 2;
       aiFeedback?: string;
+      reviewRequested?: boolean;
       matchedKeywords?: string[];
     }) => {
       const cur = stateRef.current;
@@ -721,6 +794,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           rescueHeartJustEarned: false,
         };
       }
+
+      if (task.type === 'open') void saveLessonDraftPhoto(session.sessionId, null).catch(() => {});
 
       const isPractice =
         session.source === 'saved' ||
@@ -769,7 +844,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         if (nextCombo === 3 || nextCombo === 5 || nextCombo === 8) {
           setTimeout(() => playSound('comboUp'), 140);
         }
-      } else {
+      } else if (params.outcome === 'wrong') {
         playSound('wrong');
         setTimeout(() => playSound('heartLoss'), 90);
         setHeartEventTick({ type: 'loss', tick: nowMs });
@@ -855,7 +930,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       // Accuracy stats (excluding practice sessions, per Section 6.3.2)
       let addPointsEarned = 0;
       let addPointsPossible = 0;
-      if (!isPractice) {
+      if (!isPractice && params.outcome !== 'ungraded') {
         if (task.type === 'open') {
           addPointsEarned = params.aiScore ?? 0;
           addPointsPossible = 2;
@@ -876,6 +951,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           aiScore: params.aiScore,
           aiFeedback: params.aiFeedback,
           matchedKeywords: params.matchedKeywords,
+          reviewRequested: params.reviewRequested,
         },
       };
 
@@ -930,6 +1006,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           ? {
               ...prev.activeSession,
               answers: updatedSessionAnswers,
+              draft: undefined,
               comboCount: nextCombo,
               lastAnsweredAt: nowMs,
               interruptedByZeroHearts: zeroHeartsReached,
@@ -984,6 +1061,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     let pointsPossible = 0;
     for (const taskId of session.taskIds) {
       const answer = session.answers[taskId];
+      if (answer?.outcome === 'ungraded') continue;
       const isOpen = ALL_TASKS_BY_ID[taskId]?.type === 'open';
       pointsPossible += isOpen ? 2 : 1;
       pointsEarned += isOpen ? (answer?.aiScore ?? 0) : Number(answer?.outcome === 'correct');
@@ -1057,13 +1135,17 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         ? [...cur.completedLessonIds, session.contentId]
         : cur.completedLessonIds;
 
+    const reviewTaskIds = session.taskIds.filter((id) => {
+      const answer = session.answers[id];
+      return answer && (answer.outcome === 'wrong' || answer.outcome === 'partial' || answer.reviewRequested);
+    });
+    const ungradedCount = answersList.filter((answer) => answer.outcome === 'ungraded').length;
     setLastSessionSummary({
       source: session.source,
       contentId: session.contentId,
-      reviewTaskIds: session.taskIds.filter((id) => {
-        const answer = session.answers[id];
-        return answer && (answer.outcome === 'wrong' || answer.outcome === 'partial');
-      }),
+      reviewTaskIds,
+      reviewLessonId: session.reviewLessonId,
+      ungradedCount,
       title: session.title,
       xpEarned: xpAwarded,
       coinsEarned: coinsAwarded,
@@ -1093,6 +1175,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         : prev.dailyLessonsCompleted,
       dailyChallenges: nextChallenges,
       completedLessonIds: completedIds,
+      lessonReviewTasks: isLesson
+        ? { ...prev.lessonReviewTasks, [session.contentId]: reviewTaskIds }
+        : session.reviewLessonId
+          ? { ...prev.lessonReviewTasks, [session.reviewLessonId]: reviewTaskIds }
+          : prev.lessonReviewTasks,
       rewardLedger: updatedLedger,
       activeSession: null,
     }));
@@ -1110,6 +1197,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const nextIndex = activeSession.taskIds.findIndex((id) => !activeSession.answers[id]);
     setState((previous) => ({
       ...previous,
+      taskSessionPaused: false,
       activeSession: {
         ...activeSession,
         currentIndex: nextIndex >= 0 ? nextIndex : activeSession.taskIds.length - 1,
@@ -1121,6 +1209,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const abortActiveSession = useCallback(() => {
     playSound('tap');
+    setState((previous) => ({ ...previous, taskSessionPaused: true }));
     setLessonViewStage('none');
   }, [playSound]);
 
@@ -1529,6 +1618,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const resetAllLocalProgress = useCallback(() => {
     appStateRepository.clearAll();
+    void clearLessonDraftPhotos().catch(() => {});
     const fresh = createInitialAppState();
     soundEngine.setEnabled(fresh.sfxEnabled);
     setState(fresh);
@@ -1580,6 +1670,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       updateProfileSettings,
       selectedLessonId,
       openLessonTheory,
+      saveTheoryCard,
+      closeLessonTheory,
+      saveTaskDraft,
       startLessonTasks,
       startPracticeSession,
       submitSessionTaskAnswer,
@@ -1623,6 +1716,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       updateProfileSettings,
       selectedLessonId,
       openLessonTheory,
+      saveTheoryCard,
+      closeLessonTheory,
+      saveTaskDraft,
       startLessonTasks,
       startPracticeSession,
       submitSessionTaskAnswer,

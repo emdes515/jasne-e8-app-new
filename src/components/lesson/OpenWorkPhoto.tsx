@@ -25,10 +25,11 @@ function PhotoPreview({ file }: { file: File }) {
   return <img ref={imageRef} alt="Zdjęcie rozwiązania" className="mx-auto max-h-96 w-full rounded-xl object-contain" />;
 }
 
-export function OpenWorkPhoto({ photo, disabled, onChange }: {
+export function OpenWorkPhoto({ photo, disabled, onChange, savesDraft = false }: {
   photo: File | null;
   disabled: boolean;
   onChange: (file: File | null) => void;
+  savesDraft?: boolean;
 }) {
   const chooser = useRef<HTMLInputElement>(null);
   const camera = useRef<HTMLInputElement>(null);
@@ -106,7 +107,7 @@ export function OpenWorkPhoto({ photo, disabled, onChange }: {
       )}
       {busy && <p role="status" className="text-sm text-[var(--text-secondary)]">Otwieram zdjęcie…</p>}
       {error && <p role="alert" className="text-sm text-[var(--danger)]">{error}</p>}
-      <p className="text-xs text-[var(--text-secondary)]">Zdjęcie zostaje na urządzeniu do zamknięcia zadania.</p>
+      <p className="text-xs text-[var(--text-secondary)]">{savesDraft ? 'Zdjęcie zostaje na tym urządzeniu do sprawdzenia lub usunięcia.' : 'Zdjęcie zostaje na urządzeniu do zamknięcia zadania.'}</p>
     </div>
   );
 }

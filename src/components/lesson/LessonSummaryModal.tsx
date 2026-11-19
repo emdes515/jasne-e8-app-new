@@ -118,7 +118,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
             />
           </div>
           <span className="text-[11px] font-bold text-[var(--text-secondary)]">
-            Zdobyte punkty
+            Skuteczność
           </span>
         </div>
 
@@ -137,6 +137,12 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
           </span>
         </div>
       </motion.div>
+
+      {summary.ungradedCount > 0 && (
+        <p className="text-sm text-[var(--text-secondary)]">
+          Samodzielnie porównane zadania ({summary.ungradedCount}) nie wliczają się do skuteczności.
+        </p>
+      )}
 
       {/* Streak Milestone Bonus if any */}
       {summary.streakMilestoneCoins > 0 && (
@@ -188,7 +194,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
           <p className="mt-1 mb-3 text-sm text-[var(--text-secondary)]">
             Zadania do poprawy: {summary.reviewTaskIds.length}.
           </p>
-          <TactileButton fullWidth onClick={() => startPracticeSession('bank', 'all', summary.reviewTaskIds)}>
+          <TactileButton fullWidth onClick={() => startPracticeSession('bank', 'all', summary.reviewTaskIds, summary.contentId)}>
             <RotateCcw size={17} /> Powtórz błędy
           </TactileButton>
         </section>
@@ -206,10 +212,10 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
             fullWidth
             onClick={() => {
               clearSessionSummary();
-              setActiveTab('vault');
+              setActiveTab(summary.reviewLessonId ? 'learn' : 'vault');
             }}
           >
-            <span>Wróć do Powtórek</span>
+            <span>{summary.reviewLessonId ? 'Wróć do ścieżki nauki' : 'Wróć do powtórek'}</span>
             <ArrowRight className="w-5 h-5" />
           </TactileButton>
         ) : (
@@ -219,11 +225,11 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
               size="lg"
               onClick={() => {
                 clearSessionSummary();
-                openLessonTheory(summary.contentId);
+                openLessonTheory(summary.contentId, true);
               }}
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Powtórz lekcję</span>
+              <span>Powtórz materiał</span>
             </TactileButton>
             <TactileButton
               variant="primary"

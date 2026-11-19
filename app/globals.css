@@ -147,6 +147,200 @@ h4,
   transform: rotate(8deg);
 }
 
+
+.welcome-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 5.75rem;
+}
+
+.welcome-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.welcome-track {
+  position: absolute;
+  width: 5.5rem;
+  height: 2.45rem;
+  border: 1px solid color-mix(in srgb, var(--accent-text) 58%, transparent);
+  border-radius: 50%;
+  transform: rotate(-23deg);
+  z-index: -1;
+}
+
+.welcome-spark {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--accent-text);
+}
+
+.welcome-entrance .welcome-orbit {
+  animation: lumi-arrival 720ms cubic-bezier(.2,.65,.3,1) both;
+}
+
+.welcome-entrance .welcome-spark {
+  animation: welcome-spark 760ms ease-out both;
+}
+
+@keyframes lumi-arrival {
+  0% { opacity: 0; transform: translate(22px, 17px) rotate(18deg) scale(.72); }
+  56% { opacity: 1; transform: translate(-4px, -7px) rotate(-9deg) scale(1.08); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes welcome-spark {
+  0%, 35% { opacity: 0; transform: scale(.35) rotate(-28deg); }
+  70% { opacity: 1; transform: scale(1.35); }
+  100% { opacity: 1; transform: none; }
+}
+
+.study-lesson-symbol {
+  color: var(--accent-text);
+  font: 800 clamp(2rem, 8vw, 3.5rem)/1 'Plus Jakarta Sans', sans-serif;
+}
+
+.learn-map-header {
+  background-image: repeating-linear-gradient(
+    135deg, transparent 0 15px, color-mix(in srgb, var(--accent-text) 6%, transparent) 15px 16px
+  );
+}
+
+.learn-route { display: grid; gap: 0.95rem; padding-left: 0.125rem; }
+
+.learn-stop {
+  --route-column: 2.4rem;
+  --route-gap: 0.6rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--route-column) minmax(0, 1fr);
+  gap: var(--route-gap);
+  align-items: start;
+}
+
+.learn-stop:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 2.8rem;
+  bottom: -2.2rem;
+  left: calc(var(--route-column) / 2 - 1px);
+  border-left: 2px dashed var(--border-subtle);
+}
+
+.learn-stop[data-state='done']::after { border-color: var(--success); border-left-style: solid; }
+
+.learn-marker {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--route-column);
+  aspect-ratio: 1;
+  margin-top: 0.82rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.learn-marker-dot { width: 0.45rem; aspect-ratio: 1; border-radius: 50%; background: currentColor; }
+.learn-stop[data-state='done'] .learn-marker { color: var(--success); border-color: var(--success); }
+.learn-stop[data-state='current'] .learn-marker {
+  background: var(--accent-primary);
+  color: var(--on-accent);
+  border-color: var(--accent-primary-edge);
+  box-shadow: 0 3px var(--accent-primary-edge);
+}
+.learn-stop[data-state='current'] .learn-lesson {
+  border-color: var(--accent-text);
+  box-shadow: 0 3px color-mix(in srgb, var(--accent-text) 22%, transparent);
+}
+
+.worked-example { display: grid; }
+.worked-example-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: 0.625rem;
+  padding-block: 0.875rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.worked-example-number {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.625rem;
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent-text) 10%, var(--bg-surface));
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.worked-equation {
+  margin-top: 0.45rem;
+  border-radius: 0.65rem;
+  padding-inline: 0.45rem;
+  background: var(--bg-canvas);
+  font-size: clamp(0.875rem, 3.8vw, 1.0625rem);
+}
+.worked-equation .katex-display { margin: 0.3em 0; }
+.worked-equation-result:last-child {
+  border: 1px solid color-mix(in srgb, var(--success) 58%, var(--border-subtle));
+}
+
+.tutor-analysis {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 4.75rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  background: var(--bg-elevated);
+}
+
+.tutor-analysis-figure {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  background: var(--bg-canvas);
+}
+
+.tutor-scan {
+  position: absolute;
+  inset: 0.25rem 0.2rem auto;
+  height: 1px;
+  background: var(--info);
+  animation: tutor-scan 680ms cubic-bezier(.32,.02,.35,1) both;
+}
+
+@keyframes tutor-scan {
+  from { transform: translateY(0); opacity: 0.5; }
+  45% { opacity: 1; }
+  to { transform: translateY(2.4rem); opacity: 0; }
+}
+
+@media (min-width: 640px) {
+  .welcome-header { grid-template-columns: minmax(0, 1fr) 7rem; }
+  .learn-stop { --route-column: 3rem; --route-gap: 1rem; }
+  .worked-example-step { gap: 0.875rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-entrance .welcome-orbit,
+  .welcome-entrance .welcome-spark,
+  .tutor-scan { animation: none; }
+  .tutor-scan { display: none; }
+}
+
 .study-progress {
   display: block;
   width: 100%;

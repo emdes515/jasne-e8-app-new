@@ -93,7 +93,7 @@ export function LumiMascot({
       const delay = 3200 + Math.random() * 1800;
       timeoutId = setTimeout(() => {
         setBlinking(true);
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           setBlinking(false);
           scheduleBlink();
         }, 140);

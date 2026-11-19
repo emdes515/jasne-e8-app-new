@@ -15,12 +15,13 @@ const methods = [
 
 const symbols = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '−', '×', '÷', '/', ',', '(', ')', '=', '%', '√', '²', '^'];
 
-export function OpenWorkInput({ work, onWorkChange, text, onTextChange, disabled }: {
+export function OpenWorkInput({ work, onWorkChange, text, onTextChange, disabled, optionalResult = false }: {
   work: OpenWorkDraft;
   onWorkChange: (patch: Partial<OpenWorkDraft>) => void;
   text: string;
   onTextChange: (value: string) => void;
   disabled: boolean;
+  optionalResult?: boolean;
 }) {
   const textField = useRef<HTMLTextAreaElement>(null);
   const textId = useId();
@@ -66,7 +67,7 @@ export function OpenWorkInput({ work, onWorkChange, text, onTextChange, disabled
       </fieldset>
 
       {work.mode === 'draw' && <OpenWorkPad strokes={work.strokes} disabled={disabled} onChange={(strokes) => onWorkChange({ strokes })} />}
-      {work.mode === 'photo' && <OpenWorkPhoto photo={work.photo} disabled={disabled} onChange={(photo) => onWorkChange({ photo })} />}
+      {work.mode === 'photo' && <OpenWorkPhoto savesDraft={optionalResult} photo={work.photo} disabled={disabled} onChange={(photo) => onWorkChange({ photo })} />}
       {work.mode === 'text' ? (
         <div className="space-y-2">
           <label htmlFor={textId} className="block text-sm font-semibold">Zapisz obliczenia lub uzasadnienie</label>
@@ -99,7 +100,7 @@ export function OpenWorkInput({ work, onWorkChange, text, onTextChange, disabled
         </div>
       ) : (
         <div className="space-y-2">
-          <label htmlFor={resultId} className="block text-sm font-semibold">Wynik końcowy</label>
+          <label htmlFor={resultId} className="block text-sm font-semibold">{optionalResult ? "Wynik końcowy (opcjonalnie)" : "Wynik końcowy"}</label>
           <input
             id={resultId}
             type="text"
@@ -113,7 +114,9 @@ export function OpenWorkInput({ work, onWorkChange, text, onTextChange, disabled
             onChange={(event) => onWorkChange({ result: event.target.value })}
           />
           <p id={resultId + '-check'} className="text-xs text-[var(--text-secondary)]">
-            Sprawdzamy wpisany wynik. Zapis obliczeń porównasz z rozwiązaniem.
+            {optionalResult
+              ? 'Możesz porównać swój zapis z rozwiązaniem albo wpisać liczbę do sprawdzenia.'
+              : 'Sprawdzamy wpisany wynik. Zapis obliczeń porównasz z rozwiązaniem.'}
           </p>
         </div>
       )}

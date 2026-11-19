@@ -12,7 +12,8 @@ export function LessonView() {
     state,
     lessonViewStage,
     selectedLessonId,
-    setLessonViewStage,
+    closeLessonTheory,
+    saveTheoryCard,
     startLessonTasks,
     lastSessionSummary,
   } = useAppState();
@@ -24,7 +25,10 @@ export function LessonView() {
       <BentoTheoryTabs
         key={lesson.id}
         lesson={lesson}
-        onClose={() => setLessonViewStage('none')}
+        savedCard={state.theoryCards?.[lesson.id]}
+        review={state.openTheory?.review ?? false}
+        onCardChange={(cardId) => saveTheoryCard(lesson.id, cardId)}
+        onClose={closeLessonTheory}
         onStartTasks={() => {
           startLessonTasks(lesson.id);
         }}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen, BookmarkCheck, Flame, Play, Timer } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLessonMock';
@@ -14,26 +15,42 @@ export function StartView() {
   const goal = computeDailyGoalProgress(state);
   const isMath = state.activeSubject === 'math';
   const lesson = getRecommendedMathLesson(state);
-  const hasPausedLesson = Boolean(getLessonAttempt(state, lesson.id));
+  const hasPausedTasks = Boolean(getLessonAttempt(state, lesson.id));
+  const hasPausedTheory = Boolean(state.theoryCards?.[lesson.id]);
+  const [playWelcome] = useState(() => {
+    try { return !sessionStorage.getItem('jasne-e8:welcomed'); } catch { return false; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem('jasne-e8:welcomed', '1'); } catch { /* Storage is optional. */ }
+  }, []);
   const completed = state.completedLessonIds.includes(lesson.id);
   const reviewCount = state.mistakeBank.length + state.savedTasks.length;
   const accuracy = state.accuracyPointsPossible
     ? Math.round((state.accuracyPointsEarned / state.accuracyPointsPossible) * 100)
     : null;
 
-  const lessonAction = hasPausedLesson && state.hearts > 0 ? 'Wznów lekcję' : completed ? 'Powtórz lekcję' : 'Otwórz lekcję';
+  const lessonAction = (hasPausedTasks || hasPausedTheory) ? 'Wznów lekcję' : completed ? 'Powtórz materiał' : 'Otwórz lekcję';
   const subjectName = state.activeSubject === 'polish' ? 'Język polski' : 'Język angielski';
 
   return (
     <div className="space-y-7">
-      <h1 className="page-heading [overflow-wrap:anywhere]">Cześć, {state.nickname}!</h1>
+      <header className={playWelcome ? 'welcome-header welcome-entrance' : 'welcome-header'}>
+        <div className="min-w-0">
+          <h1 className="page-heading [overflow-wrap:anywhere]">{state.totalTasksSolved > 0 ? 'Miło Cię widzieć' : 'Cześć'}, {state.nickname}!</h1>
+        </div>
+        <div className="welcome-orbit" aria-hidden="true">
+          <span className="welcome-track" />
+          <span className="welcome-spark">✦</span>
+          <LumiMascot mood="focused" loadout={state.loadout} size="sm" />
+        </div>
+      </header>
 
       <StartStreakPanel />
 
       <section aria-labelledby="start-lesson" className="study-feature grid gap-5 p-4 sm:gap-7 sm:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,42%)] sm:items-center">
-        <div className="study-board flex min-h-36 items-center justify-center sm:order-last sm:self-stretch" aria-hidden="true">
+        <div className="study-board study-lesson-art flex min-h-28 items-center justify-center sm:order-last sm:self-stretch" aria-hidden="true">
           <span className="study-board-mark">{isMath ? '2³' : 'A'}</span>
-          <LumiMascot mood={goal.percent >= 100 ? 'celebrate' : 'happy'} loadout={state.loadout} size="md" />
+          <span className="study-lesson-symbol" aria-hidden="true">{isMath ? '½' : '↗'}</span>
           <span className="study-board-mark">{isMath ? '√9' : 'B'}</span>
         </div>
         <div className="min-w-0 sm:py-2">
@@ -46,8 +63,8 @@ export function StartView() {
           <TactileButton
             onClick={() => {
               if (!isMath) setActiveTab('learn');
-              else if (hasPausedLesson && state.hearts > 0) startLessonTasks(lesson.id);
-              else openLessonTheory(lesson.id);
+              else if (hasPausedTasks && !hasPausedTheory) startLessonTasks(lesson.id);
+              else openLessonTheory(lesson.id, completed);
             }}
             className="w-full sm:w-auto"
           >

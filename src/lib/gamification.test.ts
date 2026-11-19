@@ -23,9 +23,10 @@ import {
   validateNickname,
 } from './gamification';
 import { evaluateOpenTaskDeterministic } from '../services/ai/aiTutorMock';
-import { MATH_LESSON_1_1, MATH_LESSONS } from '../data/mathLessonMock';
+import { getRecommendedMathLesson, MATH_LESSON_1_1, MATH_LESSONS } from '../data/mathLessonMock';
 import { ALL_TASKS_BY_ID, MATH_MINI_EXAM_TASKS } from '../data/mathExamMock';
-import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult } from './openWork';
+import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, hasVisualWork, matchesMathResult } from './openWork';
+import { createInitialAppState } from '../services/storage/localStateRepo';
 import { OpenTaskRubric } from '../types/domain';
 
 test('AC-S1, AC-S5, AC-S6: Europe/Warsaw playerDay and DST-safe calendar difference', () => {
@@ -324,4 +325,20 @@ test('A shield protecting a skipped day is not consumed again after reopening', 
   assert.equal(reopened.streakDays, 2);
   assert.equal(reopened.shieldsConsumed, 0);
   assert.equal(recordDayCompletion({ ...reopened, today: '2026-03-30', claimedStreakMilestones: [] }).streakDays, 3);
+});
+
+test('Start recommends resuming theory even when earlier lessons are incomplete', () => {
+  const state = createInitialAppState();
+  const lesson = MATH_LESSONS[2];
+  state.theoryCards = { [lesson.id]: 'example' };
+  assert.equal(getRecommendedMathLesson(state).id, lesson.id);
+});
+
+test('Visual work can be compared without a numeric result or awarded XP', () => {
+  const work = { ...EMPTY_OPEN_WORK, strokes: ['M0 0 L1 1'] };
+  assert.equal(hasVisualWork(work), true);
+  assert.equal(getOpenAnswer(work, ''), '');
+  assert.equal(calculateTaskXp({
+    type: 'open', outcome: 'ungraded', hintsUsed: 0, comboCountAfterAnswer: 5, source: 'lesson',
+  }), 0);
 });

@@ -16,10 +16,13 @@ export const EMPTY_OPEN_WORK: OpenWorkDraft = {
   result: '',
 };
 
+export function hasVisualWork(draft: OpenWorkDraft): boolean {
+  return draft.mode === 'draw' ? draft.strokes.length > 0 : draft.mode === 'photo' && Boolean(draft.photo);
+}
+
 export function getOpenAnswer(draft: OpenWorkDraft, text: string): string {
   if (draft.mode === 'text') return text.trim();
-  const hasWork = draft.mode === 'draw' ? draft.strokes.length > 0 : Boolean(draft.photo);
-  return hasWork ? draft.result.trim() : '';
+  return hasVisualWork(draft) ? draft.result.trim() : '';
 }
 
 function parseMathResult(input: string): number | null {
