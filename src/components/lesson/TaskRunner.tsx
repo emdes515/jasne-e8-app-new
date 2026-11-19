@@ -10,9 +10,6 @@ import {
   Heart,
   Flame,
   ArrowRight,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Play,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -20,7 +17,7 @@ import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
 import { loadLessonDraftPhoto, saveLessonDraftPhoto } from '../../services/storage/lessonDraftPhoto';
 import { aiTutorService, MOCK_AI_LATENCY_MS } from '../../services/ai/aiTutorMock';
 import { AiTutorEvaluationResult } from '../../types/repositories';
-import { LumiMood, TaskEvalOutcome } from '../../types/domain';
+import { TaskEvalOutcome } from '../../types/domain';
 import {
   getComboMultiplier,
   HEART_REFILL_PRICE,
@@ -34,6 +31,7 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { AnswerOptionCard } from './AnswerOptionCard';
 import { SmartMathKeyboard } from './SmartMathKeyboard';
 import { OpenTaskAiBox } from './OpenTaskAiBox';
+import { TaskResult } from './TaskResult';
 import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult, type OpenWorkDraft } from '../../lib/openWork';
 
 export function TaskRunner() {
@@ -73,6 +71,8 @@ function TaskRunnerQuestion() {
   const [comparing, setComparing] = useState(false);
   const evaluationVersion = useRef(0);
   const photoEdited = useRef(false);
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  const [showRecovery, setShowRecovery] = useState(false);
   const [hintsSheetOpen, setHintsSheetOpen] = useState<boolean>(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState<boolean>(false);
   const [bookmarkAnimTick, setBookmarkAnimTick] = useState<number>(0);
@@ -84,12 +84,16 @@ function TaskRunnerQuestion() {
   const [checkedFeedback, setCheckedFeedback] = useState<{
     outcome: TaskEvalOutcome;
     xpAwarded: number;
-    lumiMood: LumiMood;
   } | null>(() => priorAnswer ? {
     outcome: priorAnswer.outcome,
     xpAwarded: priorAnswer.xpAwarded,
-    lumiMood: 'focused',
   } : null);
+
+  const hasResult = Boolean(checkedFeedback);
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    if (hasResult && !showRecovery) resultHeading.current?.focus({ preventScroll: true });
+  }, [hasResult, showRecovery]);
 
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
@@ -128,24 +132,12 @@ function TaskRunnerQuestion() {
     return () => clearInterval(id);
   }, []);
 
-  // Surprised mood transitions to supportive after 1s on wrong answer (Master Spec Section 3.2 #5)
-  useEffect(() => {
-    if (checkedFeedback?.lumiMood === 'surprised') {
-      const timer = setTimeout(() => {
-        setCheckedFeedback((prev) =>
-          prev ? { ...prev, lumiMood: 'supportive' } : null
-        );
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [checkedFeedback?.lumiMood]);
-
   if (!session || !currentTask) {
     return null;
   }
 
   // Check if session was interrupted by reaching 0 hearts (Section 6.5 Step C.1 & AC-H7)
-  if (session.interruptedByZeroHearts) {
+  if (session.interruptedByZeroHearts && (!checkedFeedback || showRecovery)) {
     return (
       <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--danger)] shadow-[0_6px_0_0_var(--danger-edge)] p-6 sm:p-8 text-center space-y-5">
         <div className="flex justify-center">
@@ -248,12 +240,6 @@ function TaskRunnerQuestion() {
       setCheckedFeedback({
         outcome,
         xpAwarded: res.xpAwarded,
-        lumiMood:
-          outcome === 'correct'
-            ? res.newComboCount >= 5
-              ? 'celebrate'
-              : 'happy'
-            : 'surprised',
       });
       return;
     }
@@ -273,12 +259,6 @@ function TaskRunnerQuestion() {
       setCheckedFeedback({
         outcome,
         xpAwarded: res.xpAwarded,
-        lumiMood:
-          outcome === 'correct'
-            ? res.newComboCount >= 5
-              ? 'celebrate'
-              : 'happy'
-            : 'surprised',
       });
     }
   };
@@ -322,12 +302,6 @@ function TaskRunnerQuestion() {
     setCheckedFeedback({
       outcome,
       xpAwarded: res.xpAwarded,
-      lumiMood:
-        outcome === 'correct'
-          ? 'celebrate'
-          : outcome === 'partial'
-          ? 'happy'
-          : 'surprised',
     });
   };
 
@@ -342,7 +316,7 @@ function TaskRunnerQuestion() {
       reviewRequested,
     });
     setComparing(false);
-    setCheckedFeedback({ outcome: 'ungraded', xpAwarded: 0, lumiMood: 'focused' });
+    setCheckedFeedback({ outcome: 'ungraded', xpAwarded: 0 });
   };
 
   const taskTypeLabel =
@@ -356,7 +330,7 @@ function TaskRunnerQuestion() {
 
   return (
     <>
-      <div className="space-y-4 pb-8">
+      <div className={hasResult ? "space-y-3" : "space-y-4 pb-8"}>
         {/* Session Top Progress & Combo Bar */}
         <div className="p-3.5 sm:p-4 study-panel flex items-center justify-between gap-3">
           <button
@@ -436,282 +410,202 @@ function TaskRunnerQuestion() {
           </div>
         </div>
 
-        {/* Task Toolbar (No scratchpad! Bookmark "Zapisz do powtórki" + Wzory E8 + Podpowiedź AI) */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-          <div className="text-xs font-bold text-[var(--text-secondary)]">
-            <span>Zadanie {currentStepNum} z {totalTasks}</span>
-            <span aria-hidden="true"> · </span>
-            <span className="text-[var(--accent-text)]">{taskTypeLabel}</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* 1. Bookmark "Zapisz do powtórki" (Choreography #7) */}
-            <motion.button
-              type="button"
-              key={bookmarkAnimTick}
-              animate={
-                bookmarkAnimTick > 0 && !prefersReduced
-                  ? {
-                      scale: [1, 1.38, 1],
-                      rotate: [0, -14, 6, 0],
-                    }
-                  : {}
-              }
-              transition={{ duration: 0.36, ease: 'easeOut' }}
-              onClick={() => {
-                setBookmarkAnimTick(Date.now());
-                toggleTaskSaved(currentTask.id, currentTask.subjectId);
-              }}
-              aria-label="Zapisz do powtórki"
-              className={`min-h-[44px] px-3 rounded-xl border-2 flex items-center gap-1.5 text-xs font-extrabold font-display transition-colors cursor-pointer ${
-                isBookmarked
-                  ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)] text-[var(--accent-text)]'
-                  : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              <Bookmark
-                className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`}
-              />
-              <span>{isBookmarked ? 'Zapisane' : 'Zapisz do powtórki'}</span>
-            </motion.button>
-
-            {/* 2. "Wzory E8" strictly only for Math (AC-G4) */}
-            {state.activeSubject === 'math' && (
-              <button
-                type="button"
-                onClick={() => {
-                  playSound('tap');
-                  setFormulasOpen(true);
-                }}
-                className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-[var(--accent-primary)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--text-primary)] cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
-                <span>Wzory E8</span>
-              </button>
-            )}
-
-            {/* 3. AI Hints Button (-33% XP per level) */}
-            <button
-              type="button"
-              onClick={() => {
-                playSound('tap');
-                setHintsSheetOpen(true);
-              }}
-              className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-[var(--info)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--info)] cursor-pointer"
-            >
-              <Lightbulb className="w-4 h-4" />
-              <span>Podpowiedzi ({hintsUsed}/3)</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Horizontal Slide Between Questions (Choreography #6: AnimatePresence mode="wait") */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentTask.id}
-            initial={{ opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -28 }}
-            transition={{ duration: 0.18 }}
-            className="study-panel p-5 sm:p-6 space-y-5"
-          >
-            {/* Topic Kicker & Question Prompt */}
-            <div>
-              <div className="text-xs font-bold text-[var(--text-secondary)] mb-1">
-                {currentTask.topicTag}
+        {checkedFeedback ? (
+          <TaskResult
+            task={currentTask}
+            headingRef={resultHeading}
+            outcome={checkedFeedback.outcome}
+            xpAwarded={checkedFeedback.xpAwarded}
+            userAnswer={priorAnswer?.userAnswer}
+            tutorScore={aiEvaluation?.score ?? priorAnswer?.aiScore}
+            tutorFeedback={aiEvaluation?.feedback ?? priorAnswer?.aiFeedback}
+            isSaved={isBookmarked}
+            onToggleSaved={() => toggleTaskSaved(currentTask.id, currentTask.subjectId)}
+            onContinue={() => {
+              if (session.interruptedByZeroHearts) setShowRecovery(true);
+              else advanceSessionTaskOrFinish();
+            }}
+            continueLabel={session.interruptedByZeroHearts ? 'Odzyskaj serce' : currentStepNum < totalTasks ? 'Dalej' : 'Zobacz podsumowanie'}
+            visualWork={openWork}
+          />
+        ) : (
+          <>
+            {/* Task Toolbar (No scratchpad! Bookmark "Zapisz do powtórki" + Wzory E8 + Podpowiedź AI) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+              <div className="text-xs font-bold text-[var(--text-secondary)]">
+                <span>Zadanie {currentStepNum} z {totalTasks}</span>
+                <span aria-hidden="true"> · </span>
+                <span className="text-[var(--accent-text)]">{taskTypeLabel}</span>
               </div>
-              <div className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-relaxed">
-                <MathText text={currentTask.prompt} />
-              </div>
-            </div>
 
-            {/* Task Type 1: ABCD or True/False */}
-            {(currentTask.type === 'abcd' ||
-              currentTask.type === 'true_false') &&
-              currentTask.options && (
-                <div className="space-y-3">
-                  {currentTask.options.map((opt) => {
-                    const isSelected = selectedOption === opt.id;
-                    let checkedState:
-                      | 'idle'
-                      | 'correct'
-                      | 'wrong'
-                      | 'missed_correct' = 'idle';
-
-                    if (checkedFeedback) {
-                      if (opt.id === currentTask.correctAnswer) {
-                        checkedState = isSelected
-                          ? 'correct'
-                          : 'missed_correct';
-                      } else if (isSelected) {
-                        checkedState = 'wrong';
-                      }
-                    }
-
-                    return (
-                      <AnswerOptionCard
-                        key={opt.id}
-                        option={opt}
-                        selected={isSelected}
-                        checkedState={checkedState}
-                        disabled={Boolean(checkedFeedback)}
-                        showParticles={
-                          Boolean(checkedFeedback) &&
-                          checkedFeedback?.outcome === 'correct' &&
-                          isSelected
+              <div className="flex items-center gap-2">
+                {/* 1. Bookmark "Zapisz do powtórki" (Choreography #7) */}
+                <motion.button
+                  type="button"
+                  key={bookmarkAnimTick}
+                  animate={
+                    bookmarkAnimTick > 0 && !prefersReduced
+                      ? {
+                          scale: [1, 1.38, 1],
+                          rotate: [0, -14, 6, 0],
                         }
-                        onSelect={(id) => {
-                          playSound('tap');
-                          setSelectedOption(id);
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-            {/* Task Type 2: Numeric Input with SmartMathKeyboard */}
-            {currentTask.type === 'numeric' && (
-              <SmartMathKeyboard
-                value={numericAnswer}
-                onChange={setNumericAnswer}
-                disabled={Boolean(checkedFeedback)}
-                onSubmit={handleCheckClosedOrNumeric}
-              />
-            )}
-
-            {/* Task Type 3: Open Task with AI Tutor */}
-            {currentTask.type === 'open' && (
-              <OpenTaskAiBox
-                work={openWork}
-                onWorkChange={changeOpenWork}
-                value={openAnswer}
-                onChange={setOpenAnswer}
-                isEvaluating={isAiEvaluating}
-                evaluation={aiEvaluation}
-                disabled={Boolean(checkedFeedback) || comparing}
-                onEvaluate={handleEvaluateOpenTask}
-                onCompare={() => setComparing(true)}
-                loadout={state.loadout}
-              />
-            )}
-
-            {/* Primary Check Button for Closed & Numeric Tasks */}
-            {!checkedFeedback && currentTask.type !== 'open' && (
-              <div className="pt-2">
-                <TactileButton
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  disabled={
-                    (currentTask.type === 'abcd' ||
-                      currentTask.type === 'true_false') &&
-                    !selectedOption
-                      ? true
-                      : currentTask.type === 'numeric' &&
-                        !numericAnswer.trim()
+                      : {}
                   }
-                  onClick={handleCheckClosedOrNumeric}
+                  transition={{ duration: 0.36, ease: 'easeOut' }}
+                  onClick={() => {
+                    setBookmarkAnimTick(Date.now());
+                    toggleTaskSaved(currentTask.id, currentTask.subjectId);
+                  }}
+                  aria-label="Zapisz do powtórki"
+                  className={`min-h-[44px] px-3 rounded-xl border-2 flex items-center gap-1.5 text-xs font-extrabold font-display transition-colors cursor-pointer ${
+                    isBookmarked
+                      ? 'bg-[var(--accent-primary)]/15 border-[var(--accent-primary)] text-[var(--accent-text)]'
+                      : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }`}
                 >
-                  Sprawdź odpowiedź
-                </TactileButton>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-
-        {comparing && !checkedFeedback && (
-          <section className="study-panel space-y-3 p-4" aria-labelledby="self-review-heading">
-            <h3 id="self-review-heading" className="font-extrabold">Porównaj swoje obliczenia</h3>
-            <p className="text-sm text-[var(--text-secondary)]"><MathText text={currentTask.explanation} /></p>
-            <div className="flex flex-wrap gap-2">
-              <TactileButton variant="secondary" onClick={() => finishSelfReview(true)}>Chcę powtórzyć</TactileButton>
-              <TactileButton onClick={() => finishSelfReview(false)}>Rozumiem rozwiązanie</TactileButton>
-            </div>
-          </section>
-        )}
-
-        {/* Feedback Sheet / Card after checking answer */}
-        <AnimatePresence>
-          {checkedFeedback && (
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 12 }}
-              transition={SPRING_SNAPPY}
-              className={`rounded-3xl border-2 p-5 sm:p-6 space-y-4 ${
-                checkedFeedback.outcome === 'correct'
-                  ? 'bg-[var(--bg-surface)] border-[var(--success)] shadow-[0_6px_0_0_var(--success-edge)]'
-                  : checkedFeedback.outcome !== 'wrong'
-                  ? 'bg-[var(--bg-surface)] border-[var(--accent-primary)] shadow-[0_6px_0_0_var(--accent-primary-edge)]'
-                  : 'bg-[var(--bg-surface)] border-[var(--danger)] shadow-[0_6px_0_0_var(--danger-edge)]'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3.5">
-                  <LumiMascot
-                    mood={checkedFeedback.lumiMood}
-                    loadout={state.loadout}
-                    size="xs"
+                  <Bookmark
+                    className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`}
                   />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      {checkedFeedback.outcome === 'correct' ? (
-                        <CheckCircle2 className="w-5 h-5 text-[var(--success)]" />
-                      ) : checkedFeedback.outcome !== 'wrong' ? (
-                        <AlertCircle className="w-5 h-5 text-[var(--accent-text)]" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-[var(--danger)]" />
-                      )}
-                      <h3 className="text-base sm:text-lg font-extrabold font-display text-[var(--text-primary)]">
-                        {checkedFeedback.outcome === 'correct'
-                          ? 'Świetna robota!'
-                          : checkedFeedback.outcome === 'partial'
-                          ? 'Częściowe punkty'
-                          : checkedFeedback.outcome === 'ungraded'
-                          ? 'Rozwiązanie porównane bez punktów'
-                          : 'Tym razem pudło — zadanie trafiło do Banku Błędów'}
-                      </h3>
-                    </div>
+                  <span>{isBookmarked ? 'Zapisane' : 'Zapisz do powtórki'}</span>
+                </motion.button>
 
-                    <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1.5 leading-relaxed">
-                      <strong className="text-[var(--text-primary)]">
-                        Wyjaśnienie:
-                      </strong>{' '}
-                      <MathText text={currentTask.explanation} />
-                    </p>
+                {/* 2. "Wzory E8" strictly only for Math (AC-G4) */}
+                {state.activeSubject === 'math' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSound('tap');
+                      setFormulasOpen(true);
+                    }}
+                    className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-[var(--accent-primary)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--text-primary)] cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
+                    <span>Wzory E8</span>
+                  </button>
+                )}
+
+                {/* 3. AI Hints Button (-33% XP per level) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSound('tap');
+                    setHintsSheetOpen(true);
+                  }}
+                  className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-surface)] border-2 border-[var(--border-subtle)] hover:border-[var(--info)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--info)] cursor-pointer"
+                >
+                  <Lightbulb className="w-4 h-4" />
+                  <span>Podpowiedzi ({hintsUsed}/3)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Horizontal Slide Between Questions (Choreography #6: AnimatePresence mode="wait") */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentTask.id}
+                initial={prefersReduced ? false : { opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -28 }}
+                transition={{ duration: 0.18 }}
+                className="study-panel p-5 sm:p-6 space-y-5"
+              >
+                {/* Topic Kicker & Question Prompt */}
+                <div>
+                  <div className="text-xs font-bold text-[var(--text-secondary)] mb-1">
+                    {currentTask.topicTag}
+                  </div>
+                  <div className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-relaxed">
+                    <MathText text={currentTask.prompt} />
                   </div>
                 </div>
 
-                {checkedFeedback.xpAwarded > 0 && (
-                  <div className="px-3 py-1.5 rounded-xl bg-[var(--accent-primary)] text-[var(--on-accent)] text-xs font-extrabold font-display tabular-nums shrink-0">
-                    +{checkedFeedback.xpAwarded} XP
+                {/* Task Type 1: ABCD or True/False */}
+                {(currentTask.type === 'abcd' ||
+                  currentTask.type === 'true_false') &&
+                  currentTask.options && (
+                    <div className="space-y-3">
+                      {currentTask.options.map((opt) => {
+                        const isSelected = selectedOption === opt.id;
+                        return (
+                          <AnswerOptionCard
+                            key={opt.id}
+                            option={opt}
+                            selected={isSelected}
+                            checkedState="idle"
+                            disabled={false}
+                            onSelect={(id) => {
+                              playSound('tap');
+                              setSelectedOption(id);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+
+                {/* Task Type 2: Numeric Input with SmartMathKeyboard */}
+                {currentTask.type === 'numeric' && (
+                  <SmartMathKeyboard
+                    value={numericAnswer}
+                    onChange={setNumericAnswer}
+                    disabled={Boolean(checkedFeedback)}
+                    onSubmit={handleCheckClosedOrNumeric}
+                  />
+                )}
+
+                {/* Task Type 3: Open Task with AI Tutor */}
+                {currentTask.type === 'open' && (
+                  <OpenTaskAiBox
+                    work={openWork}
+                    onWorkChange={changeOpenWork}
+                    value={openAnswer}
+                    onChange={setOpenAnswer}
+                    isEvaluating={isAiEvaluating}
+                    evaluation={null}
+                    disabled={Boolean(checkedFeedback) || comparing}
+                    onEvaluate={handleEvaluateOpenTask}
+                    onCompare={() => setComparing(true)}
+                    loadout={state.loadout}
+                  />
+                )}
+
+                {/* Primary Check Button for Closed & Numeric Tasks */}
+                {!checkedFeedback && currentTask.type !== 'open' && (
+                  <div className="pt-2">
+                    <TactileButton
+                      variant="primary"
+                      size="lg"
+                      fullWidth
+                      disabled={
+                        (currentTask.type === 'abcd' ||
+                          currentTask.type === 'true_false') &&
+                        !selectedOption
+                          ? true
+                          : currentTask.type === 'numeric' &&
+                            !numericAnswer.trim()
+                      }
+                      onClick={handleCheckClosedOrNumeric}
+                    >
+                      Sprawdź odpowiedź
+                    </TactileButton>
                   </div>
                 )}
-              </div>
+              </motion.div>
+            </AnimatePresence>
 
-              <TactileButton
-                variant={
-                  checkedFeedback.outcome === 'correct'
-                    ? 'success'
-                    : checkedFeedback.outcome !== 'wrong'
-                    ? 'primary'
-                    : 'danger'
-                }
-                size="lg"
-                fullWidth
-                onClick={advanceSessionTaskOrFinish}
-              >
-                <span>
-                  {session.currentIndex + 1 < totalTasks
-                    ? 'Dalej'
-                    : 'Zakończ i odbierz podsumowanie'}
-                </span>
-                <ArrowRight className="w-5 h-5" />
-              </TactileButton>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            {comparing && !checkedFeedback && (
+              <section className="study-panel space-y-3 p-4" aria-labelledby="self-review-heading">
+                <h3 id="self-review-heading" className="font-extrabold">Porównaj swoje obliczenia</h3>
+                <p className="text-sm text-[var(--text-secondary)]"><MathText text={currentTask.explanation} /></p>
+                <div className="flex flex-wrap gap-2">
+                  <TactileButton variant="secondary" onClick={() => finishSelfReview(true)}>Chcę powtórzyć</TactileButton>
+                  <TactileButton onClick={() => finishSelfReview(false)}>Rozumiem rozwiązanie</TactileButton>
+                </div>
+              </section>
+            )}
+
+          </>
+        )}
       </div>
 
       {/* 3-Level Socratic AI Hints Bottom Sheet (-33% XP per level) */}

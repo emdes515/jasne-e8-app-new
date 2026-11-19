@@ -6,7 +6,7 @@ import { TactileButton } from '../ui/TactileButton';
 
 const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
 
-function PhotoPreview({ file }: { file: File }) {
+export function PhotoPreview({ file }: { file: File }) {
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {

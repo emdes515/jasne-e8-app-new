@@ -424,3 +424,60 @@ html:has(.study-dialog[open]) { overflow-y: hidden; }
     linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
   background-size: 1.25rem 1.25rem;
 }
+
+
+.task-result-content {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.875rem 0.875rem 0;
+}
+
+.task-result-answers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.75rem), 1fr));
+  gap: 0.5rem;
+}
+
+.task-result-answers > div {
+  min-width: 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.task-result-answers dt {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.task-result-answers dd {
+  margin-top: 0.2rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.task-result .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0.4em 0;
+}
+
+.task-result-details summary { list-style: none; }
+.task-result-details summary::-webkit-details-marker { display: none; }
+.task-result-details[open] summary svg { transform: rotate(180deg); }
+
+.task-result-action {
+  position: sticky;
+  z-index: 1;
+  bottom: env(safe-area-inset-bottom, 0px);
+  padding: 0.25rem 0.875rem 0.875rem;
+  border-radius: 0 0 1.125rem 1.125rem;
+  background: var(--bg-surface);
+}
+
+@media (min-width: 640px) {
+  .task-result-content { padding: 1.25rem 1.25rem 0; }
+  .task-result-action { padding: 0.25rem 1.25rem 1.25rem; }
+}
