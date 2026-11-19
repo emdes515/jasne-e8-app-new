@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { Sun, Moon, Volume2, VolumeX, BookOpen } from 'lucide-react';
+import { Sun, Moon, Volume2, VolumeX, BookOpen, Trophy } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { NAV_TABS } from './BottomTabBar';
 import { SPRING_SNAPPY } from '../../lib/motionPresets';

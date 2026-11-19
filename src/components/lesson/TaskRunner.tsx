@@ -77,6 +77,8 @@ function TaskRunnerQuestion() {
   const resultHeading = useRef<HTMLHeadingElement>(null);
   const [showRecovery, setShowRecovery] = useState(false);
   const [hintsSheetOpen, setHintsSheetOpen] = useState<boolean>(false);
+  const [aiHintLoading, setAiHintLoading] = useState<boolean>(false);
+  const [aiHintText, setAiHintText] = useState<string | null>(null);
   const [exitConfirmOpen, setExitConfirmOpen] = useState<boolean>(false);
   const [bookmarkAnimTick, setBookmarkAnimTick] = useState<number>(0);
 
@@ -155,25 +157,28 @@ function TaskRunnerQuestion() {
   // Check if session was interrupted by reaching 0 hearts (Section 6.5 Step C.1 & AC-H7)
   if (session.interruptedByZeroHearts && (!checkedFeedback || showRecovery)) {
     return (
-      <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--danger)] shadow-[0_6px_0_0_var(--danger-edge)] p-6 sm:p-8 text-center space-y-5">
+      <div className="rounded-3xl bg-[var(--bg-surface)] border-2 border-[var(--danger)]/70 shadow-[0_6px_0_0_var(--danger-edge)] p-5 sm:p-8 text-center space-y-5">
         <div className="flex justify-center">
           <LumiMascot mood="supportive" loadout={state.loadout} size="lg" />
         </div>
 
-        <div>
-          <div className="text-xs font-extrabold font-display text-[var(--danger)] mb-1 tabular-nums">
-            Stan Serc: {state.hearts}/5
-            {state.hearts < 5 && secondsToNextHeart !== null
-              ? ` · +1 serce za ${formatHeartCountdown(secondsToNextHeart)}`
-              : ''}
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--danger)]/12 border border-[var(--danger)]/40 px-3 py-1 text-xs font-extrabold font-display text-[var(--danger)] tabular-nums">
+            <TactileHeartIcon size={15} variant="cracked" />
+            <span>
+              Stan Serc: {state.hearts}/5
+              {state.hearts < 5 && secondsToNextHeart !== null
+                ? ` · +1 serce za ${formatHeartCountdown(secondsToNextHeart)}`
+                : ''}
+            </span>
           </div>
           <h2 className="text-2xl font-extrabold font-display text-[var(--text-primary)]">
             Serca się skończyły!
           </h2>
-          <p className="text-sm text-[var(--text-secondary)] mt-1.5 max-w-md mx-auto leading-relaxed">
+          <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto leading-relaxed">
             Twój dotychczasowy postęp w lekcji ({Object.keys(session.answers).length}{' '}
-            z {session.taskIds.length} zadań) został bezpiecznie zapisany.
-            Odzyskaj serce, aby wznowić dokładnie od kolejnego zadania!
+            z {session.taskIds.length} zadań) jest bezpiecznie zapisany.
+            Odzyskaj serce, aby kontynuować dokładnie od kolejnego zadania!
           </p>
         </div>
 
@@ -190,25 +195,57 @@ function TaskRunnerQuestion() {
             <span>Wznów zadania</span>
           </TactileButton>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <TactileButton
-              variant="info"
-              size="lg"
-              fullWidth
-              onClick={() => setRescueModalOpen(true)}
-            >
-              Misja Ratunkowa (+1 Serce)
-            </TactileButton>
-            <TactileButton
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={() => {
-                buyHeartWithCoins();
-              }}
-            >
-              Sklep — {HEART_REFILL_PRICE} monet (+1 Serce)
-            </TactileButton>
+          <div className="space-y-3 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <TactileButton
+                variant="info"
+                size="lg"
+                fullWidth
+                onClick={() => setRescueModalOpen(true)}
+              >
+                Misja Ratunkowa (+1 Serce)
+              </TactileButton>
+              <TactileButton
+                variant="primary"
+                size="lg"
+                fullWidth
+                onClick={() => {
+                  buyHeartWithCoins();
+                }}
+              >
+                Sklep — {HEART_REFILL_PRICE} monet (+1 Serce)
+              </TactileButton>
+            </div>
+
+            {/* Pass E8 Pro ("Kup Pro") card */}
+            <div className="rounded-2xl border-2 border-[var(--accent-primary)]/45 bg-[var(--accent-primary)]/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-extrabold font-display text-[var(--accent-text)]">
+                    Pass E8 Pro
+                  </span>
+                  <span className="rounded-full bg-[var(--accent-primary)] px-2 py-0.5 text-[10px] font-extrabold font-display text-[var(--on-accent)]">
+                    WKRÓTCE
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] leading-snug">
+                  Nielimitowane serca bez czekania + pełny AI Tutor do zadań otwartych.
+                </p>
+              </div>
+              <TactileButton
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
+                onClick={() =>
+                  pushToast(
+                    'Pass E8 Pro będzie dostępny wkrótce — teraz możesz odzyskać serce darmową Misją Ratunkową!',
+                    'info'
+                  )
+                }
+              >
+                Kup Pro
+              </TactileButton>
+            </div>
           </div>
         )}
 
@@ -746,6 +783,53 @@ function TaskRunnerQuestion() {
               </div>
             );
           })}
+          {currentTask.type === 'open' && (
+            <div className="p-4 rounded-2xl border-2 border-[var(--accent-primary)]/40 bg-[var(--accent-primary)]/8 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-extrabold font-display text-[var(--accent-text)]">
+                  Lumi Tutor AI · Wskazówka do zadania otwartego
+                </span>
+                <span className="text-[11px] font-bold text-[var(--text-secondary)]">
+                  Koszt: 1 zapytanie AI (Faza 2)
+                </span>
+              </div>
+
+              {aiHintLoading ? (
+                <div className="flex items-center gap-3 py-1">
+                  <LumiMascot mood="thinking" loadout={state.loadout} size="xs" tutorScholarCap />
+                  <div className="text-xs text-[var(--text-secondary)]">
+                    <strong className="text-[var(--text-primary)] block">
+                      Lumi Tutor analizuje zadanie…
+                    </strong>
+                    Przygotowuję wskazówkę bez zdradzania gotowego wyniku (~5 s).
+                  </div>
+                </div>
+              ) : aiHintText ? (
+                <p className="text-sm font-medium text-[var(--text-primary)] leading-relaxed">
+                  <MathText text={aiHintText} />
+                </p>
+              ) : (
+                <TactileButton
+                  variant="primary"
+                  size="sm"
+                  fullWidth
+                  onClick={() => {
+                    playSound('tap');
+                    setAiHintLoading(true);
+                    const delay = prefersReduced ? 350 : AI_ANALYSIS_UI_DURATION_MS;
+                    window.setTimeout(() => {
+                      setAiHintLoading(false);
+                      setAiHintText(
+                        `Zacznij od wypisania danych z treści zadania i zapisz równanie krok po kroku. W tym zadaniu kluczowe jest: ${currentTask.hints[1]}`
+                      );
+                    }, delay);
+                  }}
+                >
+                  Zapytaj AI Tutora o wskazówkę (0 zł w prototypie)
+                </TactileButton>
+              )}
+            </div>
+          )}
         </div>
       </BottomSheet>
 

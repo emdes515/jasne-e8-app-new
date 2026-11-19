@@ -2,7 +2,7 @@
 
 export type SubjectId = 'math' | 'polish' | 'english';
 
-export type NavTabId = 'start' | 'learn' | 'vault' | 'exam' | 'profile';
+export type NavTabId = 'start' | 'learn' | 'vault' | 'exam' | 'ranking' | 'profile';
 
 export type ThemeMode = 'dark' | 'light';
 

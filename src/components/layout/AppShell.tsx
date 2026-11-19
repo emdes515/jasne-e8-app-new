@@ -13,6 +13,7 @@ import { LearnPathView } from '../learn/LearnPathView';
 import { LessonView } from '../lesson/LessonView';
 import { VaultView } from '../vault/VaultView';
 import { ExamLobbyView } from '../exam/ExamLobbyView';
+import { RankingView } from '../ranking/RankingView';
 import { ProfileShopView } from '../profile/ProfileShopView';
 import { FormulasBottomSheet } from '../formulas/FormulasBottomSheet';
 import { RescueMissionModal } from '../vault/RescueMissionModal';
@@ -93,6 +94,7 @@ export function AppShell() {
                     {activeTab === 'learn' && <LearnPathView />}
                     {activeTab === 'vault' && <VaultView />}
                     {activeTab === 'exam' && <ExamLobbyView onRunningChange={setExamInProgress} />}
+                    {activeTab === 'ranking' && <RankingView />}
                     {activeTab === 'profile' && <ProfileShopView />}
                   </>
                 )}

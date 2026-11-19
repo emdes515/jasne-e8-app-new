@@ -9,6 +9,7 @@ interface LumiMascotProps {
   mood?: LumiMood;
   loadout?: Partial<LumiLoadout>;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  tutorScholarCap?: boolean;
   className?: string;
 }
 
@@ -77,6 +78,7 @@ export function LumiMascot({
   mood = 'idle',
   loadout,
   size = 'md',
+  tutorScholarCap = false,
   className = '',
 }: LumiMascotProps) {
   const uid = useId().replace(/:/g, '');
@@ -90,7 +92,8 @@ export function LumiMascot({
 
   const palette = COLOR_PALETTES[colorScheme] ?? COLOR_PALETTES.gold_spark;
   const pxSize = SIZE_MAP[size];
-  const hideFlameCrest = headgear === 'street_cap' || headgear === 'master_crown';
+  const hideFlameCrest =
+    tutorScholarCap || headgear === 'street_cap' || headgear === 'master_crown';
 
   // Automatic blinking every 3.2 - 5.0s
   useEffect(() => {
@@ -580,8 +583,39 @@ export function LumiMascot({
             </g>
           )}
 
-          {/* Cosmetic Layer: Headgear */}
-          {headgear === 'gaming_headphones' && (
+          {/* Cosmetic Layer: Headgear (or Scholar Graduation Cap during AI Tutor analysis) */}
+          {tutorScholarCap && (
+            <g>
+              {/* Mortarboard base */}
+              <path
+                d="M66 56 L66 43 C82 37 118 37 134 43 L134 56 C118 62 82 62 66 56 Z"
+                fill="#1E293B"
+                stroke="#0F172A"
+                strokeWidth="3.5"
+                strokeLinejoin="round"
+              />
+              {/* Mortarboard diamond top */}
+              <path
+                d="M100 18 L150 37 L100 52 L50 37 Z"
+                fill="#334155"
+                stroke="#0F172A"
+                strokeWidth="3.5"
+                strokeLinejoin="round"
+              />
+              {/* Center button + golden tassel */}
+              <circle cx="100" cy="36" r="3.5" fill="#FFB800" />
+              <path
+                d="M100 36 L134 44 L138 64"
+                stroke="#FFB800"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="138" cy="66" r="4" fill="#F59E0B" />
+            </g>
+          )}
+
+          {!tutorScholarCap && headgear === 'gaming_headphones' && (
             <g>
               <path
                 d="M46 105 C46 56 154 56 154 105"
@@ -612,7 +646,7 @@ export function LumiMascot({
             </g>
           )}
 
-          {headgear === 'street_cap' && (
+          {!tutorScholarCap && headgear === 'street_cap' && (
             <g>
               <path
                 d="M60 58 C64 34 136 34 140 58 Z"
@@ -629,7 +663,7 @@ export function LumiMascot({
             </g>
           )}
 
-          {headgear === 'master_crown' && (
+          {!tutorScholarCap && headgear === 'master_crown' && (
             <g>
               <path
                 d="M68 54 L74 28 L90 42 L100 22 L110 42 L126 28 L132 54 Z"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, BookmarkCheck, Cloud, Flame, Play, Timer, X } from 'lucide-react';
+import { ArrowRight, BookOpen, BookmarkCheck, Cloud, Flame, Play, Timer, Trophy, X } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLessonMock';
 import { computeDailyGoalProgress } from '../../lib/gamification';
@@ -179,6 +179,12 @@ export function StartView() {
               </button>
             </>
           )}
+          <button className="study-link" onClick={() => setActiveTab('ranking')} type="button">
+            <Trophy size={20} />
+            <span>Ranking E8</span>
+            <small>Liga</small>
+            <ArrowRight size={16} />
+          </button>
         </div>
       </section>
 

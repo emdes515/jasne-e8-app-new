@@ -74,12 +74,12 @@ function AiAnalysisScannerCard({
 
       <div className="relative z-10 flex items-center gap-3.5">
         <div className="shrink-0 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-1.5">
-          <LumiMascot mood="thinking" loadout={loadout} size="xs" />
+          <LumiMascot mood="thinking" loadout={loadout} size="sm" tutorScholarCap />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm sm:text-base font-extrabold font-display text-[var(--text-primary)]">
-              AI Tutor analizuje rozwiązanie
+              Lumi Tutor analizuje rozwiązanie
             </p>
             <span className="shrink-0 rounded-full bg-[var(--info)]/15 px-2 py-0.5 text-[11px] font-extrabold font-display text-[var(--info)] tabular-nums">
               ~{remainingSec} s
