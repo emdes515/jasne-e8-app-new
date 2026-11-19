@@ -1,0 +1,239 @@
+Wcielasz się w rolę Principal Frontend Architecta, Product Designera oraz Motion Engineera (poziom Duolingo + Brilliant + Linear).
+
+Twoim zadaniem jest zbudowanie od zera kompletnej, w pełni działającej, dopracowanej w detalach aplikacji webowej **JASNE E8** (mobile-first, z elegancką adaptacją na desktop) na podstawie załączonej specyfikacji `MASTER_SPEC_AI_STUDIO.md`.
+
+Aplikacja musi działać **w 100% lokalnie bez prawdziwego Firebase i bez żadnych kluczy API** (cały stan trzymany przez czystą warstwę repozytoriów na `localStorage`, gotową architektonicznie na podpięcie Firebase Auth + Cloud Firestore w Fazie 2).
+
+---
+
+### 1. STACK I ZASADY IMPLEMENTACJI (OBOWIĄZKOWE)
+- **Technologie:** React 19 + TypeScript + Tailwind CSS + Framer Motion (`motion/react` lub `framer-motion`) + `lucide-react` + `katex` (z załadowanym CSS KaTeX dla bezbłędnego renderowania wzorów matematycznych) + `canvas-confetti`.
+- **Zasoby offline:** CSS KaTeX importuj z pakietu (`import 'katex/dist/katex.min.css'`), nigdy z CDN. Fonty: `@fontsource/plus-jakarta-sans` i `@fontsource/inter` **albo** stack systemowy (`'Plus Jakarta Sans', 'Inter', system-ui, sans-serif`). Zakaz `<link>` do Google Fonts i ikon z zewnętrznych URL. Aplikacja musi wyglądać identycznie przy pierwszym uruchomieniu bez internetu.
+- **Język całego UI:** w 100% naturalny, nowoczesny, angażujący **język polski** dopasowany do ósmoklasisty (13–14 lat).
+- **Zakaz skrótów i makiet:** ZAKAZ używania `// TODO`, `alert()`, pustych handlerów, ucinania plików ani pół-działających ekranów. Każda z 5 zakładek, onboarding, lekcja, mini-egzamin, powtórki, sklep kosmetyków i ustawienia muszą być w pełni klikalne i połączone z jednym źródłem prawdy (`AppStateContext` + `localStateRepo`).
+- **Czego NIE wolno dodać:**
+  - ZERO brudnopisu (`CkeScratchpad`) — zamiast niego wszędzie przycisk „Zapisz do powtórki”.
+  - ZERO trybu „Arena”.
+  - Zakładka / przycisk **„Przydatne Wzory E8”** działa **WYŁĄCZNIE dla Matematyki** — po przełączeniu na Język Polski lub Język Angielski **znika całkowicie z interfejsu** (w zamian pokazuj subtelny, estetyczny slot zapowiedzi kontekstowej „Ściąga Lektur & Form — Wkrótce” / „Bank Zwrotów & Czasów — Wkrótce”).
+  - ZERO generycznego AI-slopu (żadnych fioletowo-różowych gradientów na całym tle, żadnego spamu ikoną `Sparkles`).
+
+---
+
+### 2. DESIGN SYSTEM: TACTILE 3D GAMING + DUAL-THEME (NOCTURNE DARK & SOLAR LIGHT)
+Zbuduj interfejs w stylu **Tactile 3D Gaming** (wciskane, dotykowe przyciski i karty w stylu Duolingo, ale nowocześniejsze, ostrzejsze i bardziej gamingowe dla 13–14-latka):
+1. **Przyciski i karty 3D (`TactileButton` / karty ABCD / węzły ścieżki):** wyraźna obwódka `border-2` + twarda dolna krawędź 3D (`border-b-[5px]` lub `shadow-[0_5px_0_0_...]`). Przy naciśnięciu przycisk fizycznie zapada się o `4px` w dół (`translateY(4px)`), skracając dolny cień do `1px`.
+2. **Dwa pełnowartościowe motywy przełączane natychmiast bez przeładowania (zmienne CSS):**
+   - **Nocturne Gaming (Dark — domyślny):** tło `#080C16` (z delikatnym radial glow), powierzchnie `#11192B`, podniesione `#19243D`, obramowania `#24324E`, akcent `#FFB800` (krawędź 3D `#B45309`), sukces `#10B981`, błąd `#F43F5E`, info/tarcza `#38BDF8`, ogień Combo `#F97316`.
+   - **Solar Gaming (Light):** tło `#F4F6FB`, czyste białe karty `#FFFFFF` z twardym dolnym cieniem 3D (`#CBD5E1`), akcent wypełnień/UI `#D97706` (≥ 3:1), **tekst akcentowy `#B45309`** (≥ 4.5:1 na białym — bezwzględnie przestrzegaj kontrastu WCAG AA!), sukces `#059669`, błąd `#E11D48`, info `#0284C7`.
+   - **Etykiety na wypełnieniach (twarda reguła):** tekst i ikony na tle akcentu używają tokenu `--on-accent` (`#080C16` w Dark, `#0F172A` w Light). **Biały tekst na `#FFB800` (1,73:1) i na `#D97706` (3,19:1) jest błędem.** Dotyczy to także wypełnień success/danger/info, jeśli biały nie osiąga 4,5:1.
+   - **Światła:** dozwolony tylko statyczny radial tła (`opacity ≤ 0.06`) i statyczna aura SVG Lumi (`opacity ≤ 0.15`). Zakaz animowanego `box-shadow`/`drop-shadow`/`filter: blur` w pętli. Puls Combo realizuj przez zmianę `opacity` istniejącego obrysu `border` (dozwolone), nie przez rozmyty cień.
+3. **Mobile-First + pełnoprawny Desktop:**
+   - Na telefonie (`360–1023px`, 0px poziomego overflow): sticky **Top HUD** (max `56px`: przełącznik przedmiotu | Seria+Tarcza | Serca | Monety) + fixed **Bottom Tab Bar** (`Start`, `Nauka`, `Powtórki`, `Egzamin`, `Profil`) z `env(safe-area-inset-bottom)` i celami dotykowymi `≥ 44×44px`.
+   - Na desktopie (`≥ 1024px`): Bottom Tab Bar zamienia się w elegancki **lewy sidebar (`248px`)**, a treść jest wycentrowana (`max-w-[760px]`). **Prawy panel statusu (`300px`) pojawia się dopiero od `1440px`** — suma `248 + 780 + 300 + 48 = 1376px` musi się zmieścić bez przycinania treści. Przy `1280px` panelu nie ma.
+4. **Liczby gamingowe:** używaj `tabular-nums` dla XP, monet, serii, Combo i timera.
+
+---
+
+### 3. MASKOTKA „LUMI” (ŻYWA, WEKTOROWA, Z KOSMETYKAMI)
+Stwórz autorski, niezwykle uroczy i wyrazisty komponent `<LumiMascot mood={...} loadout={...} size={...} />` zbudowany w 100% z czystego, wielowarstwowego SVG + Framer Motion (bez zewnętrznych plików PNG):
+- Świetlista iskierka/duszek światła nawiązujący do nazwy **JASNE**, z połyskiem 3D, dużymi ekspresyjnymi oczami z automatycznym mruganiem co 3–5 s, ruchomymi rączkami, świetlistym czubkiem na głowie i dynamicznym cieniem pod sobą, który maleje, gdy Lumi skacze!
+- **8 animowanych nastrojów (`mood`):** `idle` (płynne unoszenie + mruganie), `happy` (podskok squash&stretch + oczka `^ ^`), `celebrate` (wysoki skok + obrót + złote promienie), `thinking` (przechylona głowa + żaróweczka dla AI Tutora), `surprised` (krótkie wzdrygnięcie przy błędzie, nigdy zła!), `supportive` (trzyma serduszko przy 0 serc / pustych stanach), `focused` (skupienie w egzaminie), `cool` (poza w przymierzalni Sklepu).
+- **Warstwowe nakładanie kosmetyków na żywo w SVG (`loadout`):** kolory korpusu (*Złota Iskra*, *Błękitna Fala*, *Szmaragdowy Impuls*, *Lodowy Kryształ*, *Karmazynowa Kometa*), nakrycia głowy (*Słuchawki Gamingowe*, *Czapka Street E8*, *Korona Mistrza E8*), okulary (*Okulary Pixelowe 8-bit*, *Gogle Cyber-Alchemika*) oraz aury za postacią (*Plazmowy Pierścień*). Zmiana stroju w Sklepie natychmiast odświeża Lumi w całej aplikacji!
+
+---
+
+### 4. ANIMACJE KLASY ŚWIATOWEJ (PRIORYTET #1!)
+Zaprojektuj plik `src/lib/motionPresets.ts` (`SPRING_TACTILE`, `SPRING_SNAPPY`, `SPRING_BOUNCY`, `SPRING_SHEET`) i wdroż wszystkie **14 kluczowych animacji** (wyłącznie `transform`/`opacity`, 60 FPS, z pełnym wsparciem `<MotionConfig reducedMotion="user">`):
+1. Fizyczne zapadanie 3D wszystkich głównych przycisków i kart.
+2. Przelatująca kapsuła `layoutId` w nawigacji, 4 zakładkach Bento, filtrach Powtórek i zakładkach Sklepu.
+3. Kaskadowe wejścia kart (`staggerChildren: 0.045`) przy zmianie widoku.
+4. Karty ABCD: podskok + rysowany SVG `Check` + **wylatujące złote cząsteczki `+XP`** przy sukcesie; wstrząs poziomy `x: [0,-10,10,-7,7,-3,0]` + karmazyn przy błędzie.
+5. Pasek Combo (`x1.5` / `x2.0` / `x3.0`): sprężysty pop `SPRING_BOUNCY`, przy `x2.0`/`x3.0` pulsowanie **`opacity` obrysu `border`** (bez `box-shadow` i bez rozmytego glow).
+6. Slajd poziomy między pytaniami (`AnimatePresence mode="wait"`) + płynny pasek postępu z błyskiem shimmer.
+7. Obrót, powiększenie i mikro-rozbłysk zakładki „Zapisz do powtórki” + wysuwany toast.
+8. Drgnięcie serca + ulatujące `-1` przy błędzie; rozbłysk z pierścieniem przy regeneracji/odzyskaniu serca.
+9. Sklep: `CountUpNumber` na monetach, **ukośny błysk (shine sweep)** na kupionej karcie, mini-konfetti, wyskok Lumi w nowym stroju; przy zakupie Tarczy Serii lodowo-niebieski rozbłysk w Top HUD.
+10. Bottom Sheety (Wzory E8, AI Tutor, Misja Ratunkowa) z `SPRING_SHEET` i **gestem przeciągania w dół `drag="y"`** do zamknięcia.
+11. AI Tutor: 700 ms stan „Lumi sprawdza tok rozumowania…” z pulsującym shimmerem, potem płynne rozwinięcie karty z punktacją CKE.
+12. Podsumowanie lekcji/egzaminu z licznikami `CountUpNumber` (700 ms), płynnym dopełnieniem paska XP i pełnoekranowym modalem **AWANS RANGI** z `canvas-confetti`.
+13. Płynny 5-krokowy Onboarding z żywą, reagującą maskotką Lumi i animowanym przyznaniem pakietu startowego (+120 monet, 5/5 serc).
+14. Puls ostrzegawczy timera egzaminu w ostatnich 60 sekundach.
+
+---
+
+### 5. SILNIK DŹWIĘKOWY (WEB AUDIO API -> GOTOWY POD `.WAV`)
+Zaimplementuj `src/services/audio/soundEngine.ts` za interfejsem `ISoundEngine` (w Fazie 1 `ProceduralWebAudioSoundEngine` z leniwym `AudioContext` po pierwszym kliknięciu, plus przejrzysty szkielet `WavAssetSoundEngine` do podmiany na pliki `.wav` w przyszłości).
+Dodaj czyste, miękkie, przyjemne dźwięki dla: `tap`, `tabSwitch`, `correct` (**rosnąca wysokość dźwięku wraz z kolejnym Combo!**), `wrong`, `comboUp`, `bookmark`, `coin`, `heartLoss`, `heartRestore`, `purchase`, `rankUp`, `timerWarning`. Dodaj przełącznik „Dźwięki SFX” w Profilu.
+
+---
+
+### 6. KOMPLETNY ZAKRES FUNKCJONALNY (ZGODNY 1:1 Z `MASTER_SPEC_AI_STUDIO.md`)
+1. **Imponujący 5-krokowy Onboarding bez rejestracji + Product Tour:**
+   - Krok 1: Powitanie z dużą maskotką Lumi.
+   - Krok 2: Ksywka (+ generator losowych gamingowych nicków), wybór etapu (Klasa 8 / Klasa 7 / Powtórka przed próbnym), wybór startowego koloru Lumi.
+   - Krok 3: Przedmiot startowy (Matematyka polecana) + cel dzienny (5 / 10 / 15 min — Lumi reaguje nastrojem!).
+   - Krok 4: 3-slajdowy interaktywny Product Tour po mechanikach (z przyciskiem „Pomiń”).
+   - Krok 5: Finał z konfetti (+120 monet, 5/5 serc, Nowicjusz E8) i przyciskiem „Odpal pierwszą lekcję!” / „Wejdź na Start”.
+2. **Start (Pulpit):** Hero Card z Lumi, paskiem celu dziennego (jedna jednostka: procent + podpis „1 z 2 lekcji” / „3 z 5 zadań”) i Rangi E8, przyciskiem „Kontynuuj”, Bento 3 statystyk (skuteczność = `round(100 * punktyZdobyte / punktyMożliwe)` bez powtórek), **3 Wyzwania Dzienne globalne dla dnia** (seed `hash(playerDay)`, **bez `subjectId`**; te same po zmianie przedmiotu; pula wykonalna w Matematyce: lekcja, sprint 5 poprawnych, zapis zadania, zadanie otwarte, mini-arkusz, ≥80% w mini-arkuszu, sesja powtórkowa ≥3 zadań; +15 monet, max 45 monet/dzień, idempotencja `playerDay + challengeId`), skrót do Mini-Arkusza.
+3. **Nauka (Ścieżka Działów E8):** Wizualna, gamingowa mapa działów dla Matematyki — Dział 1 aktywny z węzłem **1.1 „Potęgi i pierwiastki w zadaniach E8”** w pełni grywalnym + realistyczne węzły i Działy 2–7 w estetycznym stanie „Wkrótce (Faza 2)”. Dla Polskiego i Angielskiego: estetyczny widok zapowiedzi w kolorze przedmiotu (bez przycisku Wzory!) i szybkie przełączenie na Matematykę.
+4. **Lekcja Bento 1.1:**
+   - 4 karty teorii (Esencja, Wzory E8 w KaTeX, Przykład 3 kroki, Pułapka E8) — **zawsze otwarte, nawet przy 0 sercach**.
+   - 5 pełnych zadań matematycznych ze specyfikacji (2× ABCD, 1× Prawda/Fałsz, 1× Numeric Input z wbudowaną **`SmartMathKeyboard`** + przełącznikiem „Klawiatura systemowa” + `scrollIntoView`, 1× Zadanie otwarte z **AI Tutorem** i 3-poziomowymi podpowiedziami ze zniżką `-33% XP` na podpowiedź). **Każde zadanie ma gotowe `explanation` i `hints[3]` z sekcji 8.1.1/8.2 specyfikacji, a żadna podpowiedź nie może zawierać końcowego wyniku.**
+   - **Zejście do 0 serc w trakcie sesji:** sesja przerywa się po feedbacku, pozostałe zadania nie są naliczane, brak XP/monet za ukończenie, stan pokazuje „Serca się skończyły” + „Misja Ratunkowa”/„Sklep — 80 monet”/„Wróć później”, a „Kontynuuj lekcję” wznawia od pierwszego nierozwiązanego zadania. Postęp sesji zapisuje się po każdym sprawdzonym zadaniu i przeżywa F5 (poza egzaminem, który jest odrzucany).
+   - Przycisk **„Zapisz do powtórki”** w każdym zadaniu oraz **„Wzory E8”** (Bottom Sheet z 4 zakładkami wzorów w KaTeX — tylko dla Matematyki).
+5. **Powtórki & Bank Błędów + Misja Ratunkowa:**
+   - Zakładki `Zapisane` (deduplikacja `taskId + subjectId`, tryb „Rozwiąż zapisane”, FIFO 200) i `Bank Błędów` (znika po **2 poprawnych z rzędu**, błąd zeruje passę, FIFO 200).
+   - **Jeden współdzielony `PracticeRunner`** dla trzech źródeł (`saved` / `bank` / `rescue`) — nie lista z pojedynczym zadaniem. Reguły: monety `0`, XP `50%` bazowego z combo, serca tak, combo tak (90 s), podsumowanie bez monet, wyjście z potwierdzeniem.
+   - Misja Ratunkowa: postęp `poprawne/2` trzymany **per `playerDay`** (wyjście go nie zeruje), zalicza tylko `correct` (nie `1/2`), limit `3` ukończonych misji dziennie, po `2/2` natychmiast `+1 serce` i reset licznika misji. Poprawna odpowiedź w źródle `bank` jednocześnie podnosi `correctStreak` i zalicza misję (dwa liczniki, jedna nagroda); zadanie usunięte z Banku nie może liczyć się dwa razy do tej samej misji.
+   - **Misja Ratunkowa:** darmowy wariant (2 poprawne zadania = +1 serce, limit **3/dzień**) + płatny wariant (**80 monet = +1 serce**, bez limitu) + zegar regeneracji `+1 serce / 30 min` liczony również offline. Przy 0 serc zablokowany start zadań (nie teorii!) z natychmiastowymi akcjami ratunkowymi — zero paywalla nauki.
+6. **Egzamin (Mini-Arkusz Testowy E8 — 5 zadań, 15 min):**
+   - Lobby z kartą aktywnego Mini-Arkusza (+40 monet, brak utraty serc) i kartą „Pełny Arkusz E8 — Wkrótce” + historia podejść.
+   - Timer oparty wyłącznie o `deadline - Date.now()` (odporny na tło, auto-submit po czasie, puls <60 s), siatka pytań 1–5 ze stanami, brak podpowiedzi AI, potwierdzenie wyjścia, restart odrzuca nieukończoną próbę bez wpisywania błędów.
+   - Podsumowanie z wynikiem %, oceną otwartego przez AI Tutora i automatycznym wrzuceniem błędów do Banku Błędów.
+7. **Profil & Sklep Kosmetyków Lumi:**
+   - Karta profilu z Lumi w założonych kosmetykach, ramką, tytułem, paskiem Rangi E8 (`0 / 500 / 1500 / 3500 / 7000 XP`), ustawieniami (Dark/Light, SFX, nick, cel, Powtórz Tour, Reset danych z potwierdzeniem).
+   - **Sklep z interaktywną Przymierzalnią Lumi na żywo:** kategorie *Maskotka* (akcesoria i skórki), *Ramki & Tytuły*, *Wspomagacze* (**Tarcza Serii = 450 monet, max 2**, **+1 Serce = 80 monet**) oraz estetyczna sekcja **„Pakiety Premium / Mikropłatności — Wkrótce (Faza 2)”**.
+
+---
+
+### 7. TWARDE REGUŁY LOGIKI I ARCHITEKTURA POD FIREBASE
+- Dzień gracza (`playerDay`): wyłącznie `Europe/Warsaw` przez `Intl.DateTimeFormat(...).formatToParts()` -> `YYYY-MM-DD`.
+- Różnica dni: licz `dayIndex = Date.UTC(y, m-1, d) / 86_400_000` z parsowania stringa i odejmuj indeksy. **Nigdy nie dziel różnicy milisekund przez 86 400 000** — przy zmianie czasu (29.03.2026, 25.10.2026) to gubi lub dodaje dzień serii.
+- Combo: `1–2 -> x1.0`, `3–4 -> x1.5` (już 3. odpowiedź!), `5–7 -> x2.0`, `8+ -> x3.0`, wygasanie po `90 s` **tylko w lekcji i powtórkach**. W egzaminie combo nie wygasa (15 min / 5 zadań).
+- Wynik zadania: `correct` (pełne XP, combo `+1`, brak serca straty), `partial` = otwarte `1/2` (`12 XP` bazowo, brak utraty serca, combo bez zmian, brak Banku), `wrong` (serce `-1`, combo reset, Bank, `0 XP`). Poprawna odpowiedź po podpowiedzi to nadal `correct`.
+- Księga nagród (`rewardLedger`, klucz `playerDay:contentId:rewardKind`): pierwsze ukończenie lekcji/mini-arkusza w dniu = pełne monety + `100%` XP; kolejne tego samego dnia = `0 monet` + `30%` XP; nowy dzień = znowu pełne. Sesje powtórkowe zawsze `0 monet` + `50%` XP.
+- Wyzwania: `3` globalne na `playerDay`, seed `hash(playerDay)` bez `subjectId`, pula wykonalna w Matematyce, limit `45 monet/dzień`, idempotencja `playerDay + challengeId`.
+- Cele dzienny: jedna jednostka wyświetlania (procent + podpis); mapowanie `5 min = 1 lekcja/5 zadań`, `10 min = 2/10`, `15 min = 3/15`; „Wzory E8” niedostępne w egzaminie, dostępne w lekcji i powtórkach.
+- Tarcza Serii: pokrywa `N` pominiętych dni jeśli `streakShields >= N` (zużywa `N`); jeśli `< N`, nie zużywa tarcz i zeruje serię.
+- Bonus za serię: `+50 monet` przy wielokrotności 7 dni ciągłej serii (7, 14, 21...), jednorazowo na próg.
+- AI Tutor Mock: deterministyczna kolejność reguł ze specyfikacji (`resultOnly`, sama liczba = 1/2, `<20` znaków = 0/2, `>=40` + ≥2 słowa kluczowe + **oczekiwany wynik jako cały token** = 2/2, reszta = 1/2) + stała etykieta **„Ocena symulowana (Faza 1)”**. Porównuj **tokeny, nie podciągi**: `"3"` nie może trafić w `"30"`. Błędny wynik nigdy nie dostaje `2/2`.
+- Serca: zegar `heartRefillAnchorAt` ustawiany przy zejściu poniżej `5/5` i przesuwany o `30 min` za każde przyznane serce; przy `5/5` pole `null`, zegar nie biegnie.
+- `localStorage`: klucz `jasne-e8-app:state`, `schemaVersion: 1`, `accountMode: 'guest'`, `guestId`, `try/catch` z resetem przy uszkodzonym JSON lub przyszłej wersji, debounce 300 ms, obsługa limitu 3 MB i `QuotaExceededError`. Reset postępów usuwa cały klucz i wraca do onboardingu (także motyw i SFX do domyślnych).
+- Walidacja nicku: `2–20` znaków, dozwolone litery (także polskie), cyfry, spacja, `-`, `_`; pusty lub 1-znakowy blokuje „Dalej”.
+- Izolacja repozytoriów (`src/types/repositories.ts` + `src/services/storage/firebaseReadyStub.ts`), tak aby żaden komponent React nie dotykał bezpośrednio `localStorage`.
+
+---
+
+### 8. SELF-CHECK PRZED ODDANIEM KODU
+Zanim zakończysz odpowiedź, zweryfikuj w kodzie:
+1. Czy wszystkie importy i typy TypeScript kompilują się czysto (0 błędów TS)?
+2. Czy wzory `KaTeX` renderują się bez wycieku surowych znaków `$`?
+3. Czy w trybie Solar Light tekst akcentowy używa `#B45309` (kontrast ≥ 4.5:1), a nie samego `#D97706`?
+4. Czy przycisk „Wzory E8” znika po przełączeniu na Polski lub Angielski?
+5. Czy Tarcza Serii kosztuje 450 monet (max 2), a kupno i założenie kosmetyku w Sklepie od razu zmienia maskotkę Lumi w całej aplikacji?
+6. Czy na szerokości `390px` nic nie wystaje poza ekran (`0px` poziomego scrollu), a na `1280px` nie ma prawego panelu i nie ma przyciętej treści?
+7. Czy każde ukończenie tego samego `contentId` drugi raz w dniu daje `0 monet` i `30%` XP, a sesja powtórkowa `0 monet` i `50%` XP?
+8. Czy przy `1` sercu błędna odpowiedź w środku lekcji przerywa sesję (bez XP/monet), a „Kontynuuj lekcję” wznawia od pierwszego nierozwiązanego zadania?
+9. Czy `1/2` w zadaniu otwartym nie zabiera serca, nie zmienia combo i nie trafia do Banku?
+10. Czy odpowiedź z błędnym wynikiem nigdy nie dostaje `2/2` (porównanie tokenów, nie podciągów)?
+11. Czy żadna podpowiedź (`hints[1..3]`) nie zawiera końcowego wyniku?
+12. Czy wyzwania są identyczne po zmianie przedmiotu (seed `hash(playerDay)` bez `subjectId`), a suma monet z wyzwań nie przekracza `45/dzień`?
+13. Czy tekst na wypełnieniu akcentu używa `--on-accent` (biały jest zabroniony)?
+14. Czy po pierwszym uruchomieniu offline fonty i KaTeX działają (brak CDN)?
+15. Czy „Wzory E8” są niedostępne w egzaminie (przycisk nie istnieje), a dostępne w lekcji i powtórkach?
+
+Zacznij budowę teraz i dostarcz kompletną, działającą, zachwycającą animacjami aplikację JASNE E8.
+```
+
+---
+
+## WARIANT B — Pakiet 3-Etapowy (Gdy chcesz budować krok po kroku bez skracania kodu)
+
+Użyj tego wariantu, jeśli w Google AI Studio wolisz wdrożyć aplikację w 3 precyzyjnych iteracjach o jeszcze wyższej gęstości detali. W pierwszym kroku załącz `MASTER_SPEC_AI_STUDIO.md`.
+
+### ETAP 1 — Fundament, Design System 3D, Dual-Theme, Maskotka Lumi, Dźwięki Web Audio, Onboarding i Powłoka
+
+```text
+Na podstawie załączonego pliku `MASTER_SPEC_AI_STUDIO.md` zbuduj ETAP 1 aplikacji **JASNE E8** — bez jeszcze pełnego runnera lekcji/egzaminu (te dodamy w Etapie 2 i 3), ale ze 100% produkcyjnym fundamentem:
+
+1. **Architektura & Stan (Firebase-Ready):**
+   - Pełne typy domenowe (`src/types/domain.ts`) i kontrakty repozytoriów (`src/types/repositories.ts`) + `localStateRepo.ts` (`schemaVersion: 1`, `guestId`, `try/catch`, debounce 300 ms, limit 3 MB / `QuotaExceededError`) + `firebaseReadyStub.ts`.
+   - `src/lib/playerDay.ts` (`Europe/Warsaw` przez `formatToParts` -> `YYYY-MM-DD`) oraz `src/lib/gamification.ts` (XP, Combo `x1.0/1.5/2.0/3.0`, Rangi `0/500/1500/3500/7000`, regeneracja serc offline 1/30 min, Tarcza Serii dla N dni, deterministyczne 3 Wyzwania Dzienne).
+   - `AppStateContext.tsx` zarządzający całym stanem.
+
+2. **Design System Tactile 3D Gaming + Dual-Theme:**
+   - Zmienne CSS dla Nocturne Dark i Solar Light (pamiętaj: tekst akcentowy Solar = `#B45309` dla WCAG AA 4.5:1!).
+   - Komponenty bazowe: `TactileButton` (wciskany 3D z `translateY(4px)`), `BottomSheet` (z `drag="y"`), `CountUpNumber`, `MathText` (KaTeX), `ToastHost`.
+   - `src/lib/motionPresets.ts` + `<MotionConfig reducedMotion="user">`.
+
+3. **Animowana Maskotka `<LumiMascot />` (czysty SVG + Framer Motion):**
+   - Wszystkie 8 nastrojów (`idle`, `happy`, `celebrate`, `thinking`, `surprised`, `supportive`, `focused`, `cool`), automatyczne mruganie, dynamiczny cień przy podskoku i warstwowe renderowanie kosmetyków (`colorScheme`, `headgear`, `eyewear`, `aura`).
+
+4. **Silnik Dźwiękowy (`soundEngine.ts`):**
+   - Interfejs `ISoundEngine` + kompletny `ProceduralWebAudioSoundEngine` (wszystkie 12 zdarzeń dźwiękowych, rosnący ton Combo) + szkielet `WavAssetSoundEngine` pod przyszłe pliki `.wav`.
+
+5. **Imponujący 5-Krokowy Onboarding bez rejestracji + Product Tour:**
+   - Wszystkie 5 kroków z maskotką Lumi, generatorem nicków, wyborem etapu, koloru Lumi, przedmiotu i celu dziennego, 3-slajdowym tourem i konfetti odblokowującym +120 monet i 5/5 serc.
+
+6. **Powłoka Aplikacji & Zakładka Start + Mapa Nauki:**
+   - Sticky Top HUD (max 56px mobile) z przełącznikiem 3 przedmiotów, Serią+Tarczą, Sercami i Monetami.
+   - Bottom Tab Bar (5 zakładek: Start, Nauka, Powtórki, Egzamin, Profil) z `layoutId` zamieniający się w lewy Sidebar na desktopie `≥ 1024px`.
+   - Pełny, bogaty ekran **Start** (Hero Lumi, cel dzienny, pasek Rangi, Bento statystyk, 3 Wyzwania Dzienne z odbieraniem nagród) oraz ekran **Nauka** (wizualna, falująca ścieżka Działów Matematyki z węzłem 1.1 i Działami 2–7 „Wkrótce”; dla Polskiego i Angielskiego widok zapowiedzi **bez przycisku Wzory E8**).
+
+    - **Zakaz martwych przycisków w Etapie 1:** węzeł 1.1 i CTA „Kontynuuj” otwierają estetyczny Bottom Sheet „Lekcja otwiera się w Etapie 2 — runner zadań dodajemy w następnym kroku” z przyciskiem „Rozumiem”. Zakładki Powtórki/Egzamin/Profil mogą pokazywać dopracowane stany „Wkrótce” (bez `alert`), ale nie mogą być puste ani mieć przycisków bez akcji. Postęp wyzwań w Etapie 1 wynosi `0`, bo zadania powstają w Etapie 2 — to oczekiwane.
+    - **Definition of Done Etapu 1:** build bez błędów TS; 5 zakładek klikalnych; zero martwych handlerów; oba motywy działają; onboarding zapisuje się i przeżywa F5; 0px overflow na `360/390/430px`.
+
+Zadbaj o 0 błędów TS, 0px overflow na 390px i zachwycającą płynność 60 FPS.
+```
+
+### ETAP 2 — Lekcja Bento, 5 Zadań z SmartMathKeyboard, AI Tutor Mock, Wzory E8 i Choreografia Combo/XP
+
+```text
+Świetnie! Teraz rozbuduj istniejącą aplikację **JASNE E8** o ETAP 2 zgodnie z `MASTER_SPEC_AI_STUDIO.md` — pełne doświadczenie nauki i animacji zadaniowych:
+
+1. **Kompletna Lekcja Testowa 1.1 („Potęgi i pierwiastki w zadaniach E8”):**
+   - **Etap A — Teoria Bento (4 zakładki z `layoutId`):** Esencja, Wzory E8 (KaTeX), Przykład krok po kroku (3 kroki), Pułapka E8 (ŹLE vs DOBRZE). Dostępna zawsze, nawet przy 0 sercach!
+   - **Etap B — Sesja 5 Zadań:** pełne 5 zadań ze specyfikacji (2× ABCD, 1× Prawda/Fałsz, 1× Numeric Input, 1× Zadanie otwarte).
+   - Przy 0 serc zablokuj przycisk „Przejdź do zadań” i pokaż opcje „Misja Ratunkowa” / „Sklep” (zgodnie z `AC-H2` i `AC-H3`).
+
+2. **Karty Odpowiedzi 3D, Cząsteczki XP i Pasek Combo:**
+   - Poprawna odpowiedź: podskok karty, animowany `Check`, **4–6 złotych cząsteczek `+XP`** wylatujących ku górze, rosnący dźwięk `correct` w Web Audio, aktywacja plakietki Combo (`x1.5` od 3., `x2.0` od 5., `x3.0` od 8. poprawnej, wygasanie 90 s).
+   - Błędna odpowiedź: wstrząs karty `x: [0,-10,10,-7,7,-3,0]`, utrata serca z ulatującym `-1`, reakcja `surprised` maskotki Lumi, automatyczne dodanie zadania do Banku Błędów.
+   - Slajd poziomy `AnimatePresence mode="wait"` między zadaniami i pasek postępu ze shimmerem.
+
+3. **Narzędzia w Zadaniu (ZERO brudnopisu!):**
+   - Przycisk **„Zapisz do powtórki”** z animacją obrotu i rozbłysku zakładki (deduplikacja `taskId + subjectId` + toast).
+   - Przycisk **„Wzory E8”** widoczny **WYŁĄCZNIE dla Matematyki** (znika w Polskim i Angielskim!) -> otwiera `FormulasBottomSheet` z 4 zakładkami wzorów w KaTeX i gestem `drag="y"`.
+   - **SmartMathKeyboard** dla zadań liczbowych (`inputmode="none"` + przełącznik „Klawiatura systemowa” + `scrollIntoView({ block: 'center' })`).
+
+4. **Symulowany AI Tutor (`aiTutorMock.ts` + `OpenTaskAiBox`):**
+   - 3 poziomy podpowiedzi Sokratycznych (każda obniża maks. XP zadania o 33%, min. 1 XP).
+   - Ocena zadania otwartego z 700 ms animacją analizy (`Lumi` w trybie `thinking` + shimmer), deterministycznymi progami ze specyfikacji (`0/2`, `1/2`, `2/2`) oraz stałą etykietą **„Ocena symulowana (Faza 1)”**.
+
+5. **Podsumowanie Lekcji & Modal Awansu Rangi:**
+   - Ekran zwycięstwa z Lumi (`celebrate`), `CountUpNumber` dla XP, Skuteczności % i `+20 monet`, aktualizacją Serii/Wyzwań oraz pełnoekranowym modalem **Awansu Rangi** z `canvas-confetti` i fanfarą.
+
+Zachowaj spójność obu motywów (Nocturne & Solar) i brak błędów TypeScript.
+
+**Zasady pracy z istniejącym projektem:** rozbudowuj obecne pliki i **nie usuwaj ani nie skracaj istniejącego kodu**, nie regeneruj projektu od zera, nie zmieniaj nazw komponentów ani kontraktów stanu bez potrzeby. Jeśli musisz zastąpić fragment, zachowaj jego publiczne API.
+
+**Definition of Done Etapu 2:** lekcja 1.1 grywalna od teorii do podsumowania; 5 zadań z poprawnymi `explanation` i `hints[3]` bez wyniku w podpowiedzi; `1/2` nie zabiera serca i nie trafia do Banku; zejście do 0 serc przerywa sesję i wznawia od pierwszego nierozwiązanego zadania; `-33% XP` za podpowiedź działa; awans rangi odpala się raz; brak błędów TS i 0px overflow na 390px.
+```
+
+### ETAP 3 — Powtórki & Bank Błędów, Misja Ratunkowa, Symulator Mini-Egzaminu E8 oraz Profil ze Sklepem Lumi
+
+```text
+Teraz domknij aplikację **JASNE E8** w ETAPIE 3 zgodnie z `MASTER_SPEC_AI_STUDIO.md`, podpinając wszystkie pozostałe 3 zakładki i pętlę retencji:
+
+1. **Zakładka Powtórki (`VaultView` + `RescueMissionModal`):**
+   - Przełącznik `layoutId`: **Zapisane** | **Bank Błędów** + filtr po przedmiocie.
+   - **Zapisane:** deduplikacja `taskId + subjectId`, limit FIFO 200, tryb „Rozwiąż zapisane”, pusty stan z Lumi (`supportive`).
+   - **Bank Błędów:** wizualny licznik `0/2` -> `1/2` -> znika po **2 poprawnych z rzędu** (błąd zeruje `correctStreak`), limit FIFO 200, sesja „Wyczyść błędy”.
+   - **Misja Ratunkowa:** darmowy wariant (2 poprawne zadania z Banku/Zapisanych = +1 serce, limit **3/dzień** per `playerDay`), wariant płatny (**80 monet = +1 serce**, bez limitu) oraz odliczanie do kolejnej automatycznej regeneracji serca (`1 / 30 min`).
+
+2. **Zakładka Egzamin (`ExamLobbyView` + `ExamRunnerView` + `ExamSummaryView`):**
+   - Lobby: aktywna karta 3D **Mini-Arkusz Testowy E8** (5 nowych zadań ze specyfikacji, 15 min, +40 monet, bez utraty serc) + karta **Pełny Próbny Arkusz E8 (Wkrótce)** + historia wyników.
+   - Tryb egzaminu: **timer `deadline - Date.now()`** odporny na przełączenie karty (`visibilitychange`), puls ostrzegawczy `< 60 s` + dźwięk, **auto-submit** po czasie, interaktywna **Siatka Pytań 1–5**, możliwość zapisu zadania do powtórki, brak podpowiedzi AI, brak utraty serc, potwierdzenie wyjścia (restart odrzuca próbę bez dodawania błędów).
+   - Raport końcowy: pierścień %, punkty CKE, zbiorcza ocena zadania otwartego przez AI Tutora, automatyczne dodanie błędów do Banku Błędów, zaliczenie dnia do Serii i +40 monet.
+
+3. **Zakładka Profil & Sklep Kosmetyków Lumi (`ProfileShopView` + `MascotDressingRoom`):**
+   - Karta Gracza z wybranym tłem, ramką, tytułem, maskotką Lumi w aktualnym ekwipunku, paskiem Rangi E8 i stanem Tarcz Serii.
+   - **Sklep z Przymierzalnią na żywo:** kliknięcie przedmiotu pokazuje podgląd na Lumi przed zakupem! Zakładki: *Maskotka* (akcesoria i skórki z tabeli cen), *Ramki & Tytuły*, *Wspomagacze* (**Tarcza Serii = 450 monet, max 2/2**, **+1 Serce = 80 monet**), oraz estetyczna sekcja **„Pakiety Premium / Mikropłatności — Wkrótce (Faza 2)”**.
+   - Animacje zakupu: `CountUpNumber` monet, shine sweep na karcie, mini-konfetti, wyskok Lumi w nowym stroju, lodowo-niebieski rozbłysk w HUD przy zakupie Tarczy Serii.
+   - Panel ustawień: przełącznik **Nocturne Dark / Solar Light**, przełącznik **Dźwięki SFX**, edycja nicku i celu dziennego, **„Powtórz intro / Product Tour”**, **„Resetuj dane lokalne”** (z podwójnym potwierdzeniem).
+
+**Zasady pracy z istniejącym projektem:** rozbudowuj obecne pliki i **nie usuwaj ani nie skracaj istniejącego kodu**, nie regeneruj projektu od zera. Zachowaj komponenty z Etapu 1 i 2 oraz ich API.
+
+4. **Finalny Audyt Jakości:**
+   - Sprawdź, czy 100% ekranów działa bez poziomego overflow na `390px` i świetnie wygląda na `1440px`, czy kontrast w Solar Light jest zachowany (`#B45309` dla tekstu akcentowego), czy „Wzory E8” znikają w Polskim i Angielskim oraz czy wszystkie dźwięki i animacje respektują ustawienia użytkownika (`SFX` i `prefers-reduced-motion`).
+```

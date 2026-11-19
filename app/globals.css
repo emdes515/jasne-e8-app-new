@@ -1,0 +1,103 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Default: Nocturne Gaming (Dark) */
+:root,
+.dark {
+  --bg-canvas: #080C16;
+  --bg-surface: #11192B;
+  --bg-elevated: #19243D;
+  --border-subtle: #24324E;
+  --border-3d-edge: #050811;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --accent-primary: #FFB800;
+  --accent-primary-edge: #B45309;
+  --on-accent: #080C16;
+  --accent-text: #FFC933;
+  --success: #10B981;
+  --success-edge: #047857;
+  --danger: #F43F5E;
+  --danger-edge: #BE123C;
+  --info: #38BDF8;
+  --info-edge: #0284C7;
+  --combo-fire: #F97316;
+  --rarity-epic: #A855F7;
+}
+
+/* Solar Gaming (Light) */
+[data-theme="light"] {
+  --bg-canvas: #F4F6FB;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F8FAFC;
+  --border-subtle: #DCE3F0;
+  --border-3d-edge: #CBD5E1;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --accent-primary: #D97706;
+  --accent-primary-edge: #92400E;
+  --on-accent: #0F172A;
+  --accent-text: #B45309;
+  --success: #059669;
+  --success-edge: #065F46;
+  --danger: #E11D48;
+  --danger-edge: #9F1239;
+  --info: #0284C7;
+  --info-edge: #0369A1;
+  --combo-fire: #EA580C;
+  --rarity-epic: #7E22CE;
+}
+
+html,
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Shine sweep animation for shop card purchase */
+@keyframes shineSweep {
+  0% {
+    transform: translateX(-140%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(240%) skewX(-20deg);
+  }
+}
+
+.animate-shine-sweep {
+  animation: shineSweep 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Progress bar subtle shimmer */
+@keyframes progressShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-progress-shimmer {
+  animation: progressShimmer 1.6s ease-in-out infinite;
+}
+
+/* KaTeX horizontal scroll safety on mobile */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
