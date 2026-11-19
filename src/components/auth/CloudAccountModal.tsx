@@ -14,12 +14,30 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { Cloud, CloudOff, KeyRound, Loader2, LogOut, Mail, ShieldCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Cloud,
+  CloudOff,
+  KeyRound,
+  Loader2,
+  LogOut,
+  Mail,
+  ShieldCheck,
+} from 'lucide-react';
 import { getFirebaseAuthClient, isFirebaseConfigured } from '../../lib/firebase';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
 
 const MAGIC_EMAIL_KEY = 'jasne_e8_magic_link_email';
+
+const FREE_UNLOCK_BENEFITS = [
+  'Dostęp do wszystkich lekcji i teorii Bento (za darmo)',
+  'Dostęp do zadań zamkniętych E8 i miniarkuszy (za darmo)',
+  'Zapis postępów, serii i Tarczy Serii w chmurze',
+  'Sklep Lumi i synchronizacja nagród między urządzeniami',
+] as const;
 
 export function useCloudAuthUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -37,7 +55,6 @@ export function useCloudAuthUser() {
       return;
     }
 
-    // Complete passwordless email link sign-in if returning from magic link
     if (typeof window !== 'undefined' && isSignInWithEmailLink(auth, window.location.href)) {
       const storedEmail = window.localStorage.getItem(MAGIC_EMAIL_KEY);
       if (storedEmail) {
@@ -63,18 +80,35 @@ export function useCloudAuthUser() {
 export function CloudAccountModal({
   open,
   onClose,
+  onSuccess,
+  titleOverride,
+  subtitleOverride,
 }: {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
+  titleOverride?: string;
+  subtitleOverride?: string;
 }) {
   const { user, configured } = useCloudAuthUser();
-  const [tab, setTab] = useState<'magic' | 'password'>('magic');
-  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
+  const [emailStep, setEmailStep] = useState<'entry' | 'login' | 'register' | 'fallback'>('entry');
+  const [fallbackMode, setFallbackMode] = useState<'login' | 'register'>('login');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setInfo(null);
+  }, [open]);
+
+  const handleSuccess = () => {
+    onSuccess?.();
+    onClose();
+  };
 
   const handleGoogleSignIn = async () => {
     const auth = getFirebaseAuthClient();
@@ -86,8 +120,7 @@ export function CloudAccountModal({
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       await signInWithPopup(auth, provider);
-      setInfo('Zalogowano przez Google! Twoje konto jest połączone z chmurą.');
-      onClose();
+      handleSuccess();
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('auth/operation-not-allowed')) {
@@ -104,8 +137,68 @@ export function CloudAccountModal({
     }
   };
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleCheckEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleaned = email.trim().toLowerCase();
+    if (!cleaned || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) {
+      setError('Podaj poprawny adres e-mail.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      const res = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleaned }),
+      });
+      const data = (await res.json()) as { exists?: boolean; known?: boolean };
+      if (data.known) {
+        setEmailStep(data.exists ? 'login' : 'register');
+      } else {
+        setEmailStep('fallback');
+      }
+    } catch {
+      setEmailStep('fallback');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent, mode: 'login' | 'register') => {
+    e.preventDefault();
+    const auth = getFirebaseAuthClient();
+    if (!auth || !email.trim() || !password) return;
+    setBusy(true);
+    setError(null);
+    setInfo(null);
+    try {
+      if (mode === 'register') {
+        await createUserWithEmailAndPassword(auth, email.trim(), password);
+      } else {
+        await signInWithEmailAndPassword(auth, email.trim(), password);
+      }
+      handleSuccess();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('auth/email-already-in-use')) {
+        setError('Ten e-mail ma już konto — przełączamy na logowanie hasłem.');
+        setEmailStep('login');
+        setFallbackMode('login');
+      } else if (msg.includes('auth/weak-password')) {
+        setError('Hasło musi mieć co najmniej 6 znaków.');
+      } else if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password')) {
+        setError('Nieprawidłowe hasło. Spróbuj ponownie lub wyślij link bez hasła.');
+      } else {
+        setError('Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSendMagicLink = async () => {
     const auth = getFirebaseAuthClient();
     if (!auth || !email.trim()) return;
     setBusy(true);
@@ -117,45 +210,13 @@ export function CloudAccountModal({
         handleCodeInApp: true,
       });
       window.localStorage.setItem(MAGIC_EMAIL_KEY, email.trim());
-      setInfo(`Wysłaliśmy link logowania na adres ${email.trim()}. Kliknij go na tym urządzeniu!`);
+      setInfo(`Wysłaliśmy link logowania na ${email.trim()}. Kliknij go na tym urządzeniu!`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('auth/operation-not-allowed')) {
-        setError('Logowanie bez hasła (Email Link) nie jest jeszcze włączone w Firebase. Użyj zakładki „E-mail i hasło”.');
+        setError('Logowanie linkiem e-mail nie jest jeszcze włączone w Firebase — wpisz hasło.');
       } else {
-        setError('Nie udało się wysłać linku. Sprawdź poprawność adresu e-mail.');
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handlePasswordAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const auth = getFirebaseAuthClient();
-    if (!auth || !email.trim() || !password) return;
-    setBusy(true);
-    setError(null);
-    setInfo(null);
-    try {
-      if (isRegister) {
-        await createUserWithEmailAndPassword(auth, email.trim(), password);
-        setInfo('Konto utworzone! Twoje postępy są przypisane do konta.');
-      } else {
-        await signInWithEmailAndPassword(auth, email.trim(), password);
-        setInfo('Zalogowano pomyślnie!');
-      }
-      onClose();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('auth/email-already-in-use')) {
-        setError('Ten e-mail ma już konto — przełącz na logowanie.');
-      } else if (msg.includes('auth/weak-password')) {
-        setError('Hasło musi mieć co najmniej 6 znaków.');
-      } else if (msg.includes('auth/invalid-credential') || msg.includes('auth/wrong-password')) {
-        setError('Nieprawidłowy e-mail lub hasło.');
-      } else {
-        setError('Błąd logowania. Sprawdź dane i spróbuj ponownie.');
+        setError('Nie udało się wysłać linku logowania.');
       }
     } finally {
       setBusy(false);
@@ -164,15 +225,12 @@ export function CloudAccountModal({
 
   const handleResetPassword = async () => {
     const auth = getFirebaseAuthClient();
-    if (!auth || !email.trim()) {
-      setError('Wpisz najpierw adres e-mail, aby zresetować hasło.');
-      return;
-    }
+    if (!auth || !email.trim()) return;
     setBusy(true);
     setError(null);
     try {
       await sendPasswordResetEmail(auth, email.trim());
-      setInfo(`Wysłano link resetu hasła na ${email.trim()}.`);
+      setInfo(`Wysłano link do ustawienia nowego hasła na ${email.trim()}.`);
     } catch {
       setError('Nie udało się wysłać linku resetu hasła.');
     } finally {
@@ -186,21 +244,32 @@ export function CloudAccountModal({
     setBusy(true);
     try {
       await signOut(auth);
-      setInfo('Wylogowano. Nadal możesz korzystać z aplikacji w trybie gościa.');
+      setInfo('Wylogowano. Nadal możesz korzystać z 1. lekcji jako Gość.');
     } finally {
       setBusy(false);
     }
   };
 
+  const activePasswordMode: 'login' | 'register' =
+    emailStep === 'register'
+      ? 'register'
+      : emailStep === 'login'
+      ? 'login'
+      : fallbackMode;
+
   return (
     <BottomSheet
       open={open}
       onClose={onClose}
-      title={user ? 'Konto w chmurze JASNE E8' : 'Zapisz swoje postępy'}
+      title={
+        user
+          ? 'Konto w chmurze JASNE E8'
+          : titleOverride ?? 'Odblokuj pełny dostęp za darmo'
+      }
       subtitle={
         user
-          ? 'Twoje konto Firebase jest aktywne.'
-          : 'Uczysz się jako Gość. Zaloguj się, aby nie stracić serii, monet i Lumi.'
+          ? 'Twoje darmowe konto Firebase jest aktywne.'
+          : subtitleOverride ?? 'Załóż darmowe konto w 15 sekund, aby uczyć się dalej i zapisać postępy.'
       }
     >
       {!configured ? (
@@ -217,7 +286,7 @@ export function CloudAccountModal({
                 {user.email ?? user.displayName ?? 'Konto zalogowane'}
               </div>
               <div className="text-xs text-[var(--text-secondary)]">
-                ID: {user.uid.slice(0, 12)}… · Połączono z Firebase
+                Wszystkie lekcje i zadania zamknięte są odblokowane.
               </div>
             </div>
           </div>
@@ -229,107 +298,157 @@ export function CloudAccountModal({
         </div>
       ) : (
         <div className="space-y-4">
-          {/* 1. Primary Google Sign-In */}
-          <TactileButton
-            variant="primary"
-            size="lg"
-            fullWidth
-            disabled={busy}
-            onClick={handleGoogleSignIn}
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
-            <span>Kontynuuj z Google</span>
-          </TactileButton>
-
-          <div className="relative flex items-center justify-center">
-            <span className="w-full border-t border-[var(--border-subtle)]" />
-            <span className="bg-[var(--bg-surface)] px-3 text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
-              lub e-mailem
-            </span>
-            <span className="w-full border-t border-[var(--border-subtle)]" />
+          {/* Free Benefits Checklist */}
+          <div className="rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] p-3.5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-extrabold uppercase tracking-wider font-display text-[var(--accent-text)]">
+                Co odblokujesz po zalogowaniu
+              </span>
+              <span className="rounded-full bg-[var(--success)]/15 border border-[var(--success)]/40 px-2 py-0.5 text-[10px] font-extrabold font-display text-[var(--success)]">
+                100% ZA DARMO
+              </span>
+            </div>
+            <ul className="space-y-1.5">
+              {FREE_UNLOCK_BENEFITS.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-2 text-xs text-[var(--text-primary)] leading-snug">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[var(--success)] shrink-0 mt-0.5" />
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* 2. Mode switch: Magic Link vs Password */}
-          <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-            <button
-              type="button"
-              onClick={() => {
-                setTab('magic');
-                setError(null);
-              }}
-              className={`min-h-[38px] rounded-lg text-xs font-extrabold font-display cursor-pointer transition-colors ${
-                tab === 'magic'
-                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
-                  : 'text-[var(--text-secondary)]'
-              }`}
-            >
-              Link bez hasła
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setTab('password');
-                setError(null);
-              }}
-              className={`min-h-[38px] rounded-lg text-xs font-extrabold font-display cursor-pointer transition-colors ${
-                tab === 'password'
-                  ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
-                  : 'text-[var(--text-secondary)]'
-              }`}
-            >
-              E-mail i hasło
-            </button>
-          </div>
-
-          {tab === 'magic' ? (
-            <form onSubmit={handleMagicLink} className="space-y-3">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="twoj@email.pl"
-                className="w-full min-h-[44px] px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
-              />
-              <TactileButton type="submit" variant="info" size="md" fullWidth disabled={busy}>
-                <Mail className="w-4 h-4" />
-                <span>Wyślij link logowania</span>
+          {emailStep === 'entry' ? (
+            <>
+              <TactileButton
+                variant="primary"
+                size="lg"
+                fullWidth
+                disabled={busy}
+                onClick={handleGoogleSignIn}
+              >
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+                <span>Kontynuuj z Google</span>
               </TactileButton>
-            </form>
+
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-[var(--border-subtle)]" />
+                <span className="shrink-0 whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  lub e-mailem
+                </span>
+                <span className="h-px flex-1 bg-[var(--border-subtle)]" />
+              </div>
+
+              <form onSubmit={handleCheckEmail} className="space-y-2.5">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Wpisz swój adres e-mail…"
+                  className="w-full min-h-[44px] px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                />
+                <TactileButton type="submit" variant="info" size="md" fullWidth disabled={busy}>
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                  <span>Dalej z e-mailem</span>
+                </TactileButton>
+              </form>
+            </>
           ) : (
-            <form onSubmit={handlePasswordAuth} className="space-y-3">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="twoj@email.pl"
-                className="w-full min-h-[44px] px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
-              />
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Hasło (min. 6 znaków)"
-                className="w-full min-h-[44px] px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
-              />
-              <TactileButton type="submit" variant="secondary" size="md" fullWidth disabled={busy}>
-                <KeyRound className="w-4 h-4" />
-                <span>{isRegister ? 'Utwórz konto' : 'Zaloguj się'}</span>
-              </TactileButton>
-              <div className="flex items-center justify-between text-xs">
+            <div className="space-y-3">
+              {/* Email header with change button */}
+              <div className="flex items-center justify-between gap-2 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] px-3 py-2 text-xs">
+                <div className="min-w-0">
+                  <span className="text-[var(--text-secondary)]">
+                    {emailStep === 'login'
+                      ? 'Znaleziono konto: '
+                      : emailStep === 'register'
+                      ? 'Nowe darmowe konto: '
+                      : 'E-mail: '}
+                  </span>
+                  <strong className="text-[var(--text-primary)] break-all">{email.trim()}</strong>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setIsRegister((v) => !v)}
-                  className="font-bold text-[var(--accent-text)] hover:underline cursor-pointer"
+                  onClick={() => {
+                    setEmailStep('entry');
+                    setPassword('');
+                    setError(null);
+                    setInfo(null);
+                  }}
+                  className="inline-flex items-center gap-1 font-bold text-[var(--accent-text)] hover:underline cursor-pointer shrink-0"
                 >
-                  {isRegister ? 'Mam już konto — zaloguj' : 'Nie masz konta? Zarejestruj się'}
+                  <ArrowLeft className="w-3 h-3" />
+                  Zmień
                 </button>
-                {!isRegister && (
+              </div>
+
+              {emailStep === 'fallback' && (
+                <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
                   <button
                     type="button"
+                    onClick={() => setFallbackMode('login')}
+                    className={`min-h-[36px] rounded-lg text-xs font-extrabold font-display cursor-pointer ${
+                      fallbackMode === 'login'
+                        ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    Mam już konto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFallbackMode('register')}
+                    className={`min-h-[36px] rounded-lg text-xs font-extrabold font-display cursor-pointer ${
+                      fallbackMode === 'register'
+                        ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]'
+                        : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    Nowe konto
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={(e) => handlePasswordSubmit(e, activePasswordMode)} className="space-y-2.5">
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  autoFocus
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={
+                    activePasswordMode === 'register'
+                      ? 'Ustaw hasło (min. 6 znaków)'
+                      : 'Wpisz swoje hasło'
+                  }
+                  className="w-full min-h-[44px] px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm"
+                />
+                <TactileButton type="submit" variant="primary" size="md" fullWidth disabled={busy}>
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                  <span>
+                    {activePasswordMode === 'register'
+                      ? 'Utwórz darmowe konto'
+                      : 'Zaloguj się'}
+                  </span>
+                </TactileButton>
+              </form>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleSendMagicLink}
+                  className="inline-flex items-center gap-1 font-bold text-[var(--info)] hover:underline cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Wyślij link bez hasła</span>
+                </button>
+                {activePasswordMode === 'login' && (
+                  <button
+                    type="button"
+                    disabled={busy}
                     onClick={handleResetPassword}
                     className="font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
                   >
@@ -337,7 +456,7 @@ export function CloudAccountModal({
                   </button>
                 )}
               </div>
-            </form>
+            </div>
           )}
 
           {error && (

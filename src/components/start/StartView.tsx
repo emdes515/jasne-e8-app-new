@@ -47,8 +47,7 @@ export function StartView() {
     firebaseReady &&
     !authLoading &&
     !cloudUser &&
-    !reminderDismissed &&
-    (state.totalTasksSolved >= 1 || state.completedLessonIds.length >= 1);
+    !reminderDismissed;
 
   return (
     <div className="space-y-5 lg:space-y-4">
@@ -81,7 +80,7 @@ export function StartView() {
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <Cloud className="w-5 h-5 text-[var(--info)] shrink-0" />
             <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-snug">
-              Zapisz swoje postępy i serię w chmurze — zaloguj się przez Google lub e-mail.
+              Zaloguj się <strong>za darmo</strong>, aby odblokować wszystkie lekcje, zadania zamknięte E8 i zapis w chmurze.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">

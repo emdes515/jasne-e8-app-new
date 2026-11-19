@@ -31,7 +31,7 @@ export const SHOP_CATALOG: ShopItemDefinition[] = [
     id: 'head_street_cap',
     category: 'mascot',
     name: 'Czapka z daszkiem',
-    description: 'Czerwona czapka z daszkiem.',
+    description: 'Niebieska czapka z daszkiem w stylu street.',
     price: 180,
     rarity: 'common',
     slot: 'headgear',

@@ -13,6 +13,7 @@ import {
   Shield,
   ArrowRight,
   Check,
+  Cloud,
   Flame,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -28,6 +29,7 @@ import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
+import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
 
 const RANDOM_NICKNAMES = [
   'CyberPitagoras',
@@ -77,6 +79,8 @@ export function OnboardingFlow() {
   const [dailyGoalMinutes, setDailyGoalMinutes] =
     useState<DailyGoalMinutes>(10);
   const [tourIndex, setTourIndex] = useState(0);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const { user: cloudUser } = useCloudAuthUser();
 
   const nickValidation = validateNickname(nickname);
 
@@ -175,6 +179,16 @@ export function OnboardingFlow() {
                 <span>Zaczynamy</span>
                 <ArrowRight className="w-5 h-5" />
               </TactileButton>
+
+              {!cloudUser && (
+                <button
+                  type="button"
+                  onClick={() => setLoginModalOpen(true)}
+                  className="mt-3 text-xs font-bold text-[var(--accent-text)] hover:underline cursor-pointer"
+                >
+                  Mam już konto — zaloguj się za darmo
+                </button>
+              )}
             </motion.div>
           )}
 
@@ -702,24 +716,57 @@ export function OnboardingFlow() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <TactileButton
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  onClick={() =>
-                    completeOnboarding({
-                      nickname: nickValidation.trimmed,
-                      studyStage,
-                      activeSubject,
-                      dailyGoalMinutes,
-                      starterColor,
-                      startFirstLesson: true,
-                    })
-                  }
-                >
-                  <BookOpen className="w-5 h-5" />
-                  <span>Otwórz pierwszą lekcję</span>
-                </TactileButton>
+                {!cloudUser ? (
+                  <>
+                    <TactileButton
+                      variant="primary"
+                      size="lg"
+                      fullWidth
+                      onClick={() => setLoginModalOpen(true)}
+                    >
+                      <Cloud className="w-5 h-5" />
+                      <span>Zaloguj się za darmo (odblokuj lekcje)</span>
+                    </TactileButton>
+
+                    <TactileButton
+                      variant="secondary"
+                      size="md"
+                      fullWidth
+                      onClick={() =>
+                        completeOnboarding({
+                          nickname: nickValidation.trimmed,
+                          studyStage,
+                          activeSubject,
+                          dailyGoalMinutes,
+                          starterColor,
+                          startFirstLesson: true,
+                        })
+                      }
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>Przetestuj 1. lekcję jako Gość</span>
+                    </TactileButton>
+                  </>
+                ) : (
+                  <TactileButton
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    onClick={() =>
+                      completeOnboarding({
+                        nickname: nickValidation.trimmed,
+                        studyStage,
+                        activeSubject,
+                        dailyGoalMinutes,
+                        starterColor,
+                        startFirstLesson: true,
+                      })
+                    }
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    <span>Otwórz pierwszą lekcję</span>
+                  </TactileButton>
+                )}
 
                 <TactileButton
                   variant="secondary"
@@ -744,7 +791,22 @@ export function OnboardingFlow() {
         </AnimatePresence>
       </div>
 
-
+      <CloudAccountModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        titleOverride="Zaloguj się za darmo i odblokuj całość"
+        subtitleOverride="Pierwsza lekcja działa bez konta. Zaloguj się za darmo, aby odblokować wszystkie lekcje i zadania zamknięte E8."
+        onSuccess={() => {
+          completeOnboarding({
+            nickname: nickValidation.trimmed,
+            studyStage,
+            activeSubject,
+            dailyGoalMinutes,
+            starterColor,
+            startFirstLesson: false,
+          });
+        }}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, Check, ChevronRight, Flag, Lock, Play, RotateCcw, Timer } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, Lock, Flag, Play, RotateCcw, Timer } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson, MATH_CHAPTERS_MAP, MATH_LESSONS, type ChapterMeta } from '../../data/mathLessonMock';
+import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
 import { SubjectComingSoonView } from './SubjectComingSoonView';
@@ -11,6 +12,8 @@ import { SubjectComingSoonView } from './SubjectComingSoonView';
 export function LearnPathView() {
   const { state, openLessonTheory, startLessonTasks, startPracticeSession, setFormulasOpen, setActiveTab } = useAppState();
   const [previewChapter, setPreviewChapter] = useState<ChapterMeta | null>(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const { user: cloudUser } = useCloudAuthUser();
 
   if (state.activeSubject !== 'math') return <SubjectComingSoonView />;
 
@@ -35,52 +38,70 @@ export function LearnPathView() {
       </header>
 
       <ol aria-label="Lekcje z matematyki" className="learn-route">
-        {MATH_LESSONS.map((lesson) => {
+        {MATH_LESSONS.map((lesson, lessonIdx) => {
           const done = state.completedLessonIds.includes(lesson.id);
           const attempt = getLessonAttempt(state, lesson.id);
           const theoryCard = state.theoryCards?.[lesson.id];
           const theoryIndex = theoryCard ? lesson.theory.findIndex((card) => card.id === theoryCard) : -1;
           const reviewIds = state.lessonReviewTasks?.[lesson.id] ??
             lesson.tasks.filter((task) => state.mistakeBank.some((entry) => entry.taskId === task.id)).map((task) => task.id);
-          const current = !done && lesson.id === recommendedId;
+          const lockedByGuest = lessonIdx > 0 && !cloudUser;
+          const current = !done && !lockedByGuest && lesson.id === recommendedId;
           return (
-            <li key={lesson.id} className="learn-stop" data-state={done ? 'done' : current ? 'current' : 'ready'}>
+            <li key={lesson.id} className="learn-stop" data-state={lockedByGuest ? 'locked' : done ? 'done' : current ? 'current' : 'ready'}>
               <span className="learn-marker" aria-hidden="true">
-                {done ? <Check size={21} /> : current ? <Flag size={19} /> : <span className="learn-marker-dot" />}
+                {lockedByGuest ? <Lock size={17} /> : done ? <Check size={21} /> : current ? <Flag size={19} /> : <span className="learn-marker-dot" />}
               </span>
               <article className="learn-lesson study-panel min-w-0 p-3.5 sm:p-5">
                 <p className="mb-1 text-xs font-bold text-[var(--accent-text)]">
-                  Lekcja {lesson.nodeNumber}{done ? ' · Ukończona' : current ? ' · Następna na ścieżce' : ''}
+                  Lekcja {lesson.nodeNumber}
+                  {lockedByGuest
+                    ? ' · Odblokuj za darmo po zalogowaniu'
+                    : done
+                    ? ' · Ukończona'
+                    : current
+                    ? ' · Następna na ścieżce'
+                    : ''}
                 </p>
                 <h2 className="text-base font-extrabold text-pretty sm:text-xl">{lesson.title}</h2>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">{lesson.subtitle}</p>
-                {(attempt || theoryIndex >= 0) && (
-                  <p className="mt-2 text-xs font-bold text-[var(--text-secondary)]">
-                    {theoryIndex >= 0
-                      ? 'Karta ' + (theoryIndex + 1) + ' z ' + lesson.theory.length
-                      : attempt && 'Zapisano ' + Object.keys(attempt.answers).length + ' z ' + attempt.taskIds.length + ' odpowiedzi'}
-                  </p>
+                {lockedByGuest ? (
+                  <div className="mt-3">
+                    <TactileButton variant="info" size="sm" onClick={() => setLoginModalOpen(true)}>
+                      <Lock size={15} /> Odblokuj za darmo (Zaloguj)
+                    </TactileButton>
+                  </div>
+                ) : (
+                  <>
+                    {(attempt || theoryIndex >= 0) && (
+                      <p className="mt-2 text-xs font-bold text-[var(--text-secondary)]">
+                        {theoryIndex >= 0
+                          ? 'Karta ' + (theoryIndex + 1) + ' z ' + lesson.theory.length
+                          : attempt && 'Zapisano ' + Object.keys(attempt.answers).length + ' z ' + attempt.taskIds.length + ' odpowiedzi'}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {attempt && (
+                        <TactileButton size="sm" onClick={() => startLessonTasks(lesson.id)}>
+                          <Play size={16} /> Wznów zadania
+                        </TactileButton>
+                      )}
+                      <TactileButton variant={current && !attempt ? 'primary' : 'secondary'} size="sm" onClick={() => openLessonTheory(lesson.id, done)}>
+                        <BookOpen size={16} /> {theoryIndex >= 0 ? 'Wznów teorię' : done ? 'Powtórz materiał' : attempt ? 'Przeczytaj teorię' : 'Otwórz lekcję'}
+                      </TactileButton>
+                      {done && !attempt && (
+                        <TactileButton variant="secondary" size="sm" onClick={() => startLessonTasks(lesson.id)}>
+                          <Play size={16} /> Rozwiąż zadania ponownie
+                        </TactileButton>
+                      )}
+                      {done && reviewIds.length > 0 && (
+                        <TactileButton variant="secondary" size="sm" onClick={() => startPracticeSession('bank', 'all', reviewIds, lesson.id)}>
+                          <RotateCcw size={16} /> Powtórz błędy ({reviewIds.length})
+                        </TactileButton>
+                      )}
+                    </div>
+                  </>
                 )}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {attempt && (
-                    <TactileButton size="sm" onClick={() => startLessonTasks(lesson.id)}>
-                      <Play size={16} /> Wznów zadania
-                    </TactileButton>
-                  )}
-                  <TactileButton variant={current && !attempt ? 'primary' : 'secondary'} size="sm" onClick={() => openLessonTheory(lesson.id, done)}>
-                    <BookOpen size={16} /> {theoryIndex >= 0 ? 'Wznów teorię' : done ? 'Powtórz materiał' : attempt ? 'Przeczytaj teorię' : 'Otwórz lekcję'}
-                  </TactileButton>
-                  {done && !attempt && (
-                    <TactileButton variant="secondary" size="sm" onClick={() => startLessonTasks(lesson.id)}>
-                      <Play size={16} /> Rozwiąż zadania ponownie
-                    </TactileButton>
-                  )}
-                  {done && reviewIds.length > 0 && (
-                    <TactileButton variant="secondary" size="sm" onClick={() => startPracticeSession('bank', 'all', reviewIds, lesson.id)}>
-                      <RotateCcw size={16} /> Powtórz błędy ({reviewIds.length})
-                    </TactileButton>
-                  )}
-                </div>
               </article>
             </li>
           );
@@ -110,6 +131,13 @@ export function LearnPathView() {
           <Timer size={16} /> Przejdź do miniarkusza
         </TactileButton>
       </BottomSheet>
+
+      <CloudAccountModal
+        open={loginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
+        titleOverride="Odblokuj wszystkie lekcje za darmo"
+        subtitleOverride="Pierwsza lekcja jest otwarta dla Gościa. Zaloguj się za darmo, aby odblokować kolejne lekcje."
+      />
     </div>
   );
 }
