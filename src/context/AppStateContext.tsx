@@ -413,13 +413,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (tab === 'exam') {
         setFormulasOpen(false);
       }
-      if (tab !== activeTab || section === 'shop') {
-        if (lessonViewStage !== 'none') {
-          setLessonViewStage('none');
-        }
-      }
+      setLessonViewStage('none');
     },
-    [activeTab, playSound, lessonViewStage]
+    [playSound]
   );
 
   // Remember to close FormulasBottomSheet when switching away from Math (AC-G4)
@@ -544,22 +540,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     playSound('tap');
 
-    // If there is already an active lesson session (e.g. resumed after 0 hearts), continue from first unanswered task
-    if (cur.activeSession && cur.activeSession.source === 'lesson') {
-      const firstUnansweredIdx = cur.activeSession.taskIds.findIndex(
-        (tid) => !cur.activeSession!.answers[tid]
-      );
-      const nextIdx =
-        firstUnansweredIdx >= 0 ? firstUnansweredIdx : cur.activeSession.currentIndex;
+    const lessonSession = cur.activeSession?.source === 'lesson'
+      ? cur.activeSession
+      : cur.pausedLessonSession;
+
+    if (lessonSession) {
+      const firstUnansweredIdx = lessonSession.taskIds.findIndex((taskId) => !lessonSession.answers[taskId]);
       setState((prev) => ({
         ...prev,
-        activeSession: prev.activeSession
-          ? {
-              ...prev.activeSession,
-              currentIndex: nextIdx,
-              interruptedByZeroHearts: false,
-            }
-          : null,
+        activeSubject: lessonSession.subjectId,
+        pausedLessonSession: undefined,
+        activeSession: {
+          ...lessonSession,
+          currentIndex: firstUnansweredIdx >= 0 ? firstUnansweredIdx : lessonSession.currentIndex,
+          interruptedByZeroHearts: false,
+        },
       }));
       setLessonViewStage('tasks');
       return true;
@@ -670,6 +665,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       setState((prev) => ({
         ...prev,
+        pausedLessonSession: prev.activeSession?.source === 'lesson' ? prev.activeSession : prev.pausedLessonSession,
         activeSession: newSession,
       }));
       setLessonViewStage('tasks');

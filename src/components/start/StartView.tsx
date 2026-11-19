@@ -12,7 +12,7 @@ export function StartView() {
   const { state, setActiveTab, openLessonTheory, startLessonTasks, setFormulasOpen, playSound } = useAppState();
   const goal = computeDailyGoalProgress(state);
   const isMath = state.activeSubject === 'math';
-  const hasPausedLesson = state.activeSession?.source === 'lesson';
+  const hasPausedLesson = state.activeSession?.source === 'lesson' || Boolean(state.pausedLessonSession);
   const completed = state.completedLessonIds.includes(MATH_LESSON_1_1.id);
   const reviewCount = state.mistakeBank.length + state.savedTasks.length;
   const accuracy = state.accuracyPointsPossible

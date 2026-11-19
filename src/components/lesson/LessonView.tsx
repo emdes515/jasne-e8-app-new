@@ -9,6 +9,7 @@ import { LessonSummaryModal } from './LessonSummaryModal';
 
 export function LessonView() {
   const {
+    state,
     lessonViewStage,
     setLessonViewStage,
     startLessonTasks,
@@ -28,7 +29,7 @@ export function LessonView() {
   }
 
   if (lessonViewStage === 'tasks') {
-    return <TaskRunner />;
+    return <TaskRunner key={state.activeSession?.sessionId} />;
   }
 
   if (lessonViewStage === 'summary' && lastSessionSummary) {

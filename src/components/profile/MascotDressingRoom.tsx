@@ -272,11 +272,8 @@ export function MascotDressingRoom() {
       {activeCategory === 'premium' && (
         <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--info)] text-xs text-[var(--text-secondary)] leading-relaxed">
           <strong className="text-[var(--info)] font-display">
-            Pakiety są zapowiedzią. Płatności są niedostępne.
-          </strong>{' '}
-          W JASNE E8 nauka nigdy nie jest blokowana paywallem, a wszystkie
-          kosmetyki i Tarcze Serii zdobywasz za monety z lekcji, wyzwań i
-          egzaminów.
+            Pakiety w przygotowaniu. Płatności są niedostępne.
+          </strong>
         </div>
       )}
 
@@ -366,15 +363,10 @@ export function MascotDressingRoom() {
                 )}
 
                 {item.comingSoon ? (
-                  <TactileButton
-                    variant="secondary"
-                    size="sm"
-                    fullWidth
-                    onClick={() => handleBuyOrEquip(item)}
-                  >
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)]">
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Zapowiedź</span>
-                  </TactileButton>
+                    W przygotowaniu
+                  </span>
                 ) : isEquipped ? (
                   <div className="w-full min-h-[44px] px-4 rounded-xl bg-[var(--success)]/15 border-2 border-[var(--success)] text-[var(--success)] text-xs font-extrabold font-display flex items-center justify-center gap-1.5">
                     <Check className="w-4 h-4" />

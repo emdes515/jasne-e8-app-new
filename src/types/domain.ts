@@ -288,6 +288,7 @@ export interface AppState {
 
   // Active Lesson / Practice session (survives F5)
   activeSession: ActiveTaskSession | null;
+  pausedLessonSession?: ActiveTaskSession;
 
   // Exam history
   examHistory: ExamAttemptRecord[];

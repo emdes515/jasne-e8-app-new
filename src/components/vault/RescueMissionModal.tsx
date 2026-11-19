@@ -40,8 +40,8 @@ export function RescueMissionModal() {
     <BottomSheet
       open={rescueModalOpen}
       onClose={() => setRescueModalOpen(false)}
-      title="Misja ratunkowa & Serca"
-      subtitle="Rozwiąż 2 zadania, żeby odzyskać serce."
+      title="Serca"
+
     >
       <div className="space-y-4">
         {/* Top Status Header with Lumi */}
@@ -55,7 +55,7 @@ export function RescueMissionModal() {
             <div className="flex items-center gap-2">
               <Heart className="w-5 h-5 text-[var(--danger)] fill-[var(--danger)]" />
               <span className="text-lg font-extrabold font-display tabular-nums">
-                Twoje Serca: {state.hearts} / {MAX_HEARTS}
+                Serca {state.hearts} / {MAX_HEARTS}
               </span>
             </div>
 
@@ -63,7 +63,7 @@ export function RescueMissionModal() {
               <Clock className="w-3.5 h-3.5 text-[var(--info)] shrink-0" />
               <span>
                 {heartsFull
-                  ? 'Masz pełny zapas serc (5/5)!'
+                  ? 'Pełny zapas serc'
                   : `Kolejne darmowe serce za: ${formatCountdown(
                       secondsToNextHeart
                     )} (+1 co 30 min)`}
@@ -76,11 +76,8 @@ export function RescueMissionModal() {
         <div className="p-4 rounded-2xl bg-[var(--bg-surface)] border-2 border-[var(--info)] space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div>
-              <div className="text-xs font-extrabold font-display text-[var(--info)]">
-                Wariant darmowy • Nauka zamiast czekania
-              </div>
               <h3 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                Misja ratunkowa: 2 poprawne zadania = +1 Serce
+                Misja ratunkowa
               </h3>
             </div>
             <span className="text-xs font-extrabold font-display tabular-nums text-[var(--text-secondary)]">
@@ -89,9 +86,7 @@ export function RescueMissionModal() {
           </div>
 
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-            Rozwiąż poprawnie 2 zadania z Banku Błędów lub Zapisanych. Postęp
-            bieżącej misji ({state.rescueMissionCurrentProgress}/2) nie przepada
-            przy wyjściu!
+            Rozwiąż poprawnie 2 zadania, żeby odzyskać serce. Postęp: {state.rescueMissionCurrentProgress}/2.
           </p>
 
           {freeLimitReached ? (
@@ -115,7 +110,7 @@ export function RescueMissionModal() {
                 }}
               >
                 <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
-                <span>Otwórz teorię (zawsze dostępna)</span>
+                <span>Otwórz teorię</span>
               </TactileButton>
             </div>
           ) : (
@@ -132,7 +127,7 @@ export function RescueMissionModal() {
               <span>
                 {heartsFull
                   ? 'Serca pełne (5/5)'
-                  : `Start Misji Ratunkowej (${state.rescueMissionCurrentProgress}/2)`}
+                  : `Rozpocznij misję (${state.rescueMissionCurrentProgress}/2)`}
               </span>
             </TactileButton>
           )}
@@ -141,11 +136,8 @@ export function RescueMissionModal() {
         {/* Option 2: Paid with in-game coins (80 coins = +1 Heart, no daily limit) */}
         <div className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-              Natychmiastowe doładowanie • Bez limitu dziennego
-            </div>
             <h3 className="text-sm font-extrabold font-display text-[var(--text-primary)]">
-              Doładowanie +1 Serca za {HEART_REFILL_PRICE} monet
+              Dodatkowe serce za {HEART_REFILL_PRICE} monet
             </h3>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5 tabular-nums">
               Masz obecnie: {state.coins} monet
@@ -166,7 +158,7 @@ export function RescueMissionModal() {
                 ? 'Serca pełne (5/5)'
                 : state.coins < HEART_REFILL_PRICE
                 ? `Brakuje ${HEART_REFILL_PRICE - state.coins} monet`
-                : `Kup +1 Serce (${HEART_REFILL_PRICE})`}
+                : `Kup serce (${HEART_REFILL_PRICE})`}
             </span>
           </TactileButton>
         </div>
