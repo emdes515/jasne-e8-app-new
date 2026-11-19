@@ -152,6 +152,7 @@ interface AppStateContextValue {
   playSound: (event: SoundEvent, options?: { comboCount?: number }) => void;
 
   // Domain Actions
+  setStudyReminder: (schedule: AppState['studyReminder']) => void;
   completeOnboarding: (params: {
     nickname: string;
     studyStage: StudyStageId;
@@ -159,6 +160,8 @@ interface AppStateContextValue {
     dailyGoalMinutes: DailyGoalMinutes;
     starterColor: LumiLoadout['colorScheme'];
     startFirstLesson: boolean;
+    audience: NonNullable<AppState['onboardingAudience']>;
+    studyReminder: AppState['studyReminder'];
   }) => void;
   setSubject: (subject: SubjectId) => void;
   setTheme: (theme: ThemeMode) => void;
@@ -508,6 +511,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [pushToast]
   );
 
+  const setStudyReminder = useCallback((studyReminder: AppState['studyReminder']) => {
+    setState((previous) => ({ ...previous, studyReminder }));
+  }, []);
+
   const completeOnboarding = useCallback(
     (params: {
       nickname: string;
@@ -516,6 +523,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       dailyGoalMinutes: DailyGoalMinutes;
       starterColor: LumiLoadout['colorScheme'];
       startFirstLesson: boolean;
+      audience: NonNullable<AppState['onboardingAudience']>;
+      studyReminder: AppState['studyReminder'];
     }) => {
       const v = validateNickname(params.nickname);
       const safeNick = v.valid ? v.trimmed : 'BłyskLogiki';
@@ -524,6 +533,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setState((prev) => ({
         ...prev,
         onboardingCompleted: true,
+        onboardingAudience: params.audience,
+        studyReminder: params.studyReminder,
         nickname: safeNick,
         studyStage: params.studyStage,
         activeSubject: params.activeSubject,
@@ -1663,6 +1674,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       dismissToast,
       playSound,
       completeOnboarding,
+      setStudyReminder,
       setSubject,
       setTheme,
       setSfxEnabled,
@@ -1709,6 +1721,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       dismissToast,
       playSound,
       completeOnboarding,
+      setStudyReminder,
       setSubject,
       setTheme,
       setSfxEnabled,

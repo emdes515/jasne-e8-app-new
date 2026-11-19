@@ -2,6 +2,7 @@
 
 import React, { useId, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
+import { useHydrationSafeReducedMotion } from '../../lib/useHydrationSafeReducedMotion';
 import { SPRING_BOUNCY, SPRING_TACTILE } from '../../lib/motionPresets';
 
 export type BulbAnimationMode = 'none' | 'subtle' | 'ignition' | 'loading';
@@ -41,7 +42,7 @@ export function JasneBulbMark({
   className = '',
 }: JasneBulbMarkProps) {
   const uid = useId().replace(/:/g, '');
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = useHydrationSafeReducedMotion();
   const mode: BulbAnimationMode = prefersReduced ? 'none' : animated;
 
   const haloId = `bulb-halo-${uid}`;

@@ -23,7 +23,7 @@ export function FreeAccountAction() {
   return (
     <>
       <button type="button" className={styles.freeAction} disabled={loading} onClick={() => setOpen(true)}>
-        Zaloguj się lub załóż konto <ArrowRight size={17} aria-hidden="true" />
+        Przejdź do konta osoby dorosłej <ArrowRight size={17} aria-hidden="true" />
       </button>
       {open && (
         <CloudAccountModal

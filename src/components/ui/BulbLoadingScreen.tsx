@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { JasneBulbMark } from '../brand/JasneLogo';
+import { useHydrationSafeReducedMotion } from '../../lib/useHydrationSafeReducedMotion';
 
 export type SplashVariant = 'boot' | 'lesson' | 'exam' | 'sync';
 
@@ -66,7 +67,7 @@ export function AppSplashLoader({
   fullscreen = true,
   className = '',
 }: AppSplashLoaderProps) {
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = useHydrationSafeReducedMotion();
   const [messageIdx, setMessageIdx] = useState(0);
   const messages = ROTATING_MESSAGES[variant];
 

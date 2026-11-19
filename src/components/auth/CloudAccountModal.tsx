@@ -28,8 +28,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { getFirebaseAuthClient, isFirebaseConfigured } from '../../lib/firebase';
-import { useAppState } from '../../context/AppStateContext';
-import { initializeCloudUserProfile } from '../../services/storage/cloudUserSync';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
 
@@ -47,15 +45,9 @@ export function useCloudAuthUser() {
   const configured = isFirebaseConfigured();
 
   useEffect(() => {
-    if (!configured) {
-      setLoading(false);
-      return;
-    }
+    if (!configured) return;
     const auth = getFirebaseAuthClient();
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
+    if (!auth) return;
 
     if (typeof window !== 'undefined' && isSignInWithEmailLink(auth, window.location.href)) {
       const storedEmail = window.localStorage.getItem(MAGIC_EMAIL_KEY);
@@ -76,26 +68,51 @@ export function useCloudAuthUser() {
     return () => unsub();
   }, [configured]);
 
-  return { user, loading, configured };
+  return { user, loading: configured && loading, configured };
 }
 
-export function CloudAccountModal({
-  open,
-  onClose,
-  onSuccess,
-  titleOverride,
-  subtitleOverride,
-  showPlanLink = true,
-}: {
+type AccountModalProps = {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
   titleOverride?: string;
   subtitleOverride?: string;
   showPlanLink?: boolean;
-}) {
+};
+
+export function CloudAccountModal(props: AccountModalProps) {
+  return props.open ? <AccountEntry {...props} /> : null;
+}
+
+function AccountEntry(props: AccountModalProps) {
+  const { user, loading, configured } = useCloudAuthUser();
+  const [confirmed, setConfirmed] = useState(false);
+  if (!configured || user || confirmed) return <AccountForm {...props} />;
+
+  return (
+    <BottomSheet open onClose={props.onClose} title="Konto osoby dorosłej" maxWidthClass="max-w-md">
+      <div className="space-y-3">
+        <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
+          Konto zakłada i obsługuje osoba dorosła. Rodzicu lub opiekunie, użyj własnego adresu e-mail. Uczeń może rozpocząć pierwszą lekcję na tym urządzeniu bez konta.
+        </p>
+        <TactileButton fullWidth disabled={loading} onClick={() => setConfirmed(true)}>
+          Jestem osobą dorosłą, kontynuuję
+        </TactileButton>
+        <TactileButton fullWidth variant="secondary" onClick={props.onClose}>Wróć do nauki</TactileButton>
+      </div>
+    </BottomSheet>
+  );
+}
+
+function AccountForm({
+  open,
+  onClose,
+  onSuccess,
+  titleOverride,
+  subtitleOverride,
+  showPlanLink = true,
+}: AccountModalProps) {
   const { user, configured } = useCloudAuthUser();
-  const { state } = useAppState();
   const emailId = useId();
   const [email, setEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'entry' | 'login' | 'register' | 'fallback'>('entry');
@@ -105,17 +122,7 @@ export function CloudAccountModal({
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    setError(null);
-    setInfo(null);
-  }, [open]);
-
   const handleSuccess = () => {
-    const auth = getFirebaseAuthClient();
-    if (auth?.currentUser) {
-      void initializeCloudUserProfile(auth.currentUser, state);
-    }
     onSuccess?.();
     onClose();
   };
@@ -147,33 +154,17 @@ export function CloudAccountModal({
     }
   };
 
-  const handleCheckEmail = async (e: React.FormEvent) => {
+  const handleCheckEmail = (e: React.FormEvent) => {
     e.preventDefault();
     const cleaned = email.trim().toLowerCase();
     if (!cleaned || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) {
       setError('Podaj poprawny adres e-mail.');
       return;
     }
-    setBusy(true);
+    setEmail(cleaned);
     setError(null);
     setInfo(null);
-    try {
-      const res = await fetch('/api/auth/check-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleaned }),
-      });
-      const data = (await res.json()) as { exists?: boolean; known?: boolean };
-      if (data.known) {
-        setEmailStep(data.exists ? 'login' : 'register');
-      } else {
-        setEmailStep('fallback');
-      }
-    } catch {
-      setEmailStep('fallback');
-    } finally {
-      setBusy(false);
-    }
+    setEmailStep('fallback');
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent, mode: 'login' | 'register') => {
@@ -274,12 +265,12 @@ export function CloudAccountModal({
       title={
         user
           ? 'Konto w chmurze JASNE E8'
-          : titleOverride ?? 'Darmowe konto JASNE E8'
+          : titleOverride ?? 'Konto osoby dorosłej'
       }
       subtitle={
         user
           ? 'Twoje darmowe konto jest aktywne.'
-          : subtitleOverride ?? 'Zaloguj się lub załóż darmowe konto, aby odblokować kolejne lekcje.'
+          : subtitleOverride ?? 'Użyj własnych danych logowania, aby uzyskać dostęp do ustawień konta i kolejnych lekcji.'
       }
     >
       {!configured ? (

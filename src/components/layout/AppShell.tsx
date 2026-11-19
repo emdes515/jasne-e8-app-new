@@ -6,6 +6,7 @@ import { useAppState } from '../../context/AppStateContext';
 import { findMathLesson } from '../../data/mathLessonMock';
 import { OnboardingFlow, ProductTourModal } from '../onboarding/OnboardingFlow';
 import { GuestAccountReminder } from '../auth/GuestAccountReminder';
+import { StudyReminderController } from '../reminders/StudyReminderController';
 import { TopHud } from './TopHud';
 import { BottomTabBar } from './BottomTabBar';
 import { DesktopSidebar } from './DesktopSidebar';
@@ -202,7 +203,7 @@ export function AppShell() {
           <div className="flex-1 min-w-0 flex flex-col">
             <div className="sticky top-0 z-20">
               {!focusMode && <TopHud />}
-              <GuestAccountReminder suppressed={focusMode} />
+              {!state.onboardingAudience && <GuestAccountReminder suppressed={focusMode} />}
             </div>
 
             {!focusMode && state.hearts === 0 && (
@@ -260,6 +261,7 @@ export function AppShell() {
           {!focusMode && <BottomTabBar />}
 
           {/* Global Modals & Sheets */}
+          <StudyReminderController paused={focusMode} />
           <FormulasBottomSheet />
           <RescueMissionModal />
           <ProductTourModal />

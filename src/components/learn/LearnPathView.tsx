@@ -56,7 +56,7 @@ export function LearnPathView() {
                 <p className="mb-1 text-xs font-bold text-[var(--accent-text)]">
                   Lekcja {lesson.nodeNumber}
                   {lockedByGuest
-                    ? ' · Odblokuj za darmo po zalogowaniu'
+                    ? ' · Dostęp przez konto osoby dorosłej'
                     : done
                     ? ' · Ukończona'
                     : current
@@ -68,7 +68,7 @@ export function LearnPathView() {
                 {lockedByGuest ? (
                   <div className="mt-3">
                     <TactileButton variant="info" size="sm" onClick={() => setLoginModalOpen(true)}>
-                      <Lock size={15} /> Odblokuj za darmo (Zaloguj)
+                      <Lock size={15} /> Przejdź do konta rodzica
                     </TactileButton>
                   </div>
                 ) : (
@@ -136,7 +136,7 @@ export function LearnPathView() {
         open={loginModalOpen}
         onClose={() => setLoginModalOpen(false)}
         titleOverride="Odblokuj kolejne lekcje"
-        subtitleOverride="Pierwsza lekcja jest otwarta dla Gościa. Zaloguj się za darmo, aby odblokować kolejne lekcje."
+        subtitleOverride="Pierwsza lekcja działa bez konta. Rodzic lub opiekun może odblokować kolejne lekcje na własnym koncie."
       />
     </div>
   );
