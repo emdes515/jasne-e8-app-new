@@ -499,3 +499,58 @@ html:has(.study-dialog[open]) { overflow-y: hidden; }
   .task-result-content { padding: 1.25rem 1.25rem 0; }
   .task-result-action { padding: 0.25rem 1.25rem 1.25rem; }
 }
+
+/* Loading choreography & brand bulb utilities (GPU-only transform/opacity) */
+.bulb-grid-backdrop {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--border-subtle) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--border-subtle) 55%, transparent) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+  -webkit-mask-image: radial-gradient(circle at 50% 44%, #000 18%, transparent 74%);
+  mask-image: radial-gradient(circle at 50% 44%, #000 18%, transparent 74%);
+}
+
+@keyframes bulb-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bulb-orbit-counter-spin {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes bulb-shimmer-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(220%); }
+}
+
+@keyframes bulb-float-css {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.bulb-orbit-spin {
+  animation: bulb-orbit-spin 22s linear infinite;
+}
+
+.bulb-orbit-counter-spin {
+  animation: bulb-orbit-counter-spin 22s linear infinite;
+}
+
+.bulb-shimmer-slide {
+  animation: bulb-shimmer-slide 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.bulb-float-css {
+  animation: bulb-float-css 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bulb-orbit-spin,
+  .bulb-orbit-counter-spin,
+  .bulb-shimmer-slide,
+  .bulb-float-css {
+    animation: none;
+  }
+}

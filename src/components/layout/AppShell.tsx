@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { MotionConfig } from 'motion/react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react';
 import { useAppState } from '../../context/AppStateContext';
+import { findMathLesson } from '../../data/mathLessonMock';
 import { OnboardingFlow, ProductTourModal } from '../onboarding/OnboardingFlow';
 import { GuestAccountReminder } from '../auth/GuestAccountReminder';
 import { TopHud } from './TopHud';
@@ -22,7 +23,10 @@ import { RankUpModal } from '../profile/RankUpModal';
 import { ToastHost } from '../ui/ToastHost';
 import { AppUpdateModal } from '../ui/AppUpdateModal';
 import { TactileHeartIcon } from '../ui/TactileHeartIcon';
+import { AppSplashLoader, SessionTransitionLoader } from '../ui/BulbLoadingScreen';
 import { formatHeartCountdown } from '../../lib/lumiCopy';
+
+const SPLASH_SEEN_KEY = 'jasne-e8:splash-seen';
 
 export function AppShell() {
   const {
@@ -30,20 +34,160 @@ export function AppShell() {
     state,
     activeTab,
     lessonViewStage,
+    selectedLessonId,
     secondsToNextHeart,
     setRescueModalOpen,
   } = useAppState();
+  const prefersReduced = useReducedMotion();
   const [examInProgress, setExamInProgress] = useState(false);
+  const [splashState, setSplashState] = useState<'checking' | 'pinned' | 'auto' | 'done'>('checking');
+  const [splashProgress, setSplashProgress] = useState(18);
+  const [lessonTransitionTitle, setLessonTransitionTitle] = useState<string | null>(null);
+  const prevHydratedRef = useRef(false);
+  const prevLessonStageRef = useRef(lessonViewStage);
   const focusMode = examInProgress || lessonViewStage !== 'none';
+
+  // Cold-start splash reveal raz na sesję (pomijany przy ?autostart=1 i reduced-motion; wymuszany przy ?splash=1)
+  useEffect(() => {
+    if (!hydrated || typeof window === 'undefined') return;
+    let rafId = 0;
+
+    const initRaf = window.requestAnimationFrame(() => {
+      const params = new URLSearchParams(window.location.search);
+      const forceSplash = params.get('splash') === '1';
+      const isAutostart = params.get('autostart') === '1';
+
+      if (forceSplash) {
+        setSplashProgress(74);
+        setSplashState('pinned');
+        return;
+      }
+
+      if (isAutostart || prefersReduced) {
+        setSplashState('done');
+        return;
+      }
+
+      let alreadySeen = false;
+      try {
+        alreadySeen = Boolean(sessionStorage.getItem(SPLASH_SEEN_KEY));
+        if (!alreadySeen) {
+          sessionStorage.setItem(SPLASH_SEEN_KEY, '1');
+        }
+      } catch {
+        /* sessionStorage jest opcjonalny */
+      }
+
+      if (alreadySeen) {
+        setSplashState('done');
+        return;
+      }
+
+      setSplashState('auto');
+      setSplashProgress(18);
+      const startTime = performance.now();
+      const durationMs = 950;
+
+      const step = (now: number) => {
+        const ratio = Math.min(1, (now - startTime) / durationMs);
+        const eased = 1 - Math.pow(1 - ratio, 2);
+        setSplashProgress(Math.round(18 + eased * 82));
+        if (ratio >= 1) {
+          setSplashState('done');
+          return;
+        }
+        rafId = window.requestAnimationFrame(step);
+      };
+
+      rafId = window.requestAnimationFrame(step);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(initRaf);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [hydrated, prefersReduced]);
+
+  // Ekran przejścia przy otwieraniu/wznawianiu lekcji (z wyłączeniem F5 recovery, ?autostart=1 i reduced-motion)
+  useLayoutEffect(() => {
+    const wasHydrated = prevHydratedRef.current;
+    const prevStage = prevLessonStageRef.current;
+    let cancelled = false;
+
+    if (
+      wasHydrated &&
+      hydrated &&
+      prevStage === 'none' &&
+      (lessonViewStage === 'theory' || lessonViewStage === 'tasks')
+    ) {
+      const isAutostart =
+        typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).get('autostart') === '1';
+
+      if (!prefersReduced && !isAutostart) {
+        const lessonTitle =
+          lessonViewStage === 'tasks' && state.activeSession?.title
+            ? state.activeSession.title
+            : findMathLesson(selectedLessonId)?.title ?? 'Lekcja matematyki E8';
+        queueMicrotask(() => {
+          if (!cancelled) setLessonTransitionTitle(lessonTitle);
+        });
+      }
+    }
+
+    prevHydratedRef.current = hydrated;
+    prevLessonStageRef.current = lessonViewStage;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, lessonViewStage, prefersReduced, selectedLessonId, state.activeSession?.title]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab, lessonViewStage, state.onboardingCompleted, examInProgress]);
 
-  if (!hydrated) return <div className="min-h-dvh bg-[var(--bg-canvas)]" />;
+  if (!hydrated) {
+    return (
+      <MotionConfig reducedMotion="user">
+        <AppSplashLoader variant="boot" progress={18} fullscreen />
+      </MotionConfig>
+    );
+  }
 
   return (
     <MotionConfig reducedMotion="user">
+      <AnimatePresence>
+        {splashState !== 'done' && (
+          <motion.div
+            key="cold-start-splash"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.24 }}
+            className="fixed inset-0 z-[220]"
+          >
+            <AppSplashLoader
+              variant="boot"
+              progress={splashProgress}
+              allowSkip={splashState !== 'checking'}
+              onSkip={() => setSplashState('done')}
+              fullscreen
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {lessonTransitionTitle && (
+          <SessionTransitionLoader
+            key="lesson-transition-loader"
+            mode="lesson"
+            title={lessonTransitionTitle}
+            onDone={() => setLessonTransitionTitle(null)}
+          />
+        )}
+      </AnimatePresence>
+
       {!state.onboardingCompleted ? (
         <>
           <OnboardingFlow />
