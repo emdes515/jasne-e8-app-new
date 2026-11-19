@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Treści redakcyjne: lekcje, zadania, paczki, wzory, sklep.
+    // Zapis wyłącznie przez Admin SDK / panel (klient nie może podmienić treści).
+    match /content/{collection}/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Wersjonowanie treści, flagi funkcji, ceny, komunikaty.
+    match /meta/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Profil ucznia i postęp: tylko właściciel konta.
+    match /users/{uid}/{collection}/{docId} {
+      allow read, write: if isOwner(uid) && collection != 'private';
+    }
+
+    // Uprawnienia, monety, serca, kredyty AI — wyłącznie serwer.
+    match /users/{uid}/private/{docId} {
+      allow read, write: if false;
+    }
+
+    // Domyślnie wszystko zablokowane.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
