@@ -175,9 +175,9 @@ export function BentoTheoryTabs({
       {/* Active Bento Card Content */}
       <motion.div
         key={currentCard.id}
-        initial={reducedMotion ? false : { opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.18 }}
+        initial={reducedMotion ? false : { opacity: 0, x: 14, scale: 0.99 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        transition={reducedMotion ? { duration: 0.1 } : SPRING_SNAPPY}
         className="study-panel p-4 sm:p-5 space-y-3.5"
       >
         <div>

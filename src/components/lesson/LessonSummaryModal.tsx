@@ -86,13 +86,18 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
         )}
       </motion.div>
 
-      {/* 3 Result Stat Tiles with CountUpNumber (700ms) */}
+      {/* 3 Result Stat Tiles with CountUpNumber (700ms) + Spring Pop */}
       <motion.div
         variants={STAGGER_ITEM_VARIANTS}
         className="grid grid-cols-3 gap-3"
       >
         {/* Tile 1: XP */}
-        <div className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex flex-col items-center">
+        <motion.div
+          initial={prefersReduced ? false : { scale: 0.86, y: 8 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={SPRING_BOUNCY}
+          className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--accent-primary)]/40 flex flex-col items-center"
+        >
           <Trophy className="w-5 h-5 text-[var(--accent-text)] mb-1" />
           <div className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
             <CountUpNumber
@@ -105,10 +110,15 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
           <span className="text-[11px] font-bold text-[var(--text-secondary)]">
             Zdobyte XP
           </span>
-        </div>
+        </motion.div>
 
         {/* Tile 2: Accuracy % */}
-        <div className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex flex-col items-center">
+        <motion.div
+          initial={prefersReduced ? false : { scale: 0.86, y: 8 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ ...SPRING_BOUNCY, delay: 0.08 }}
+          className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--success)]/40 flex flex-col items-center"
+        >
           <CheckCircle2 className="w-5 h-5 text-[var(--success)] mb-1" />
           <div className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
             <CountUpNumber
@@ -120,10 +130,15 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
           <span className="text-[11px] font-bold text-[var(--text-secondary)]">
             Skuteczność
           </span>
-        </div>
+        </motion.div>
 
         {/* Tile 3: Coins */}
-        <div className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex flex-col items-center">
+        <motion.div
+          initial={prefersReduced ? false : { scale: 0.86, y: 8 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ ...SPRING_BOUNCY, delay: 0.16 }}
+          className="p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--accent-primary)]/40 flex flex-col items-center"
+        >
           <Coins className="w-5 h-5 text-[var(--accent-text)] mb-1" />
           <div className="text-xl sm:text-2xl font-extrabold font-display text-[var(--text-primary)]">
             <CountUpNumber
@@ -135,7 +150,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
           <span className="text-[11px] font-bold text-[var(--text-secondary)]">
             Zdobyte Monety
           </span>
-        </div>
+        </motion.div>
       </motion.div>
 
       {summary.ungradedCount > 0 && (
