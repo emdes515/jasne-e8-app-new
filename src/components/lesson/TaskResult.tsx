@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type Ref } from 'react';
+import type { Ref } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   AlertCircle,
@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import type { LumiLoadout, LumiMood, TaskDefinition, TaskEvalOutcome } from '../../types/domain';
 import { hasVisualWork, type OpenWorkDraft } from '../../lib/openWork';
-import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
@@ -25,19 +24,17 @@ import { PhotoPreview } from './OpenWorkPhoto';
 
 const OUTCOME_CONFIG = {
   correct: {
-    title: 'Świetna robota!',
+    title: 'Poprawna odpowiedź',
     subtitle: 'Dokładnie tak na egzaminie E8.',
     icon: CheckCircle2,
     color: 'var(--success)',
-    bannerClass: 'bg-[var(--success)]/12 border-[var(--success)]/45',
     badgeClass: 'bg-[var(--success)] text-[var(--on-success)]',
   },
   wrong: {
-    title: 'Tym razem inaczej',
+    title: 'Odpowiedź do poprawy',
     subtitle: 'Zapisano w Banku Błędów — zobacz krok po kroku.',
     icon: XCircle,
     color: 'var(--danger)',
-    bannerClass: 'bg-[var(--danger)]/12 border-[var(--danger)]/45',
     badgeClass: 'bg-[var(--danger)] text-[var(--on-danger)]',
   },
   partial: {
@@ -45,7 +42,6 @@ const OUTCOME_CONFIG = {
     subtitle: 'Dobry kierunek — sprawdź brakujący element.',
     icon: AlertCircle,
     color: 'var(--accent-text)',
-    bannerClass: 'bg-[var(--accent-primary)]/12 border-[var(--accent-primary)]/45',
     badgeClass: 'bg-[var(--accent-primary)] text-[var(--on-accent)]',
   },
   ungraded: {
@@ -53,7 +49,6 @@ const OUTCOME_CONFIG = {
     subtitle: 'Sprawdź swój tok rozumowania z kluczem CKE.',
     icon: CheckCircle2,
     color: 'var(--accent-text)',
-    bannerClass: 'bg-[var(--info)]/12 border-[var(--info)]/40',
     badgeClass: 'bg-[var(--info)] text-[var(--on-info)]',
   },
 } as const;
@@ -141,24 +136,7 @@ export function TaskResult({
   const expectedAnswer = task.options?.find((option) => option.id === task.correctAnswer)?.label ?? task.correctAnswer;
   const submittedAnswer = task.options?.find((option) => option.id === userAnswer)?.label ?? userAnswer;
 
-  // Lumi emotional choreography: surprised -> supportive after 900ms on wrong answer
-  const [wrongSettled, setWrongSettled] = useState(false);
-  useEffect(() => {
-    if (outcome !== 'wrong') return;
-    const timer = window.setTimeout(() => setWrongSettled(true), 900);
-    return () => window.clearTimeout(timer);
-  }, [outcome, task.id]);
-
-  const lumiMood: LumiMood =
-    outcome === 'correct'
-      ? comboMultiplier >= 1.5
-        ? 'celebrate'
-        : 'happy'
-      : outcome === 'wrong'
-      ? wrongSettled
-        ? 'supportive'
-        : 'surprised'
-      : 'thinking';
+  const lumiMood: LumiMood = outcome === 'wrong' ? 'supportive' : outcome === 'correct' ? 'happy' : 'thinking';
 
   const steps =
     task.explanationSteps && task.explanationSteps.length > 0
@@ -174,22 +152,12 @@ export function TaskResult({
   const goldenHabit = task.goldenHabit?.trim() || task.hints[0];
 
   return (
-    <motion.section
-      initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.97 }}
-      animate={prefersReduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-      transition={prefersReduced ? { duration: 0.12 } : SPRING_SNAPPY}
+    <section
       className="study-panel task-result overflow-hidden"
       aria-labelledby="task-result-heading"
     >
       <div className="task-result-content">
-        {/* 1. Tactile Outcome Banner with Lumi */}
-        <div
-          className={`rounded-2xl border-2 p-3 sm:p-4 flex items-center gap-3 ${cfg.bannerClass}`}
-        >
-          <div className="shrink-0">
-            <LumiMascot mood={lumiMood} loadout={loadout} size="sm" />
-          </div>
-
+        <div className="flex items-start gap-3 border-b border-[var(--border-subtle)] pb-3">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2
@@ -204,26 +172,20 @@ export function TaskResult({
 
               <div className="flex items-center gap-1.5 shrink-0">
                 {comboMultiplier > 1.0 && outcome === 'correct' && (
-                  <motion.span
-                    initial={prefersReduced ? false : { scale: 0.6 }}
-                    animate={{ scale: 1 }}
-                    transition={SPRING_BOUNCY}
+                  <span
                     className="inline-flex items-center gap-1 rounded-full bg-[var(--bg-surface)] border border-[var(--combo-fire)] px-2 py-0.5 text-xs font-extrabold font-display text-[var(--combo-fire)] tabular-nums"
                   >
                     <Flame size={12} className="fill-current" aria-hidden="true" />
                     x{comboMultiplier.toFixed(1)}
-                  </motion.span>
+                  </span>
                 )}
                 {xpAwarded > 0 && (
-                  <motion.span
-                    initial={prefersReduced ? false : { scale: 0.65, y: 4 }}
-                    animate={{ scale: 1, y: 0 }}
-                    transition={SPRING_BOUNCY}
+                  <span
                     className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-primary)] px-2.5 py-0.5 text-xs font-extrabold font-display text-[var(--on-accent)] tabular-nums"
                   >
                     <Sparkles size={12} aria-hidden="true" />
                     +{xpAwarded} XP
-                  </motion.span>
+                  </span>
                 )}
               </div>
             </div>
@@ -233,6 +195,9 @@ export function TaskResult({
                 ? `${tutorScore}/2 pkt · Ocena symulowana · ${cfg.subtitle}`
                 : cfg.subtitle}
             </p>
+          </div>
+          <div aria-hidden="true" className="shrink-0">
+            <LumiMascot mood={lumiMood} loadout={loadout} size="xs" />
           </div>
         </div>
 
@@ -267,8 +232,17 @@ export function TaskResult({
               {steps.map((step, index) => (
                 <li
                   key={index}
-                  className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--text-primary)] sm:text-[15px]"
+                  className="relative isolate flex items-start gap-2.5 rounded-md text-sm leading-relaxed text-[var(--text-primary)] sm:text-[15px]"
                 >
+                  {index === 0 && outcome !== 'ungraded' && (
+                    <motion.span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -inset-x-1.5 -inset-y-1 -z-10 rounded-md bg-[var(--accent-primary)]"
+                      initial={prefersReduced ? false : { opacity: 0 }}
+                      animate={prefersReduced ? { opacity: 0 } : { opacity: [0, 0.16, 0] }}
+                      transition={{ duration: prefersReduced ? 0 : 0.56, times: [0, 0.32, 1] }}
+                    />
+                  )}
                   <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[11px] font-extrabold font-display text-[var(--accent-text)] tabular-nums">
                     {index + 1}
                   </span>
@@ -343,6 +317,6 @@ export function TaskResult({
           <ArrowRight size={18} aria-hidden="true" />
         </TactileButton>
       </div>
-    </motion.section>
+    </section>
   );
 }

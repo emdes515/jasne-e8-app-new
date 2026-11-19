@@ -2,9 +2,7 @@
 
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import confetti from 'canvas-confetti';
 import {
-  X,
   Bookmark,
   BookOpen,
   Lightbulb,
@@ -23,7 +21,7 @@ import {
   HEART_REFILL_PRICE,
   isComboExpired,
 } from '../../lib/gamification';
-import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
+import { SPRING_BOUNCY } from '../../lib/motionPresets';
 import { formatHeartCountdown } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { MathText } from '../ui/MathText';
@@ -263,9 +261,7 @@ function TaskRunnerQuestion() {
 
   const totalTasks = session.taskIds.length;
   const currentStepNum = session.currentIndex + 1;
-  const progressPct = Math.round(
-    ((session.currentIndex + (checkedFeedback ? 1 : 0)) / totalTasks) * 100
-  );
+  const completedTaskCount = session.currentIndex + (checkedFeedback ? 1 : 0);
 
   // Active combo count (0 if 90s expired) + live remaining % bar
   const comboExpired = isComboExpired(session.lastAnsweredAt, nowMs, false);
@@ -284,14 +280,6 @@ function TaskRunnerQuestion() {
     if (checkedFeedback || revealPhase) return;
 
     const finalizeCheck = (outcome: TaskEvalOutcome, xpAwarded: number) => {
-      if (outcome === 'correct' && !prefersReduced && comboMultiplier >= 1.5) {
-        confetti({
-          particleCount: 28,
-          spread: 58,
-          origin: { y: 0.72 },
-          disableForReducedMotion: true,
-        });
-      }
       if (prefersReduced) {
         setCheckedFeedback({ outcome, xpAwarded });
         return;
@@ -300,7 +288,7 @@ function TaskRunnerQuestion() {
       revealTimerRef.current = window.setTimeout(() => {
         setRevealPhase(null);
         setCheckedFeedback({ outcome, xpAwarded });
-      }, 540);
+      }, 120);
     };
 
     if (
@@ -407,54 +395,82 @@ function TaskRunnerQuestion() {
   return (
     <>
       <div className={hasResult ? "space-y-3" : "space-y-3 sm:space-y-3.5 pb-6"}>
-        {/* Session Top Progress & Combo Bar */}
-        <div className="p-3.5 sm:p-4 study-panel flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              playSound('tap');
-              setExitConfirmOpen(true);
-            }}
-            aria-label="Przerwij sesję"
-            className="min-w-[44px] min-h-[44px] rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer shrink-0"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Animated Progress Bar with Shimmer & Combo x3.0 Border Opacity Pulse (Choreography #5 & #6) */}
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex items-center justify-between text-xs font-extrabold font-display tabular-nums">
-              <span className="min-w-0 truncate text-[var(--text-secondary)]">
-                {session.source === 'rescue'
-                  ? `Misja Ratunkowa (${state.rescueMissionCurrentProgress}/2 do +1 Serca)`
-                  : session.title}
-              </span>
-              <span className="text-[var(--text-primary)] shrink-0 ml-2">
-                {currentStepNum} / {totalTasks}
-              </span>
+        <section className="study-panel space-y-3 p-3.5 sm:p-4" aria-label="Postęp sesji">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-extrabold text-[var(--accent-text)]">
+                {session.source === 'rescue' ? `Misja Ratunkowa · ${state.rescueMissionCurrentProgress}/2 do +1 serca` : `Zadanie ${currentStepNum} z ${totalTasks}`}
+              </p>
+              <p className="mt-0.5 text-base font-extrabold leading-snug text-[var(--text-primary)] sm:text-lg">
+                {currentTask.topicTag}
+              </p>
             </div>
-
-            <div className="relative h-3.5 w-full rounded-full bg-[var(--bg-canvas)] border-2 border-[var(--border-subtle)] overflow-hidden">
-              {comboMultiplier >= 3.0 && !prefersReduced && (
-                <motion.span
-                  aria-hidden="true"
-                  animate={{ opacity: [0.45, 0.85, 0.45] }}
-                  transition={{ duration: 1.2, repeat: Infinity }}
-                  className="absolute inset-0 rounded-full border-2 border-[var(--combo-fire)] pointer-events-none z-10"
-                />
-              )}
-              <motion.div
-                className="relative h-full bg-[var(--accent-primary)] rounded-full overflow-hidden"
-                initial={{ width: '0%' }}
-                animate={{ width: `${progressPct}%` }}
-                transition={SPRING_SNAPPY}
-              >
-              </motion.div>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                playSound('tap');
+                setExitConfirmOpen(true);
+              }}
+              aria-label="Przerwij sesję"
+              className="min-h-11 shrink-0 rounded-lg px-2.5 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+            >
+              Wyjdź
+            </button>
           </div>
 
-          {/* Dynamic Combo Badge (x1.5 / x2.0 / x3.0) + Hearts Counter */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div
+            role="progressbar"
+            aria-label="Ukończone zadania"
+            aria-valuemin={0}
+            aria-valuemax={totalTasks}
+            aria-valuenow={completedTaskCount}
+          >
+            {totalTasks <= 12 ? (
+              <div className="flex gap-1.5" aria-hidden="true">
+                {session.taskIds.map((taskId, index) => (
+                  <span
+                    key={taskId}
+                    className={`h-1.5 min-w-0 flex-1 rounded-sm ${
+                      index < completedTaskCount
+                        ? 'bg-[var(--accent-primary)]'
+                        : index === session.currentIndex
+                          ? 'bg-[var(--accent-primary)]/30 ring-1 ring-[var(--accent-primary)]/55'
+                          : 'bg-[var(--border-subtle)]'
+                    }`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="h-1.5 overflow-hidden rounded-sm bg-[var(--border-subtle)]" aria-hidden="true">
+                <div className="h-full bg-[var(--accent-primary)]" style={{ width: `${completedTaskCount / totalTasks * 100}%` }} />
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div
+              className={`min-h-8 inline-flex items-center gap-1.5 text-xs font-bold tabular-nums ${
+                state.hearts === 0
+                  ? 'text-[var(--danger)]'
+                  : 'text-[var(--text-secondary)]'
+              }`}
+              title={
+                state.hearts < 5 && secondsToNextHeart !== null
+                  ? `Kolejne serce za ${formatHeartCountdown(secondsToNextHeart)}`
+                  : 'Pełny zapas serc'
+              }
+            >
+              <TactileHeartIcon
+                size={17}
+                variant={state.hearts > 0 ? 'full' : 'cracked'}
+              />
+              <span>{state.hearts} / 5 serc</span>
+              {state.hearts < 5 && secondsToNextHeart !== null && (
+                <span className="text-[11px] font-bold text-[var(--text-secondary)]">
+                  · {formatHeartCountdown(secondsToNextHeart)}
+                </span>
+              )}
+            </div>
             <AnimatePresence>
               {comboMultiplier > 1.0 && (
                 <motion.div
@@ -489,32 +505,8 @@ function TaskRunnerQuestion() {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            <div
-              className={`min-h-[40px] px-2.5 rounded-xl bg-[var(--bg-elevated)] border flex items-center gap-1.5 text-xs font-extrabold font-display tabular-nums ${
-                state.hearts === 0
-                  ? 'border-[var(--danger)]/70 text-[var(--danger)]'
-                  : 'border-[var(--border-subtle)]'
-              }`}
-              title={
-                state.hearts < 5 && secondsToNextHeart !== null
-                  ? `Kolejne serce za ${formatHeartCountdown(secondsToNextHeart)}`
-                  : 'Pełny zapas serc'
-              }
-            >
-              <TactileHeartIcon
-                size={17}
-                variant={state.hearts > 0 ? 'full' : 'cracked'}
-              />
-              <span>{state.hearts}</span>
-              {state.hearts < 5 && secondsToNextHeart !== null && (
-                <span className="hidden min-[380px]:inline text-[11px] font-bold text-[var(--text-secondary)]">
-                  · {formatHeartCountdown(secondsToNextHeart)}
-                </span>
-              )}
-            </div>
           </div>
-        </div>
+        </section>
 
         {checkedFeedback ? (
           <TaskResult
@@ -541,8 +533,6 @@ function TaskRunnerQuestion() {
             {/* Task Toolbar (No scratchpad! Bookmark "Zapisz do powtórki" + Wzory E8 + Podpowiedź AI) */}
             <div className="flex flex-wrap items-center justify-between gap-2 px-1">
               <div className="text-xs font-bold text-[var(--text-secondary)]">
-                <span>Zadanie {currentStepNum} z {totalTasks}</span>
-                <span aria-hidden="true"> · </span>
                 <span className="text-[var(--accent-text)]">{taskTypeLabel}</span>
               </div>
 
@@ -619,9 +609,6 @@ function TaskRunnerQuestion() {
               >
                 {/* Topic Kicker & Question Prompt */}
                 <div>
-                  <div className="text-xs font-bold text-[var(--text-secondary)] mb-1">
-                    {currentTask.topicTag}
-                  </div>
                   <div className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-relaxed">
                     <MathText text={currentTask.prompt} />
                   </div>
@@ -652,11 +639,6 @@ function TaskRunnerQuestion() {
                             option={opt}
                             selected={isSelected}
                             checkedState={checkedState}
-                            showParticles={Boolean(
-                              revealPhase &&
-                                isSelected &&
-                                revealPhase.outcome === 'correct'
-                            )}
                             disabled={Boolean(revealPhase) || Boolean(checkedFeedback)}
                             onSelect={(id) => {
                               playSound('tap');
