@@ -27,6 +27,7 @@ import {
 import { validateNickname } from '../../lib/gamification';
 import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
+import { JasneLogo } from '../brand/JasneLogo';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
 import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
@@ -127,9 +128,7 @@ export function OnboardingFlow() {
       {/* Top Progress Bar */}
       <div className="w-full max-w-xl mx-auto">
         <div className="flex items-center justify-between text-xs font-bold text-[var(--text-secondary)] mb-2">
-          <span className="font-display tracking-tight text-sm text-[var(--text-primary)]">
-            JASNE E8
-          </span>
+          <JasneLogo size="sm" animated="subtle" />
           <span className="tabular-nums">Krok {step} z 5</span>
         </div>
         <div className="h-3 w-full rounded-full bg-[var(--bg-surface)] border border-[var(--border-subtle)] overflow-hidden">

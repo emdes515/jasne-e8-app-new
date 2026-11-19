@@ -8,6 +8,7 @@ import { NAV_TABS } from './BottomTabBar';
 import { SPRING_SNAPPY } from '../../lib/motionPresets';
 import { getRankForXp } from '../../lib/gamification';
 import { PLAYER_TITLE_LABELS } from '../../data/shopCatalog';
+import { JasneLogo } from '../brand/JasneLogo';
 
 export function DesktopSidebar() {
   const {
@@ -30,20 +31,17 @@ export function DesktopSidebar() {
     >
       <div className="space-y-6">
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-2 pt-1">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent-primary)] text-[var(--on-accent)] border-2 border-[var(--accent-primary-edge)] flex items-center justify-center font-extrabold font-display text-base">
-              E8
-            </div>
-            <div>
-              <div className="text-lg font-extrabold font-display tracking-tight text-[var(--text-primary)] leading-none">
-                JASNE E8
-              </div>
-              <div className="text-[11px] font-medium text-[var(--text-secondary)] mt-0.5">
-                Egzamin ósmoklasisty
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center justify-between px-1.5 pt-1">
+          <JasneLogo
+            size="md"
+            animated="subtle"
+            showSubtitle
+            interactive
+            onClick={() => {
+              playSound('tap');
+              setActiveTab('start');
+            }}
+          />
         </div>
 
         {/* Navigation Links with Shared layoutId Capsule */}

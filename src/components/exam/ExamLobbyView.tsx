@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   Timer,
   Coins,
@@ -17,6 +17,7 @@ import {
 } from '../../lib/motionPresets';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
+import { SessionTransitionLoader } from '../ui/BulbLoadingScreen';
 import { ExamRunnerView } from './ExamRunnerView';
 import {
   ExamSummaryView,
@@ -28,6 +29,7 @@ export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: 
   const [examMode, setExamMode] = useState<'lobby' | 'running' | 'summary'>(
     'lobby'
   );
+  const [startingExam, setStartingExam] = useState(false);
   const [lastRecord, setLastRecord] = useState<ExamAttemptRecord | null>(null);
   const [lastDetails, setLastDetails] = useState<ExamTaskEvaluationDetail[]>(
     []
@@ -66,12 +68,28 @@ export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: 
   }
 
   return (
-    <motion.div
-      variants={STAGGER_CONTAINER_VARIANTS}
-      initial={false}
-      animate="visible"
-      className="space-y-5"
-    >
+    <>
+      <AnimatePresence>
+        {startingExam && (
+          <SessionTransitionLoader
+            key="exam-transition-loader"
+            mode="exam"
+            title="Miniarkusz · Matematyka E8"
+            subtitle="5 zadań · 15 minut · bez utraty serc"
+            onDone={() => {
+              setStartingExam(false);
+              setExamMode('running');
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.div
+        variants={STAGGER_CONTAINER_VARIANTS}
+        initial={false}
+        animate="visible"
+        className="space-y-5"
+      >
       {/* Top Header with Focused Lumi */}
       <motion.section
         variants={STAGGER_ITEM_VARIANTS}
@@ -128,7 +146,7 @@ Cztery zadania zamknięte lub liczbowe i jedno otwarte. Po oddaniu zobaczysz wyn
             fullWidth
             onClick={() => {
               playSound('tap');
-              setExamMode('running');
+              setStartingExam(true);
             }}
           >
             <Play className="w-5 h-5" />
@@ -226,6 +244,7 @@ Cztery zadania zamknięte lub liczbowe i jedno otwarte. Po oddaniu zobaczysz wyn
           </div>
         )}
       </motion.section>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
