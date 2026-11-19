@@ -23,11 +23,11 @@ export function RankingView() {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider font-display text-[var(--accent-text)]">
             <Trophy className="w-4 h-4" />
-            <span>Liga E8 · Ranking tygodniowy</span>
+            <span>Liga E8 · Podgląd rankingu</span>
           </div>
           <h1 className="page-heading">Ranking uczniów</h1>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)]">
-            Wynik E8 = XP + bonus za serię dni i skuteczność. Kliknij gracza, aby zobaczyć jego profil.
+            Zobacz swój wynik na tle przykładowych graczy. Punkty E8 łączą XP, serię dni i skuteczność.
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export function RankingView() {
 
             <div className="rounded-xl bg-[var(--bg-canvas)]/70 border border-[var(--border-subtle)] px-3.5 py-2.5 flex items-center gap-2 text-xs text-[var(--text-secondary)]">
               <Award className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
-              <span>Ranking tygodniowy synchronizuje się z chmurą Firebase w Fazie 2.</span>
+              <span>To podgląd ligi. Twoje statystyki pochodzą z tego urządzenia.</span>
             </div>
           </div>
         )}

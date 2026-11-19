@@ -42,7 +42,7 @@ export function TopHud() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 h-14 w-full bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] px-1.5 min-[360px]:px-3 sm:px-5 flex items-center justify-between gap-1 min-[360px]:gap-2">
+      <header className="h-14 w-full bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] px-1.5 min-[360px]:px-3 sm:px-5 flex items-center justify-between gap-1 min-[360px]:gap-2">
         {/* Left: Subject Switcher + Optional Math Formulas quick trigger on tablet/desktop */}
         <div className="flex items-center gap-1 min-[360px]:gap-2 shrink-0">
           <SubjectSwitcher />

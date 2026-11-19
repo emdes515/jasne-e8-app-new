@@ -56,7 +56,10 @@ export function AppShell() {
 
           {/* Main Workspace Area */}
           <div className="flex-1 min-w-0 flex flex-col">
-            {!focusMode && <TopHud />}
+            <div className="sticky top-0 z-20">
+              {!focusMode && <TopHud />}
+              <GuestAccountReminder suppressed={focusMode} />
+            </div>
 
             {!focusMode && state.hearts === 0 && (
               <div
@@ -118,7 +121,6 @@ export function AppShell() {
           <ProductTourModal />
           <RankUpModal />
           <AppUpdateModal suppressed={focusMode} />
-          <GuestAccountReminder suppressed={focusMode} />
           <ToastHost />
         </div>
       )}
