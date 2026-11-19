@@ -15,7 +15,7 @@ import {
 import { useAppState } from '../../context/AppStateContext';
 import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
 import { loadLessonDraftPhoto, saveLessonDraftPhoto } from '../../services/storage/lessonDraftPhoto';
-import { aiTutorService, MOCK_AI_LATENCY_MS } from '../../services/ai/aiTutorMock';
+import { aiTutorService, AI_ANALYSIS_UI_DURATION_MS } from '../../services/ai/aiTutorMock';
 import { AiTutorEvaluationResult } from '../../types/repositories';
 import { TaskEvalOutcome } from '../../types/domain';
 import {
@@ -304,11 +304,13 @@ function TaskRunnerQuestion() {
     playSound('tap');
     setIsAiEvaluating(true);
 
-    const evalRes = openWork.mode === 'text'
-      ? await aiTutorService.evaluateOpenTask(answer, rubric)
-      : await new Promise<AiTutorEvaluationResult>((resolve) => window.setTimeout(() => {
-          resolve(evaluateVisualWork(answer, rubric.expectedResult, rubric.resultOnly));
-        }, MOCK_AI_LATENCY_MS));
+    const uiDelay = prefersReduced ? 400 : AI_ANALYSIS_UI_DURATION_MS;
+    const [evalRes] = await Promise.all([
+      openWork.mode === 'text'
+        ? aiTutorService.evaluateOpenTask(answer, rubric)
+        : Promise.resolve(evaluateVisualWork(answer, rubric.expectedResult, rubric.resultOnly)),
+      new Promise<void>((resolve) => window.setTimeout(resolve, uiDelay)),
+    ]);
     if (version !== evaluationVersion.current) return;
     setIsAiEvaluating(false);
     setAiEvaluation(evalRes);
@@ -363,7 +365,7 @@ function TaskRunnerQuestion() {
 
   return (
     <>
-      <div className={hasResult ? "space-y-3" : "space-y-4 pb-8"}>
+      <div className={hasResult ? "space-y-3" : "space-y-3 sm:space-y-3.5 pb-6"}>
         {/* Session Top Progress & Combo Bar */}
         <div className="p-3.5 sm:p-4 study-panel flex items-center justify-between gap-3">
           <button
@@ -561,7 +563,7 @@ function TaskRunnerQuestion() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -28 }}
                 transition={{ duration: 0.18 }}
-                className="study-panel p-5 sm:p-6 space-y-5"
+                className="study-panel p-4 sm:p-5 space-y-4"
               >
                 {/* Topic Kicker & Question Prompt */}
                 <div>
@@ -577,7 +579,7 @@ function TaskRunnerQuestion() {
                 {(currentTask.type === 'abcd' ||
                   currentTask.type === 'true_false') &&
                   currentTask.options && (
-                    <div className="space-y-3">
+                    <div className="space-y-2.5">
                       {currentTask.options.map((opt) => {
                         const isSelected = selectedOption === opt.id;
                         const checkedState = revealPhase

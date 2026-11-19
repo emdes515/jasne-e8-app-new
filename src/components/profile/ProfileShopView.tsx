@@ -15,6 +15,8 @@ import {
   Trash2,
   Check,
   Flame,
+  Cloud,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import {
@@ -41,6 +43,7 @@ import {
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
+import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
 import { MascotDressingRoom } from './MascotDressingRoom';
 
 export function ProfileShopView() {
@@ -64,6 +67,8 @@ export function ProfileShopView() {
   // Two-step Reset Local Progress modals (Master Spec Section 6.9 Part A & AC-V7)
   const [resetStep, setResetStep] = useState<0 | 1 | 2>(0);
   const [resetConfirmWord, setResetConfirmWord] = useState('');
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const { user: cloudUser } = useCloudAuthUser();
 
   const rankInfo = getRankForXp(state.xp);
 
@@ -258,6 +263,42 @@ export function ProfileShopView() {
                   </div>
                 </div>
               </div>
+            </motion.section>
+
+            {/* Cloud Sync & Login Card */}
+            <motion.section
+              variants={STAGGER_ITEM_VARIANTS}
+              className="study-panel p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5"
+            >
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    cloudUser
+                      ? 'bg-[var(--success)]/15 text-[var(--success)]'
+                      : 'bg-[var(--info)]/15 text-[var(--info)]'
+                  }`}
+                >
+                  {cloudUser ? <ShieldCheck className="w-5 h-5" /> : <Cloud className="w-5 h-5" />}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-sm sm:text-base font-extrabold font-display text-[var(--text-primary)]">
+                    {cloudUser ? 'Konto w chmurze połączone' : 'Zapisz swoje postępy w chmurze'}
+                  </h2>
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
+                    {cloudUser
+                      ? cloudUser.email ?? 'Zalogowano przez Firebase Auth'
+                      : 'Uczysz się jako Gość. Zaloguj się przez Google lub e-mail, aby nie stracić serii i monet.'}
+                  </p>
+                </div>
+              </div>
+              <TactileButton
+                variant={cloudUser ? 'secondary' : 'info'}
+                size="sm"
+                className="shrink-0"
+                onClick={() => setAccountModalOpen(true)}
+              >
+                {cloudUser ? 'Zarządzaj kontem' : 'Zaloguj / Połącz'}
+              </TactileButton>
             </motion.section>
 
             {/* Quick Starter Color Switcher */}
@@ -627,6 +668,11 @@ export function ProfileShopView() {
           </div>
         )}
       </BottomSheet>
+
+      <CloudAccountModal
+        open={accountModalOpen}
+        onClose={() => setAccountModalOpen(false)}
+      />
     </>
   );
 }

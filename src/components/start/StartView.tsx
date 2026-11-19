@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, BookmarkCheck, Flame, Play, Timer } from 'lucide-react';
+import { ArrowRight, BookOpen, BookmarkCheck, Cloud, Flame, Play, Timer, X } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLessonMock';
 import { computeDailyGoalProgress } from '../../lib/gamification';
 import { getLumiCompanionMessage } from '../../lib/lumiCopy';
+import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 import { DailyChallengesCard } from './DailyChallengesCard';
@@ -33,9 +34,24 @@ export function StartView() {
   const lessonAction = (hasPausedTasks || hasPausedTheory) ? 'Wznów lekcję' : completed ? 'Powtórz materiał' : 'Otwórz lekcję';
   const subjectName = state.activeSubject === 'polish' ? 'Język polski' : 'Język angielski';
   const lumiBanner = getLumiCompanionMessage(state, goal.percent);
+  const { user: cloudUser, loading: authLoading, configured: firebaseReady } = useCloudAuthUser();
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
+  const [reminderDismissed, setReminderDismissed] = useState(() => {
+    try {
+      return Number(localStorage.getItem('jasne_e8_cloud_reminder_snooze') || '0') > Date.now();
+    } catch {
+      return false;
+    }
+  });
+  const showCloudReminder =
+    firebaseReady &&
+    !authLoading &&
+    !cloudUser &&
+    !reminderDismissed &&
+    (state.totalTasksSolved >= 1 || state.completedLessonIds.length >= 1);
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5 lg:space-y-4">
       <header className={playWelcome ? 'welcome-header welcome-entrance' : 'welcome-header'}>
         <div className="min-w-0 space-y-2">
           <h1 className="page-heading [overflow-wrap:anywhere]">{state.totalTasksSolved > 0 ? 'Miło Cię widzieć' : 'Cześć'}, {state.nickname}!</h1>
@@ -57,8 +73,49 @@ export function StartView() {
 
       <StartStreakPanel />
 
-      <section aria-labelledby="start-lesson" className="study-feature grid gap-5 p-4 sm:gap-7 sm:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,42%)] sm:items-center">
-        <div className="study-board study-lesson-art flex min-h-28 items-center justify-center sm:order-last sm:self-stretch" aria-hidden="true">
+      {showCloudReminder && (
+        <section
+          aria-label="Przypomnienie o zapisie postępów"
+          className="rounded-2xl border border-[var(--info)]/40 bg-[var(--info)]/8 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <Cloud className="w-5 h-5 text-[var(--info)] shrink-0" />
+            <p className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] leading-snug">
+              Zapisz swoje postępy i serię w chmurze — zaloguj się przez Google lub e-mail.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <TactileButton
+              variant="info"
+              size="sm"
+              onClick={() => setAccountModalOpen(true)}
+            >
+              Zaloguj się
+            </TactileButton>
+            <button
+              type="button"
+              aria-label="Przypomnij później"
+              onClick={() => {
+                try {
+                  localStorage.setItem(
+                    'jasne_e8_cloud_reminder_snooze',
+                    String(Date.now() + 24 * 3600 * 1000)
+                  );
+                } catch {
+                  // ignore
+                }
+                setReminderDismissed(true);
+              }}
+              className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      <section aria-labelledby="start-lesson" className="study-feature grid gap-4 p-4 sm:gap-5 sm:p-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,40%)] sm:items-center">
+        <div className="study-board study-lesson-art flex min-h-24 items-center justify-center sm:order-last sm:self-stretch" aria-hidden="true">
           <span className="study-board-mark">{isMath ? '2³' : 'A'}</span>
           <span className="study-lesson-symbol" aria-hidden="true">{isMath ? '½' : '↗'}</span>
           <span className="study-board-mark">{isMath ? '√9' : 'B'}</span>
@@ -127,6 +184,11 @@ export function StartView() {
       </section>
 
       <DailyChallengesCard />
+
+      <CloudAccountModal
+        open={accountModalOpen}
+        onClose={() => setAccountModalOpen(false)}
+      />
     </div>
   );
 }

@@ -86,7 +86,7 @@ export function BentoTheoryTabs({
   const isZeroHearts = state.hearts <= 0;
 
   return (
-    <div className="space-y-5 pb-6">
+    <div className="space-y-3.5 sm:space-y-4 pb-5">
       {/* Top Bar */}
       <div className="flex items-center justify-between gap-3 p-4 study-panel">
         <div className="flex items-center gap-3 min-w-0">
@@ -178,7 +178,7 @@ export function BentoTheoryTabs({
         initial={reducedMotion ? false : { opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.18 }}
-        className="study-panel p-5 sm:p-6 space-y-4"
+        className="study-panel p-4 sm:p-5 space-y-3.5"
       >
         <div>
           <h2 ref={headingRef} tabIndex={-1} className="text-lg sm:text-xl font-extrabold font-display text-[var(--text-primary)]">

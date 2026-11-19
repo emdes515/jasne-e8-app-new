@@ -43,8 +43,12 @@ export function DesktopCompanionPanel({ showProgress }: { showProgress: boolean 
           <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
             Lumi
           </div>
-          <div className="rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] leading-snug">
-            „{lumiCompanion.message}”
+          <div className="relative mt-2 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] px-3.5 py-2.5 text-xs font-medium text-[var(--text-primary)] leading-snug">
+            <span
+              aria-hidden="true"
+              className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 bg-[var(--bg-elevated)] border-l border-t border-[var(--border-subtle)]"
+            />
+            <span className="relative z-10">„{lumiCompanion.message}”</span>
           </div>
         </div>
         <TactileButton

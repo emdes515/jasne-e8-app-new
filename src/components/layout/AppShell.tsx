@@ -18,6 +18,7 @@ import { FormulasBottomSheet } from '../formulas/FormulasBottomSheet';
 import { RescueMissionModal } from '../vault/RescueMissionModal';
 import { RankUpModal } from '../profile/RankUpModal';
 import { ToastHost } from '../ui/ToastHost';
+import { AppUpdateModal } from '../ui/AppUpdateModal';
 import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 import { formatHeartCountdown } from '../../lib/lumiCopy';
 
@@ -81,7 +82,7 @@ export function AppShell() {
               </div>
             )}
 
-            <div className={`flex-1 w-full px-3.5 sm:px-6 pt-[max(0.875rem,env(safe-area-inset-top))] sm:pt-7 flex justify-center gap-6 ${focusMode ? 'pb-[max(1.5rem,env(safe-area-inset-bottom))]' : 'pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10'}`}>
+            <div className={`flex-1 w-full px-3.5 sm:px-6 pt-[max(0.875rem,env(safe-area-inset-top))] sm:pt-5 lg:pt-4 flex justify-center gap-6 ${focusMode ? 'pb-[max(1.5rem,env(safe-area-inset-bottom))]' : 'pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8'}`}>
               {/* Primary Content Column: max-w-[760px] on 1024-1439px, max-w-[780px] on >=1440px */}
               <main className="w-full max-w-[760px] min-[1440px]:max-w-[780px] min-w-0">
                 {lessonViewStage !== 'none' ? (
@@ -113,6 +114,7 @@ export function AppShell() {
           <RescueMissionModal />
           <ProductTourModal />
           <RankUpModal />
+          <AppUpdateModal suppressed={focusMode} />
           <ToastHost />
         </div>
       )}

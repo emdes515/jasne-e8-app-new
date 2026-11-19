@@ -38,8 +38,103 @@ const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string }> = [
   { id: 'mascot', label: 'Maskotka Lumi' },
   { id: 'profile', label: 'Ramki i tytuły' },
   { id: 'boosters', label: 'Wspomagacze' },
-  { id: 'premium', label: 'Premium (Wkrótce)' },
+  { id: 'premium', label: 'Pakiety Pro' },
 ];
+
+const FRAME_PREVIEW_CLASSES: Record<string, string> = {
+  emerald_impulse_frame: 'border-[#10B981] bg-[#10B981]/15 text-[#10B981]',
+  gold_ring_frame: 'border-[#FFB800] bg-[#FFB800]/15 text-[#FFB800]',
+  cyber_plasma_frame: 'border-[#38BDF8] bg-[#38BDF8]/15 text-[#38BDF8]',
+};
+
+function ShopItemVisualThumbnail({
+  item,
+  baseLoadout,
+}: {
+  item: ShopItemDefinition;
+  baseLoadout: LumiLoadout;
+}) {
+  if (
+    item.slot &&
+    item.slotValue &&
+    (item.slot === 'colorScheme' ||
+      item.slot === 'headgear' ||
+      item.slot === 'eyewear' ||
+      item.slot === 'aura')
+  ) {
+    const previewLoadout: Partial<LumiLoadout> = {
+      colorScheme:
+        item.slot === 'colorScheme'
+          ? (item.slotValue as LumiLoadout['colorScheme'])
+          : baseLoadout.colorScheme,
+      headgear:
+        item.slot === 'headgear'
+          ? (item.slotValue as LumiLoadout['headgear'])
+          : 'none',
+      eyewear:
+        item.slot === 'eyewear'
+          ? (item.slotValue as LumiLoadout['eyewear'])
+          : 'none',
+      aura:
+        item.slot === 'aura'
+          ? (item.slotValue as LumiLoadout['aura'])
+          : 'none',
+    };
+
+    return (
+      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center justify-center shrink-0 overflow-hidden">
+        <LumiMascot mood="cool" loadout={previewLoadout} size="xs" />
+      </div>
+    );
+  }
+
+  if (item.slot === 'profileFrame' && item.slotValue) {
+    const frameClass =
+      FRAME_PREVIEW_CLASSES[item.slotValue] ??
+      'border-[var(--accent-primary)] bg-[var(--accent-primary)]/12 text-[var(--accent-text)]';
+    return (
+      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
+        <div
+          className={`w-11 h-11 rounded-full border-[3px] flex items-center justify-center text-xs font-extrabold font-display ${frameClass}`}
+        >
+          E8
+        </div>
+      </div>
+    );
+  }
+
+  if (item.slot === 'playerTitle') {
+    return (
+      <div className="w-16 h-16 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0 px-1.5 text-center">
+        <span className="rounded-lg bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/40 px-1.5 py-1 text-[10px] font-extrabold font-display leading-tight text-[var(--accent-text)]">
+          TYTUŁ
+        </span>
+      </div>
+    );
+  }
+
+  if (item.boosterKind === 'streak_shield') {
+    return (
+      <div className="w-16 h-16 rounded-2xl bg-[var(--info)]/12 border-2 border-[var(--info)]/45 flex items-center justify-center shrink-0">
+        <Shield className="w-8 h-8 text-[var(--info)] fill-[var(--info)]/20" />
+      </div>
+    );
+  }
+
+  if (item.boosterKind === 'heart_refill') {
+    return (
+      <div className="w-16 h-16 rounded-2xl bg-[var(--danger)]/12 border-2 border-[var(--danger)]/45 flex items-center justify-center shrink-0">
+        <TactileHeartIcon size={34} variant="full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-16 h-16 rounded-2xl bg-[var(--accent-primary)]/12 border-2 border-[var(--accent-primary)]/45 flex items-center justify-center shrink-0">
+      <Coins className="w-8 h-8 text-[var(--accent-text)]" />
+    </div>
+  );
+}
 
 const RARITY_LABELS: Record<
   ItemRarity,
@@ -235,6 +330,7 @@ export function MascotDressingRoom() {
       >
         {SHOP_CATEGORIES.map((cat) => {
           const isSelected = activeCategory === cat.id;
+          const count = SHOP_CATALOG.filter((it) => it.category === cat.id).length;
           return (
             <button
               key={cat.id}
@@ -245,7 +341,7 @@ export function MascotDressingRoom() {
                 playSound('tabSwitch');
                 setActiveCategory(cat.id);
               }}
-              className="relative min-h-[44px] px-3 py-2 rounded-xl flex items-center justify-center text-xs font-extrabold font-display cursor-pointer select-none"
+              className="relative min-h-[44px] px-2.5 py-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-extrabold font-display cursor-pointer select-none"
             >
               {isSelected && (
                 <motion.span
@@ -262,6 +358,15 @@ export function MascotDressingRoom() {
                 }`}
               >
                 {cat.label}
+              </span>
+              <span
+                className={`relative z-10 rounded-full px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums ${
+                  isSelected
+                    ? 'bg-black/15 text-[var(--on-accent)]'
+                    : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                }`}
+              >
+                {count}
               </span>
             </button>
           );
@@ -317,39 +422,60 @@ export function MascotDressingRoom() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`text-xs font-extrabold font-display ${rarityMeta.colorClass}`}
-                  >
-                    {rarityMeta.label}
-                  </span>
+              <div className="flex items-start gap-3.5">
+                <ShopItemVisualThumbnail item={item} baseLoadout={state.loadout} />
+
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span
+                      className={`text-[11px] font-extrabold uppercase tracking-wider font-display ${rarityMeta.colorClass}`}
+                    >
+                      {rarityMeta.label}
+                    </span>
+
+                    {item.comingSoon ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] px-2 py-0.5 text-[11px] font-bold text-[var(--text-secondary)]">
+                        <Lock className="w-3 h-3" />
+                        Wkrótce
+                      </span>
+                    ) : isOwned ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--success)]/15 border border-[var(--success)]/40 px-2 py-0.5 text-[11px] font-extrabold text-[var(--success)]">
+                        <Check className="w-3 h-3" />
+                        Posiadane
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-primary)]/15 border border-[var(--accent-primary)]/45 px-2.5 py-0.5 text-xs font-extrabold font-display text-[var(--accent-text)] tabular-nums">
+                        <Coins className="w-3.5 h-3.5" />
+                        {item.price}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-base font-extrabold font-display text-[var(--text-primary)] leading-snug">
+                    {item.name}
+                  </h3>
+
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                    {item.description}
+                  </p>
 
                   {isStreakShield && (
-                    <span className="inline-flex items-center gap-1 text-xs font-extrabold font-display text-[var(--info)] tabular-nums">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-extrabold font-display text-[var(--info)] tabular-nums pt-0.5">
                       <Shield className="w-3.5 h-3.5" />
                       <span>Zapas: {state.streakShields}/2</span>
                     </span>
                   )}
 
                   {isHeartRefill && (
-                    <span className="inline-flex items-center gap-1 text-xs font-extrabold font-display text-[var(--danger)] tabular-nums">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-extrabold font-display text-[var(--danger)] tabular-nums pt-0.5">
                       <TactileHeartIcon
-                        size={16}
+                        size={14}
                         variant={state.hearts > 0 ? 'full' : 'cracked'}
                       />
                       <span>Serca: {state.hearts}/5</span>
                     </span>
                   )}
                 </div>
-
-                <h3 className="text-base font-extrabold font-display text-[var(--text-primary)]">
-                  {item.name}
-                </h3>
-
-                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                  {item.description}
-                </p>
               </div>
 
               {/* Action Buttons Row: Preview (if cosmetic) + Buy / Equip / Disabled State */}

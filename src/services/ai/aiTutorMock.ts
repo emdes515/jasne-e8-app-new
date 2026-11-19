@@ -4,6 +4,8 @@ import { OpenTaskRubric } from '../../types/domain';
 import { AiTutorEvaluationResult, IAiTutorService } from '../../types/repositories';
 
 export const MOCK_AI_LATENCY_MS = 700;
+/** Docelowy czas animacji analizy AI w UI zadań otwartych (5 s — zbliżony do realnego modelu). */
+export const AI_ANALYSIS_UI_DURATION_MS = 5000;
 
 /**
  * Strips Polish diacritics from a lowercase string.

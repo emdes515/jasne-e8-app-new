@@ -334,6 +334,15 @@ h4,
   .worked-example-step { gap: 0.875rem; }
 }
 
+@media (min-width: 1024px) {
+  .welcome-header { min-height: 0; }
+}
+
+@media (min-width: 1440px) {
+  .welcome-header { grid-template-columns: minmax(0, 1fr); }
+  .welcome-orbit { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .welcome-entrance .welcome-orbit,
   .welcome-entrance .welcome-spark,
@@ -387,6 +396,15 @@ h4,
 :where(button, a, input, textarea, select, [tabindex]):focus-visible {
   outline: 2px solid var(--accent-text);
   outline-offset: 2px;
+}
+
+@media (min-width: 1024px) {
+  .welcome-header { min-height: 0; }
+}
+
+@media (min-width: 1440px) {
+  .welcome-header { grid-template-columns: minmax(0, 1fr); }
+  .welcome-orbit { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
