@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import { useAppState } from '../../context/AppStateContext';
 import { OnboardingFlow, ProductTourModal } from '../onboarding/OnboardingFlow';
+import { GuestAccountReminder } from '../auth/GuestAccountReminder';
 import { TopHud } from './TopHud';
 import { BottomTabBar } from './BottomTabBar';
 import { DesktopSidebar } from './DesktopSidebar';
@@ -117,6 +118,7 @@ export function AppShell() {
           <ProductTourModal />
           <RankUpModal />
           <AppUpdateModal suppressed={focusMode} />
+          <GuestAccountReminder suppressed={focusMode} />
           <ToastHost />
         </div>
       )}
