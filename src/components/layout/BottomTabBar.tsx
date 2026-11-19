@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { Home, Map, BookmarkCheck, Timer, User } from 'lucide-react';
+import { Home, Map, BookmarkCheck, Timer, Trophy, User } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { NavTabId } from '../../types/domain';
 import { SPRING_SNAPPY } from '../../lib/motionPresets';
@@ -16,6 +16,7 @@ export const NAV_TABS: Array<{
   { id: 'learn', label: 'Nauka', icon: Map },
   { id: 'vault', label: 'Powtórki', icon: BookmarkCheck },
   { id: 'exam', label: 'Egzamin', icon: Timer },
+  { id: 'ranking', label: 'Ranking', icon: Trophy },
   { id: 'profile', label: 'Profil', icon: User },
 ];
 
@@ -28,7 +29,7 @@ export function BottomTabBar() {
       aria-label="Główna nawigacja dolna"
       className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] px-2 pt-1.5 pb-[max(10px,env(safe-area-inset-bottom))]"
     >
-      <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
+      <div className="grid grid-cols-6 gap-1 max-w-md mx-auto">
         {NAV_TABS.map((tab) => {
           const IconComp = tab.icon;
           const isActive = activeTab === tab.id;
@@ -71,7 +72,7 @@ export function BottomTabBar() {
               </motion.div>
 
               <span
-                className={`relative z-10 text-[11px] font-extrabold font-display mt-0.5 whitespace-nowrap ${
+                className={`relative z-10 text-[10px] min-[360px]:text-[11px] font-extrabold font-display mt-0.5 whitespace-nowrap ${
                   isActive
                     ? 'text-[var(--text-primary)]'
                     : 'text-[var(--text-secondary)]'
