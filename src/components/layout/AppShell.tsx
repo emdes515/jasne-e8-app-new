@@ -59,7 +59,6 @@ export function AppShell() {
       const isAutostart = params.get('autostart') === '1';
 
       if (forceSplash) {
-        setSplashProgress(74);
         setSplashState('pinned');
         return;
       }
@@ -87,7 +86,7 @@ export function AppShell() {
       setSplashState('auto');
       setSplashProgress(18);
       const startTime = performance.now();
-      const durationMs = 950;
+      const durationMs = 560;
 
       const step = (now: number) => {
         const ratio = Math.min(1, (now - startTime) / durationMs);
@@ -151,7 +150,7 @@ export function AppShell() {
   if (!hydrated) {
     return (
       <MotionConfig reducedMotion="user">
-        <AppSplashLoader variant="boot" progress={18} fullscreen />
+        <AppSplashLoader variant="boot" fullscreen />
       </MotionConfig>
     );
   }
@@ -162,14 +161,14 @@ export function AppShell() {
         {splashState !== 'done' && (
           <motion.div
             key="cold-start-splash"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.02 }}
-            transition={{ duration: 0.24 }}
+            initial={{ opacity: 1, transform: 'scale(1)' }}
+            exit={{ opacity: 0, transform: 'scale(0.985)' }}
+            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
             className="fixed inset-0 z-[220]"
           >
             <AppSplashLoader
               variant="boot"
-              progress={splashProgress}
+              progress={splashState === 'pinned' ? undefined : splashProgress}
               allowSkip={splashState !== 'checking'}
               onSkip={() => setSplashState('done')}
               fullscreen

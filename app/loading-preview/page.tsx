@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, MotionConfig } from 'motion/react';
-import { ArrowLeft, Moon, Play, Sparkles, Sun, Zap } from 'lucide-react';
+import { ArrowLeft, Moon, Play, Sun, Zap } from 'lucide-react';
 import { JasneBulbMark, JasneLogo } from '../../src/components/brand/JasneLogo';
 import {
   AppSplashLoader,
@@ -12,12 +12,22 @@ import {
   BulbInlineLoader,
   SessionTransitionLoader,
 } from '../../src/components/ui/BulbLoadingScreen';
+import { OpenWorkInput } from '../../src/components/lesson/OpenWorkInput';
+import { EMPTY_OPEN_WORK, type OpenWorkDraft } from '../../src/lib/openWork';
 import { TactileButton } from '../../src/components/ui/TactileButton';
 
 export default function LoadingPreviewPage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [sparkCount, setSparkCount] = useState(0);
+  const [replaySeed, setReplaySeed] = useState(0);
   const [activeFullscreen, setActiveFullscreen] = useState<null | 'boot' | 'lesson' | 'exam'>(null);
+  const [previewWork, setPreviewWork] = useState<OpenWorkDraft>({
+    ...EMPTY_OPEN_WORK,
+    mode: 'text',
+  });
+  const [previewText, setPreviewText] = useState(
+    'Dane: P = 49 cm², V = 27 cm³\nObliczenia: √49 = 7 cm, ∛27 = 3 cm\nOdp.: Suma wynosi 10 cm.'
+  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -78,16 +88,19 @@ export default function LoadingPreviewPage() {
                   Tożsamość JASNE E8 — Żarówka Tactile 3D
                 </h1>
                 <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1">
-                  Kliknij dowolne interaktywne logo albo wyzwalacz błysku, żeby przetestować animację iskry.
+                  Kliknij dowolne interaktywne logo albo wyzwalacz błysku, żeby zobaczyć impuls i zapłon żarnika.
                 </p>
               </div>
               <TactileButton
                 variant="secondary"
                 size="sm"
-                onClick={() => setSparkCount((c) => c + 1)}
+                onClick={() => {
+                  setSparkCount((c) => c + 1);
+                  setReplaySeed((s) => s + 1);
+                }}
               >
                 <Zap className="w-4 h-4 text-[var(--accent-text)]" />
-                <span>Wyzwól błysk</span>
+                <span>Powtórz zapłon</span>
               </TactileButton>
             </div>
 
@@ -110,7 +123,7 @@ export default function LoadingPreviewPage() {
                 <span className="text-xs font-bold text-[var(--text-secondary)]">
                   Sygnet solo (Subtle / Ignition / Loading)
                 </span>
-                <div className="flex items-center gap-4">
+                <div key={replaySeed} className="flex items-center gap-4">
                   <JasneBulbMark size={44} animated="subtle" framed sparkTrigger={sparkCount} />
                   <JasneBulbMark size={48} animated="ignition" sparkTrigger={sparkCount} />
                   <JasneBulbMark size={48} animated="loading" sparkTrigger={sparkCount} />
@@ -164,15 +177,15 @@ export default function LoadingPreviewPage() {
             </div>
           </section>
 
-          {/* Sekcja 3: Interaktywne Ekrany Ładowania */}
+          {/* Sekcja 3: Ekrany Ładowania „Tungsten Ignition” */}
           <section className="study-panel p-5 sm:p-6 space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-extrabold font-display">
-                  Ekrany Ładowania z Żarówką (Choreografia 60 FPS)
+                  Ekrany Ładowania — Zapłon Żarnika (Tungsten Ignition)
                 </h2>
                 <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5">
-                  Przetestuj pełnoekranowe przejścia na żywo lub sprawdź warianty osadzone poniżej.
+                  Bez zbędnych orbit i ozdobników: pojedynczy zapłon wolframowego żarnika, rozgrzanie bańki i włosowaty pasek na GPU.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -181,7 +194,7 @@ export default function LoadingPreviewPage() {
                   size="sm"
                   onClick={() => setActiveFullscreen('boot')}
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Play className="w-4 h-4" />
                   <span>Splash Startowy</span>
                 </TactileButton>
                 <TactileButton
@@ -205,8 +218,8 @@ export default function LoadingPreviewPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
               <AppSplashLoader
+                key={`embedded-${replaySeed}`}
                 variant="boot"
-                progress={68}
                 fullscreen={false}
               />
 
@@ -217,10 +230,32 @@ export default function LoadingPreviewPage() {
                 />
 
                 <div className="p-4 rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-3">
-                  <BulbInlineLoader message="Zapisuję postęp sesji…" size={28} />
-                  <BulbInlineLoader message="Wczytuję wzory CKE…" size={24} />
+                  <BulbInlineLoader message="Zapisuję postęp sesji…" size={24} />
+                  <BulbInlineLoader message="Wczytuję wzory CKE…" size={22} />
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Sekcja 4: Edytor i klawiatura zadań otwartych */}
+          <section className="study-panel p-5 sm:p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-extrabold font-display">
+                Klawiatura zadań otwartych (Tryb Klawiatura CKE)
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-0.5">
+                Pasek szybkich symboli dostępny razem z klawiaturą systemową oraz 3-zakładkowa klawiatura matematyczna z kursorem, Cofnij i szablonami CKE.
+              </p>
+            </div>
+
+            <div className="max-w-xl">
+              <OpenWorkInput
+                work={previewWork}
+                onWorkChange={(patch) => setPreviewWork((prev) => ({ ...prev, ...patch }))}
+                text={previewText}
+                onTextChange={setPreviewText}
+                disabled={false}
+              />
             </div>
           </section>
         </div>
@@ -231,7 +266,6 @@ export default function LoadingPreviewPage() {
             <div className="fixed inset-0 z-50">
               <AppSplashLoader
                 variant="boot"
-                progress={78}
                 allowSkip
                 onSkip={() => setActiveFullscreen(null)}
                 fullscreen
@@ -243,7 +277,7 @@ export default function LoadingPreviewPage() {
             <SessionTransitionLoader
               mode="lesson"
               title="Działania na ułamkach i procenty"
-              durationMs={2200}
+              durationMs={1400}
               onDone={() => setActiveFullscreen(null)}
             />
           )}
@@ -253,7 +287,7 @@ export default function LoadingPreviewPage() {
               mode="exam"
               title="Miniarkusz · Matematyka E8"
               subtitle="5 zadań · 15 minut · bez utraty serc"
-              durationMs={2200}
+              durationMs={1400}
               onDone={() => setActiveFullscreen(null)}
             />
           )}
