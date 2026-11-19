@@ -118,8 +118,16 @@ export function TopHud() {
               playSound('tap');
               setRescueModalOpen(true);
             }}
-            aria-label={`Serca: ${state.hearts} z 5`}
-            className="relative min-h-[44px] min-w-[44px] px-1.5 min-[360px]:px-2.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center justify-center gap-1 min-[360px]:gap-1.5 text-xs sm:text-sm font-extrabold font-display tabular-nums cursor-pointer hover:border-[var(--danger)] transition-colors"
+            aria-label={`Serca: ${state.hearts} z 5${
+              state.hearts < 5 && secondsToNextHeart !== null
+                ? `, kolejne za ${formatCountdown(secondsToNextHeart)}`
+                : ''
+            }`}
+            className={`relative min-h-[44px] min-w-[44px] px-1.5 min-[360px]:px-2.5 rounded-xl bg-[var(--bg-elevated)] border-2 flex items-center justify-center gap-1 min-[360px]:gap-1.5 text-xs sm:text-sm font-extrabold font-display tabular-nums cursor-pointer hover:border-[var(--danger)] transition-colors ${
+              state.hearts === 0
+                ? 'border-[var(--danger)]/70 text-[var(--danger)]'
+                : 'border-[var(--border-subtle)]'
+            }`}
           >
             <TactileHeartIcon
               size={18}
@@ -129,6 +137,17 @@ export function TopHud() {
             <span className="hidden min-[380px]:inline">
               {state.hearts}/5
             </span>
+            {state.hearts < 5 && secondsToNextHeart !== null && (
+              <span
+                className={`text-[11px] font-bold tabular-nums ${
+                  state.hearts === 0
+                    ? 'inline text-[var(--danger)]'
+                    : 'hidden sm:inline text-[var(--text-secondary)]'
+                }`}
+              >
+                · {formatCountdown(secondsToNextHeart)}
+              </span>
+            )}
 
             {/* Floating -1 indicator on heart loss (Choreography #8) */}
             <AnimatePresence>

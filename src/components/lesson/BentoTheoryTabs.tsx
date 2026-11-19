@@ -11,15 +11,16 @@ import {
   ShieldAlert,
   Play,
   X,
-  HeartCrack,
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { BentoTheoryCard, LessonDefinition } from '../../types/domain';
 import { SPRING_SNAPPY } from '../../lib/motionPresets';
+import { formatHeartCountdown } from '../../lib/lumiCopy';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 
 interface BentoTheoryTabsProps {
   lesson: LessonDefinition;
@@ -50,6 +51,7 @@ export function BentoTheoryTabs({
 }: BentoTheoryTabsProps) {
   const {
     state,
+    secondsToNextHeart,
     setFormulasOpen,
     setRescueModalOpen,
     setActiveTab,
@@ -288,12 +290,19 @@ export function BentoTheoryTabs({
       {/* Bottom Sticky Action Area (Respects AC-H2 & AC-H3 when 0 hearts!) */}
       <div className="p-4 study-panel space-y-3">
         {isLastCard && isZeroHearts && !review && (
-          <div className="p-3.5 rounded-2xl bg-[var(--danger)]/15 border border-[var(--danger)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-xs">
-              <HeartCrack className="w-5 h-5 text-[var(--danger)] shrink-0" />
-              <span className="font-bold text-[var(--text-primary)]">
-                Masz 0 serc — odzyskaj serce, żeby rozwiązywać zadania
-              </span>
+          <div className="p-3.5 rounded-2xl bg-[var(--danger)]/12 border border-[var(--danger)]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-2.5 text-xs">
+              <TactileHeartIcon size={20} variant="cracked" className="mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="font-bold text-[var(--text-primary)]">
+                  Masz 0 serc — odzyskaj serce, żeby rozwiązywać zadania
+                </div>
+                {secondsToNextHeart !== null && (
+                  <div className="font-extrabold tabular-nums text-[var(--danger)]">
+                    Kolejne darmowe serce za {formatHeartCountdown(secondsToNextHeart)}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-2 shrink-0">
               <TactileButton

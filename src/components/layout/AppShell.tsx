@@ -18,9 +18,18 @@ import { FormulasBottomSheet } from '../formulas/FormulasBottomSheet';
 import { RescueMissionModal } from '../vault/RescueMissionModal';
 import { RankUpModal } from '../profile/RankUpModal';
 import { ToastHost } from '../ui/ToastHost';
+import { TactileHeartIcon } from '../ui/TactileHeartIcon';
+import { formatHeartCountdown } from '../../lib/lumiCopy';
 
 export function AppShell() {
-  const { hydrated, state, activeTab, lessonViewStage } = useAppState();
+  const {
+    hydrated,
+    state,
+    activeTab,
+    lessonViewStage,
+    secondsToNextHeart,
+    setRescueModalOpen,
+  } = useAppState();
   const [examInProgress, setExamInProgress] = useState(false);
   const focusMode = examInProgress || lessonViewStage !== 'none';
 
@@ -45,6 +54,32 @@ export function AppShell() {
           {/* Main Workspace Area */}
           <div className="flex-1 min-w-0 flex flex-col">
             {!focusMode && <TopHud />}
+
+            {!focusMode && state.hearts === 0 && (
+              <div
+                role="status"
+                className="w-full bg-[var(--danger)]/10 border-b border-[var(--danger)]/35 px-3.5 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-2 text-xs"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <TactileHeartIcon size={17} variant="cracked" />
+                  <span className="font-bold text-[var(--text-primary)]">
+                    Brak serc do zadań
+                    {secondsToNextHeart !== null && (
+                      <span className="ml-1.5 font-extrabold tabular-nums text-[var(--danger)]">
+                        · +1 serce za {formatHeartCountdown(secondsToNextHeart)}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRescueModalOpen(true)}
+                  className="shrink-0 rounded-lg bg-[var(--danger)] px-2.5 py-1 text-[11px] font-extrabold font-display text-[var(--on-danger)] cursor-pointer hover:opacity-95 transition-opacity"
+                >
+                  Odzyskaj serce
+                </button>
+              </div>
+            )}
 
             <div className={`flex-1 w-full px-3.5 sm:px-6 pt-[max(0.875rem,env(safe-area-inset-top))] sm:pt-7 flex justify-center gap-6 ${focusMode ? 'pb-[max(1.5rem,env(safe-area-inset-bottom))]' : 'pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10'}`}>
               {/* Primary Content Column: max-w-[760px] on 1024-1439px, max-w-[780px] on >=1440px */}

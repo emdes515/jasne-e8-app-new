@@ -24,6 +24,7 @@ import {
   isComboExpired,
 } from '../../lib/gamification';
 import { SPRING_BOUNCY, SPRING_SNAPPY } from '../../lib/motionPresets';
+import { formatHeartCountdown } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
@@ -44,6 +45,7 @@ export function TaskRunner() {
 function TaskRunnerQuestion() {
   const {
     state,
+    secondsToNextHeart,
     submitSessionTaskAnswer,
     saveTaskDraft,
     pushToast,
@@ -159,8 +161,11 @@ function TaskRunnerQuestion() {
         </div>
 
         <div>
-          <div className="text-xs font-extrabold font-display text-[var(--danger)] mb-1">
+          <div className="text-xs font-extrabold font-display text-[var(--danger)] mb-1 tabular-nums">
             Stan Serc: {state.hearts}/5
+            {state.hearts < 5 && secondsToNextHeart !== null
+              ? ` · +1 serce za ${formatHeartCountdown(secondsToNextHeart)}`
+              : ''}
           </div>
           <h2 className="text-2xl font-extrabold font-display text-[var(--text-primary)]">
             Serca się skończyły!
@@ -431,12 +436,28 @@ function TaskRunnerQuestion() {
               )}
             </AnimatePresence>
 
-            <div className="min-h-[40px] px-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center gap-1.5 text-xs font-extrabold font-display tabular-nums">
+            <div
+              className={`min-h-[40px] px-2.5 rounded-xl bg-[var(--bg-elevated)] border flex items-center gap-1.5 text-xs font-extrabold font-display tabular-nums ${
+                state.hearts === 0
+                  ? 'border-[var(--danger)]/70 text-[var(--danger)]'
+                  : 'border-[var(--border-subtle)]'
+              }`}
+              title={
+                state.hearts < 5 && secondsToNextHeart !== null
+                  ? `Kolejne serce za ${formatHeartCountdown(secondsToNextHeart)}`
+                  : 'Pełny zapas serc'
+              }
+            >
               <TactileHeartIcon
                 size={17}
                 variant={state.hearts > 0 ? 'full' : 'cracked'}
               />
               <span>{state.hearts}</span>
+              {state.hearts < 5 && secondsToNextHeart !== null && (
+                <span className="hidden min-[380px]:inline text-[11px] font-bold text-[var(--text-secondary)]">
+                  · {formatHeartCountdown(secondsToNextHeart)}
+                </span>
+              )}
             </div>
           </div>
         </div>

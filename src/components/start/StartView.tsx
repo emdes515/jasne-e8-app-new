@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, BookmarkCheck, Flame, Play, Timer } from 'lucide-
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLessonMock';
 import { computeDailyGoalProgress } from '../../lib/gamification';
+import { getLumiCompanionMessage } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 import { DailyChallengesCard } from './DailyChallengesCard';
@@ -31,18 +32,23 @@ export function StartView() {
 
   const lessonAction = (hasPausedTasks || hasPausedTheory) ? 'Wznów lekcję' : completed ? 'Powtórz materiał' : 'Otwórz lekcję';
   const subjectName = state.activeSubject === 'polish' ? 'Język polski' : 'Język angielski';
+  const lumiBanner = getLumiCompanionMessage(state, goal.percent);
 
   return (
     <div className="space-y-7">
       <header className={playWelcome ? 'welcome-header welcome-entrance' : 'welcome-header'}>
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-2">
           <h1 className="page-heading [overflow-wrap:anywhere]">{state.totalTasksSolved > 0 ? 'Miło Cię widzieć' : 'Cześć'}, {state.nickname}!</h1>
+          {/* Speech bubble visible on mobile/tablet where Lumi sits in this header (on >=1440px Lumi + speech bubble live in DesktopCompanionPanel) */}
+          <p className="min-[1440px]:hidden inline-block rounded-2xl rounded-tl-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] leading-snug max-w-md">
+            {lumiBanner.message}
+          </p>
         </div>
-        <div className="welcome-orbit" aria-hidden="true">
+        <div className="welcome-orbit min-[1440px]:hidden" aria-hidden="true">
           <span className="welcome-track" />
           <span className="welcome-spark">✦</span>
           <LumiMascot
-            mood={state.totalTasksSolved > 0 ? 'happy' : 'idle'}
+            mood={lumiBanner.mood}
             loadout={state.loadout}
             size="sm"
           />
@@ -67,6 +73,7 @@ export function StartView() {
           <TactileButton
             onClick={() => {
               if (!isMath) setActiveTab('learn');
+              else if (state.hearts <= 0) openLessonTheory(lesson.id, completed);
               else if (hasPausedTasks && !hasPausedTheory) startLessonTasks(lesson.id);
               else openLessonTheory(lesson.id, completed);
             }}

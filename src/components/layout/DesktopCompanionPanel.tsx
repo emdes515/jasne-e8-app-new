@@ -7,6 +7,7 @@ import {
   computeDailyGoalProgress,
   getRankForXp,
 } from '../../lib/gamification';
+import { getLumiCompanionMessage } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 
@@ -24,6 +25,7 @@ export function DesktopCompanionPanel({ showProgress }: { showProgress: boolean 
   });
 
   const rankInfo = getRankForXp(state.xp);
+  const lumiCompanion = getLumiCompanionMessage(state, dailyGoal.percent);
 
   return (
     <aside
@@ -33,19 +35,17 @@ export function DesktopCompanionPanel({ showProgress }: { showProgress: boolean 
       {/* Lumi Companion Card */}
       <div className="p-4 study-panel flex flex-col items-center text-center space-y-2.5">
         <LumiMascot
-          mood={dailyGoal.percent >= 100 ? 'celebrate' : 'idle'}
+          mood={lumiCompanion.mood}
           loadout={state.loadout}
           size="sm"
         />
-        <div>
+        <div className="w-full space-y-1.5">
           <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
             Lumi
           </div>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            {dailyGoal.percent >= 100
-              ? 'Dzisiejszy cel osiągnięty.'
-              : 'Przymierz akcesoria z kolekcji.'}
-          </p>
+          <div className="rounded-2xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] leading-snug">
+            „{lumiCompanion.message}”
+          </div>
         </div>
         <TactileButton
           variant="secondary"
