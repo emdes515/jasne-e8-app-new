@@ -74,11 +74,11 @@ export function ReminderCloudActions({ schedule, onLoad }: {
   return (
     <details className="rounded-xl border border-[var(--border-subtle)] px-3">
       <summary className="my-1.5 cursor-pointer rounded-md py-2 text-sm font-extrabold">
-        Harmonogram na koncie rodzica
+        Harmonogram na koncie ucznia
       </summary>
       <div className="space-y-2.5 pb-3 text-sm">
         <p className="text-[var(--text-secondary)]">
-          Użyj własnego konta osoby dorosłej. Na konto trafiają godzina i wybrane dni. Wczytanie harmonogramu zastępuje plan na tym urządzeniu.
+          Rodzicu lub opiekunie, zaloguj się własnymi danymi. Na konto trafiają godzina i wybrane dni. Wczytanie harmonogramu zastępuje plan na tym urządzeniu.
         </p>
         {user ? (
           <>
@@ -94,7 +94,7 @@ export function ReminderCloudActions({ schedule, onLoad }: {
           </>
         ) : (
           <TactileButton variant="secondary" size="sm" disabled={loading} onClick={() => setShowAccount(true)}>
-            <Cloud size={16} aria-hidden="true" /> Zaloguj się jako rodzic
+            <Cloud size={16} aria-hidden="true" /> Przejdź do konta ucznia
           </TactileButton>
         )}
         {message && <p role="status" className="text-sm font-semibold text-[var(--text-secondary)]">{message}</p>}

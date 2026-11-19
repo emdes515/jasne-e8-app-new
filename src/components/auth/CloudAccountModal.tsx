@@ -1,19 +1,15 @@
 'use client';
 
-import React, { useEffect, useId, useState } from 'react';
+import React, { useId, useState } from 'react';
 import Link from 'next/link';
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
-  isSignInWithEmailLink,
-  onAuthStateChanged,
   sendPasswordResetEmail,
   sendSignInLinkToEmail,
   signInWithEmailAndPassword,
-  signInWithEmailLink,
   signInWithPopup,
   signOut,
-  type User,
 } from 'firebase/auth';
 import {
   ArrowLeft,
@@ -27,11 +23,10 @@ import {
   Mail,
   ShieldCheck,
 } from 'lucide-react';
-import { getFirebaseAuthClient, isFirebaseConfigured } from '../../lib/firebase';
+import { getFirebaseAuthClient } from '../../lib/firebase';
+import { MAGIC_EMAIL_KEY, useCloudAuthUser } from './useCloudAuthUser';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
-
-const MAGIC_EMAIL_KEY = 'jasne_e8_magic_link_email';
 
 const FREE_UNLOCK_BENEFITS = [
   'Dostęp do kolejnych lekcji',
@@ -39,37 +34,7 @@ const FREE_UNLOCK_BENEFITS = [
   'Zadania zamknięte ze wskazówkami i rozwiązaniami',
 ] as const;
 
-export function useCloudAuthUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const configured = isFirebaseConfigured();
-
-  useEffect(() => {
-    if (!configured) return;
-    const auth = getFirebaseAuthClient();
-    if (!auth) return;
-
-    if (typeof window !== 'undefined' && isSignInWithEmailLink(auth, window.location.href)) {
-      const storedEmail = window.localStorage.getItem(MAGIC_EMAIL_KEY);
-      if (storedEmail) {
-        void signInWithEmailLink(auth, storedEmail, window.location.href)
-          .then(() => {
-            window.localStorage.removeItem(MAGIC_EMAIL_KEY);
-            window.history.replaceState({}, document.title, window.location.pathname);
-          })
-          .catch(() => {});
-      }
-    }
-
-    const unsub = onAuthStateChanged(auth, (fbUser) => {
-      setUser(fbUser && !fbUser.isAnonymous ? fbUser : null);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, [configured]);
-
-  return { user, loading: configured && loading, configured };
-}
+export { useCloudAuthUser } from './useCloudAuthUser';
 
 type AccountModalProps = {
   open: boolean;
@@ -90,13 +55,13 @@ function AccountEntry(props: AccountModalProps) {
   if (!configured || user || confirmed) return <AccountForm {...props} />;
 
   return (
-    <BottomSheet open onClose={props.onClose} title="Konto osoby dorosłej" maxWidthClass="max-w-md">
+    <BottomSheet open onClose={props.onClose} title="Konto ucznia" subtitle={props.subtitleOverride} maxWidthClass="max-w-md">
       <div className="space-y-3">
         <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-          Konto zakłada i obsługuje osoba dorosła. Rodzicu lub opiekunie, użyj własnego adresu e-mail. Uczeń może rozpocząć pierwszą lekcję na tym urządzeniu bez konta.
+          Rodzicu lub opiekunie, załóż konto ucznia przy użyciu własnego adresu e-mail. Konto daje dostęp do kolejnych lekcji.
         </p>
         <TactileButton fullWidth disabled={loading} onClick={() => setConfirmed(true)}>
-          Jestem osobą dorosłą, kontynuuję
+          Jestem rodzicem lub opiekunem
         </TactileButton>
         <TactileButton fullWidth variant="secondary" onClick={props.onClose}>Wróć do nauki</TactileButton>
       </div>
@@ -264,13 +229,13 @@ function AccountForm({
       onClose={onClose}
       title={
         user
-          ? 'Konto w chmurze JASNE E8'
-          : titleOverride ?? 'Konto osoby dorosłej'
+          ? 'Konto ucznia'
+          : titleOverride ?? 'Konto ucznia'
       }
       subtitle={
         user
           ? 'Twoje darmowe konto jest aktywne.'
-          : subtitleOverride ?? 'Użyj własnych danych logowania, aby uzyskać dostęp do ustawień konta i kolejnych lekcji.'
+          : subtitleOverride ?? 'Rodzicu lub opiekunie, zaloguj się własnymi danymi albo załóż konto.'
       }
     >
       {!configured ? (
@@ -300,7 +265,7 @@ function AccountForm({
       ) : (
         <div className="space-y-4">
           <div className="space-y-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3.5">
-            <h3 className="text-sm font-extrabold">Co daje darmowe konto?</h3>
+            <h3 className="text-sm font-extrabold">Co daje konto ucznia?</h3>
             <ul className="space-y-1.5">
               {FREE_UNLOCK_BENEFITS.map((benefit) => (
                 <li key={benefit} className="flex items-start gap-2 text-xs text-[var(--text-primary)] leading-snug">
@@ -427,7 +392,7 @@ function AccountForm({
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
                   <span>
                     {activePasswordMode === 'register'
-                      ? 'Utwórz darmowe konto'
+                      ? 'Załóż konto ucznia'
                       : 'Zaloguj się'}
                   </span>
                 </TactileButton>

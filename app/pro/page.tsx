@@ -57,7 +57,7 @@ export default function ProPage() {
                 <span className={styles.icon}><BookOpen size={22} aria-hidden="true" /></span>
                 <span className={styles.status}>Dostępne teraz</span>
               </div>
-              <h3>Darmowe konto</h3>
+              <h3>Bezpłatne konto ucznia</h3>
               <p className={styles.cardSubtitle}>Lekcje, zadania i powtórki</p>
               <ul className={styles.features}>
                 {freeFeatures.map((feature) => (

@@ -299,11 +299,11 @@ export function ProfileShopView() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-sm sm:text-base font-extrabold font-display text-[var(--text-primary)]">
-                    {cloudUser ? 'Konto w chmurze połączone' : 'Konto rodzica lub opiekuna'}
+                    Konto ucznia
                   </h2>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
                     {cloudUser
-                      ? cloudUser.email ?? 'Zalogowano przez Firebase Auth'
+                      ? cloudUser.email ?? 'Konto aktywne'
                       : 'Uczysz się jako Gość. Zaloguj się przez Google lub e-mail, aby nie stracić serii i monet.'}
                   </p>
                 </div>

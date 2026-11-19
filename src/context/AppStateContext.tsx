@@ -49,6 +49,8 @@ import {
   validateNickname,
 } from '../lib/gamification';
 import { ALL_TASKS_BY_ID } from '../data/mathExamMock';
+import { useCloudAuthUser } from '../components/auth/useCloudAuthUser';
+import { getFirebaseAuthClient } from '../lib/firebase';
 import { getRescueTaskIds } from '../lib/rescueMission';
 import { findMathLesson, getLessonAttempt, getRecommendedMathLesson, MATH_LESSON_1_1 } from '../data/mathLessonMock';
 
@@ -136,6 +138,10 @@ interface AppStateContextValue {
 
   // Active Lesson View mode ('none' | 'theory' | 'tasks' | 'summary')
   lessonViewStage: 'none' | 'theory' | 'tasks' | 'summary';
+  hasStudentAccount: boolean;
+  lessonAccountRequired: boolean;
+  dismissLessonAccount: () => void;
+  continueAfterSignIn: () => void;
   setLessonViewStage: (stage: 'none' | 'theory' | 'tasks' | 'summary') => void;
   lastSessionSummary: SessionCompletionSummary | null;
   clearSessionSummary: () => void;
@@ -259,7 +265,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     type: 'loss' | 'restore';
     tick: number;
   } | null>(null);
-  const [lessonViewStage, setLessonViewStage] = useState<
+  const { user: accountUser } = useCloudAuthUser();
+  const hasStudentAccount = Boolean(accountUser);
+  const [lessonAccountRequest, setLessonAccountRequest] = useState<{ lessonId: string; action: "theory" | "tasks"; review?: boolean } | null>(null);
+  const [requestedLessonStage, setLessonViewStage] = useState<
     'none' | 'theory' | 'tasks' | 'summary'
   >('none');
   const [lastSessionSummary, setLastSessionSummary] =
@@ -569,9 +578,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   );
 
 
+  const canOpenLesson = useCallback((lessonId: string) => {
+    const currentUser = getFirebaseAuthClient()?.currentUser;
+    return lessonId === MATH_LESSON_1_1.id || Boolean(currentUser && !currentUser.isAnonymous);
+  }, []);
+
   const openLessonTheory = useCallback((lessonId?: string, review = false) => {
     const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(stateRef.current);
     if (!lesson) return;
+    if (!canOpenLesson(lesson.id)) {
+      setLessonAccountRequest({ lessonId: lesson.id, action: 'theory', review });
+      return;
+    }
     playSound('tap');
     setSelectedLessonId(lesson.id);
     setState((prev) => ({
@@ -582,7 +600,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       theoryCards: { ...prev.theoryCards, [lesson.id]: prev.theoryCards?.[lesson.id] ?? lesson.theory[0].id },
     }));
     setLessonViewStage('theory');
-  }, [playSound]);
+  }, [canOpenLesson, playSound]);
 
   const saveTheoryCard = useCallback((lessonId: string, cardId: BentoTheoryCard['id']) => {
     setState((previous) => ({
@@ -613,6 +631,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const current = stateRef.current;
     const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(current);
     if (!lesson) return false;
+    if (!canOpenLesson(lesson.id)) {
+      setLessonAccountRequest({ lessonId: lesson.id, action: 'tasks' });
+      return false;
+    }
     if (current.hearts <= 0) {
       playSound('wrong');
       setRescueModalOpen(true);
@@ -662,7 +684,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
     setLessonViewStage('tasks');
     return true;
-  }, [playSound]);
+  }, [canOpenLesson, playSound]);
+
+  const dismissLessonAccount = useCallback(() => setLessonAccountRequest(null), []);
+  const continueAfterSignIn = useCallback(() => {
+    if (!lessonAccountRequest) return;
+    const { lessonId, action, review } = lessonAccountRequest;
+    if (action === 'tasks') startLessonTasks(lessonId);
+    else openLessonTheory(lessonId, review);
+  }, [lessonAccountRequest, openLessonTheory, startLessonTasks]);
 
   const startPracticeSession = useCallback(
     (
@@ -1646,6 +1676,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setRankUpModalRank(null);
   }, [playSound]);
 
+  const visibleLessonId = requestedLessonStage === 'theory' ? selectedLessonId :
+    requestedLessonStage === 'tasks' ? state.activeSession?.reviewLessonId ??
+      (state.activeSession?.source === 'lesson' ? state.activeSession.contentId : undefined) : undefined;
+  const lessonViewStage = visibleLessonId && visibleLessonId !== MATH_LESSON_1_1.id && !hasStudentAccount
+    ? 'none' : requestedLessonStage;
+  const lessonAccountRequired = lessonAccountRequest !== null;
+
   const value = useMemo<AppStateContextValue>(
     () => ({
       hydrated,
@@ -1665,6 +1702,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       shieldBurstTick,
       heartEventTick,
       lessonViewStage,
+      hasStudentAccount,
+      lessonAccountRequired,
+      dismissLessonAccount,
+      continueAfterSignIn,
       setLessonViewStage,
       lastSessionSummary,
       clearSessionSummary,
@@ -1713,6 +1754,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       shieldBurstTick,
       heartEventTick,
       lessonViewStage,
+      hasStudentAccount,
+      lessonAccountRequired,
+      dismissLessonAccount,
+      continueAfterSignIn,
       lastSessionSummary,
       clearSessionSummary,
       secondsToNextHeart,

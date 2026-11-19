@@ -5,6 +5,7 @@ import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/
 import { useAppState } from '../../context/AppStateContext';
 import { findMathLesson } from '../../data/mathLessonMock';
 import { OnboardingFlow, ProductTourModal } from '../onboarding/OnboardingFlow';
+import { CloudAccountModal } from '../auth/CloudAccountModal';
 import { GuestAccountReminder } from '../auth/GuestAccountReminder';
 import { StudyReminderController } from '../reminders/StudyReminderController';
 import { TopHud } from './TopHud';
@@ -38,6 +39,9 @@ export function AppShell() {
     selectedLessonId,
     secondsToNextHeart,
     setRescueModalOpen,
+    lessonAccountRequired,
+    dismissLessonAccount,
+    continueAfterSignIn,
   } = useAppState();
   const prefersReduced = useReducedMotion();
   const [examInProgress, setExamInProgress] = useState(false);
@@ -260,6 +264,13 @@ export function AppShell() {
           {!focusMode && <BottomTabBar />}
 
           {/* Global Modals & Sheets */}
+          <CloudAccountModal
+            open={lessonAccountRequired}
+            onClose={dismissLessonAccount}
+            onSuccess={continueAfterSignIn}
+            subtitleOverride="Do tej lekcji potrzebne jest bezpłatne konto ucznia."
+            showPlanLink={false}
+          />
           <StudyReminderController paused={focusMode} />
           <FormulasBottomSheet />
           <RescueMissionModal />

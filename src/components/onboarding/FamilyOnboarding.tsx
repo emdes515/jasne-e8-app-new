@@ -108,7 +108,7 @@ export function FamilyOnboarding() {
                     <ArrowRight size={17} aria-hidden="true" />
                   </button>
                 </div>
-                <button type="button" className={styles.textButton} onClick={() => setAccountOpen(true)}>Logowanie do istniejącego konta osoby dorosłej</button>
+                <button type="button" className={styles.textButton} onClick={() => setAccountOpen(true)}>Mam już konto ucznia</button>
               </>
             )}
 

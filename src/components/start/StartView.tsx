@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, BookOpen, BookmarkCheck, Flame, Play, Timer, Trophy } from 'lucide-react';
+import { ArrowRight, BookOpen, BookmarkCheck, Flame, Lock, Play, Timer, Trophy } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLessonMock';
+import { getLessonAttempt, getRecommendedMathLesson, MATH_LESSON_1_1 } from '../../data/mathLessonMock';
 import { computeDailyGoalProgress } from '../../lib/gamification';
 import { getLumiCompanionMessage } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
@@ -13,10 +13,11 @@ import { DailyChallengesCard } from './DailyChallengesCard';
 import { StartStreakPanel } from './StartStreakPanel';
 
 export function StartView() {
-  const { state, setActiveTab, openLessonTheory, startLessonTasks, setFormulasOpen, playSound } = useAppState();
+  const { state, hasStudentAccount, setActiveTab, openLessonTheory, startLessonTasks, setFormulasOpen, playSound } = useAppState();
   const goal = computeDailyGoalProgress(state);
   const isMath = state.activeSubject === 'math';
   const lesson = getRecommendedMathLesson(state);
+  const requiresAccount = isMath && lesson.id !== MATH_LESSON_1_1.id && !hasStudentAccount;
   const hasPausedTasks = Boolean(getLessonAttempt(state, lesson.id));
   const hasPausedTheory = Boolean(state.theoryCards?.[lesson.id]);
   const [playWelcome] = useState(() => {
@@ -76,7 +77,7 @@ export function StartView() {
             {isMath ? lesson.title : subjectName}
           </h2>
           <p className="mt-2 mb-4 text-sm text-[var(--text-secondary)]">
-            {isMath ? 'Krótka teoria, przykład i 5 zadań.' : 'Lekcje w przygotowaniu. Możesz już zobaczyć plan działów.'}
+            {requiresAccount ? 'Do tej lekcji potrzebne jest bezpłatne konto ucznia.' : isMath ? 'Krótka teoria, przykład i 5 zadań.' : 'Lekcje w przygotowaniu. Możesz już zobaczyć plan działów.'}
           </p>
           <TactileButton
             onClick={() => {
@@ -87,8 +88,8 @@ export function StartView() {
             }}
             className="w-full sm:w-auto"
           >
-            {isMath ? <Play size={17} /> : <ArrowRight size={17} />}
-            {isMath ? lessonAction : 'Zobacz plan działów'}
+            {requiresAccount ? <Lock size={17} aria-hidden="true" /> : isMath ? <Play size={17} /> : <ArrowRight size={17} />}
+            {requiresAccount ? 'Odblokuj lekcję' : isMath ? lessonAction : 'Zobacz plan działów'}
           </TactileButton>
         </div>
       </section>

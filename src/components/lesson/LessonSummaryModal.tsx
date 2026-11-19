@@ -2,15 +2,18 @@
 
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { type SessionCompletionSummary, useAppState } from '../../context/AppStateContext';
+import { MATH_LESSONS } from '../../data/mathLessonMock';
 import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
 import { getRankForXp } from '../../lib/gamification';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 
 export function LessonSummaryModal({ summary }: { summary: SessionCompletionSummary }) {
-  const { state, clearSessionSummary, setActiveTab, openLessonTheory, startPracticeSession } = useAppState();
+  const { state, hasStudentAccount, clearSessionSummary, setActiveTab, openLessonTheory, startPracticeSession } = useAppState();
   const rank = getRankForXp(state.xp);
   const isLesson = summary.source === 'lesson';
+  const lessonIndex = MATH_LESSONS.findIndex((lesson) => lesson.id === summary.contentId);
+  const nextLesson = isLesson && lessonIndex >= 0 ? MATH_LESSONS[lessonIndex + 1] : undefined;
   const isRescue = summary.source === 'rescue';
   const hasReview = isLesson && summary.reviewTaskIds.length > 0;
   const assessedCount = summary.totalCount - summary.ungradedCount;
@@ -65,6 +68,15 @@ export function LessonSummaryModal({ summary }: { summary: SessionCompletionSumm
             </TactileButton>
           </div>
         )}
+        {nextLesson && (
+          <div className="space-y-2">
+            {!hasStudentAccount && <p className="text-sm text-[var(--text-secondary)]">Kolejne lekcje są dostępne z bezpłatnym kontem ucznia.</p>}
+            <TactileButton onClick={() => openLessonTheory(nextLesson.id)}>
+              {hasStudentAccount ? 'Otwórz następną lekcję' : 'Odblokuj następną lekcję'}
+              <ArrowRight size={17} aria-hidden="true" />
+            </TactileButton>
+          </div>
+        )}
         {isRescue && summary.rescueHeartEarned && <p className="text-sm font-bold text-[var(--success)]">Odzyskano serce.</p>}
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {isLesson && (
@@ -75,7 +87,7 @@ export function LessonSummaryModal({ summary }: { summary: SessionCompletionSumm
               <RotateCcw size={16} aria-hidden="true" /> Powtórz materiał
             </TactileButton>
           )}
-          <TactileButton variant={hasReview ? 'secondary' : 'primary'} onClick={leaveSummary}>
+          <TactileButton variant={hasReview || nextLesson ? 'secondary' : 'primary'} onClick={leaveSummary}>
             {isLesson ? 'Wróć na Start' : summary.reviewLessonId ? 'Wróć do ścieżki nauki' : 'Wróć do powtórek'}
             <ArrowRight size={17} aria-hidden="true" />
           </TactileButton>
