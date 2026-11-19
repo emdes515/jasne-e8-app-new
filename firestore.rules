@@ -1,36 +1,235 @@
 rules_version = '2';
 
+// ============================================================================
+// JASNE E8 — Cloud Firestore Security Rules (v1.0 Hardened)
+// Zgodne ze specyfikacją: ARCHITECTURE_E8_DATA_FIREBASE_SPEC.md (sekcje 4.4 i 5.2)
+// ============================================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ------------------------------------------------------------------------
+    // FUNKCJE POMOCNICZE (Autoryzacja i walidacja typów / limitów)
+    // ------------------------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
     function isOwner(uid) {
-      return request.auth != null && request.auth.uid == uid;
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    // Treści redakcyjne: lekcje, zadania, paczki, wzory, sklep.
-    // Zapis wyłącznie przez Admin SDK / panel (klient nie może podmienić treści).
-    match /content/{collection}/{docId} {
-      allow read: if true;
-      allow write: if false;
+    function isBoundedString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
     }
 
-    // Wersjonowanie treści, flagi funkcji, ceny, komunikaty.
+    function isIntInRange(val, minVal, maxVal) {
+      return val is int && val >= minVal && val <= maxVal;
+    }
+
+    function isNumberInRange(val, minVal, maxVal) {
+      return (val is int || val is float) && val >= minVal && val <= maxVal;
+    }
+
+    function isValidSubjectId(subjectId) {
+      return subjectId in ['math', 'polish', 'english'];
+    }
+
+    // ------------------------------------------------------------------------
+    // WALIDATORY DOMENOWE — /users/{uid}
+    // ------------------------------------------------------------------------
+
+    function isValidUserProfile(p) {
+      return p is map
+        && p.size() <= 15
+        && !p.keys().hasAny(['role', 'plan', 'coins', 'hearts', 'aiQuota', 'streakShields', 'isAdmin', 'admin'])
+        && (!('nickname' in p) || isBoundedString(p.nickname, 1, 40))
+        && (!('studyStage' in p) || isBoundedString(p.studyStage, 1, 40))
+        && (!('activeSubject' in p) || isValidSubjectId(p.activeSubject))
+        && (!('dailyGoalMinutes' in p) || isIntInRange(p.dailyGoalMinutes, 0, 480))
+        && (!('avatarLoadout' in p) || (p.avatarLoadout is map && p.avatarLoadout.size() <= 20));
+    }
+
+    function isValidUserPrefs(pr) {
+      return pr is map
+        && pr.size() <= 15
+        && (!('theme' in pr) || isBoundedString(pr.theme, 1, 24))
+        && (!('sfxEnabled' in pr) || pr.sfxEnabled is bool)
+        && (!('hapticsEnabled' in pr) || pr.hapticsEnabled is bool);
+    }
+
+    function isValidGamificationPublic(g) {
+      return g is map
+        && g.size() <= 15
+        && !g.keys().hasAny(['coins', 'hearts', 'plan', 'role', 'aiQuota', 'streakShields', 'isAdmin'])
+        && (!('xp' in g) || isIntInRange(g.xp, 0, 10000000))
+        && (!('rankId' in g) || isBoundedString(g.rankId, 1, 40))
+        && (!('streakDays' in g) || isIntInRange(g.streakDays, 0, 5000))
+        && (!('bestCombo' in g) || isIntInRange(g.bestCombo, 0, 10000))
+        && (!('lastCompletedPlayerDay' in g) || g.lastCompletedPlayerDay == null || isBoundedString(g.lastCompletedPlayerDay, 1, 16))
+        && (!('totalTasksSolved' in g) || isIntInRange(g.totalTasksSolved, 0, 1000000));
+    }
+
+    function isValidUserAccount(a, isUpdate) {
+      return a is map
+        && a.size() <= 15
+        && !a.keys().hasAny(['role', 'plan', 'coins', 'hearts', 'aiQuota', 'isAdmin', 'admin', 'customClaims'])
+        && (!('isAnonymous' in a) || a.isAnonymous is bool)
+        && (!('providers' in a) || (a.providers is list && a.providers.size() <= 10))
+        && (!('createdAt' in a) || a.createdAt is timestamp)
+        && (!('lastActiveAt' in a) || a.lastActiveAt is timestamp)
+        && (!('appVersion' in a) || isBoundedString(a.appVersion, 1, 32))
+        && (!('platform' in a) || isBoundedString(a.platform, 1, 24))
+        && (!isUpdate
+            || !('account' in resource.data)
+            || !(resource.data.account is map)
+            || !('createdAt' in resource.data.account)
+            || ('createdAt' in a && a.createdAt == resource.data.account.createdAt));
+    }
+
+    function isValidUserRoot(data, isUpdate) {
+      return data is map
+        && data.size() > 0
+        && data.keys().hasOnly([
+             'profile',
+             'prefs',
+             'gamificationPublic',
+             'account',
+             'schemaVersion',
+             'updatedAt'
+           ])
+        && (!('profile' in data) || isValidUserProfile(data.profile))
+        && (!('prefs' in data) || isValidUserPrefs(data.prefs))
+        && (!('gamificationPublic' in data) || isValidGamificationPublic(data.gamificationPublic))
+        && (!('account' in data) || isValidUserAccount(data.account, isUpdate))
+        && (!('schemaVersion' in data) || isIntInRange(data.schemaVersion, 1, 100))
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // ------------------------------------------------------------------------
+    // WALIDATORY DOMENOWE — /users/{uid}/progress/{subjectId}
+    // ------------------------------------------------------------------------
+
+    function isValidProgressDoc(data) {
+      return data is map
+        && data.size() > 0
+        && data.size() <= 16
+        && data.keys().hasOnly([
+             'completedLessonIds',
+             'lessonStats',
+             'taskHistory',
+             'mistakeBank',
+             'savedTaskIds',
+             'updatedAt'
+           ])
+        && (!('completedLessonIds' in data) || (data.completedLessonIds is list && data.completedLessonIds.size() <= 500))
+        && (!('lessonStats' in data) || (data.lessonStats is map && data.lessonStats.size() <= 500))
+        && (!('taskHistory' in data) || (data.taskHistory is map && data.taskHistory.size() <= 5000))
+        && (!('mistakeBank' in data) || (data.mistakeBank is list && data.mistakeBank.size() <= 500))
+        && (!('savedTaskIds' in data) || (data.savedTaskIds is list && data.savedTaskIds.size() <= 500))
+        && (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    // ------------------------------------------------------------------------
+    // WALIDATORY DOMENOWE — /users/{uid}/exam_attempts/{attemptId}
+    // ------------------------------------------------------------------------
+
+    function isValidExamAttempt(data, attemptId) {
+      return isBoundedString(attemptId, 1, 128)
+        && data is map
+        && data.size() >= 1
+        && data.size() <= 16
+        && data.keys().hasOnly([
+             'sheetId',
+             'mode',
+             'scorePercent',
+             'pointsEarned',
+             'pointsMax',
+             'durationSec',
+             'completedAt',
+             'answersSummary'
+           ])
+        && (!('sheetId' in data) || isBoundedString(data.sheetId, 1, 120))
+        && (!('mode' in data) || isBoundedString(data.mode, 1, 40))
+        && (!('scorePercent' in data) || isNumberInRange(data.scorePercent, 0, 100))
+        && (!('pointsEarned' in data) || isNumberInRange(data.pointsEarned, 0, 500))
+        && (!('pointsMax' in data) || isNumberInRange(data.pointsMax, 0, 500))
+        && (!('durationSec' in data) || isIntInRange(data.durationSec, 0, 86400))
+        && (!('completedAt' in data) || data.completedAt is timestamp)
+        && (!('answersSummary' in data) || ((data.answersSummary is map || data.answersSummary is list) && data.answersSummary.size() <= 200));
+    }
+
+    // ========================================================================
+    // 1. KOLEKCJE PUBLICZNE TYLKO DO ODCZYTU (Zapis wyłącznie przez Admin SDK)
+    // ========================================================================
+
     match /meta/{docId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // Profil ucznia i postęp: tylko właściciel konta.
-    match /users/{uid}/{collection}/{docId} {
-      allow read, write: if isOwner(uid) && collection != 'private';
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    // Uprawnienia, monety, serca, kredyty AI — wyłącznie serwer.
-    match /users/{uid}/private/{docId} {
+    match /content/{collection}/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ========================================================================
+    // 2. KOLEKCJE SERWEROWE / ADMIN-ONLY (Brak dostępu dla klientów)
+    // ========================================================================
+
+    match /admin_tasks/{docId} {
       allow read, write: if false;
     }
 
-    // Domyślnie wszystko zablokowane.
+    match /server_config/{docId} {
+      allow read, write: if false;
+    }
+
+    // ========================================================================
+    // 3. DANE UŻYTKOWNIKA (/users/{uid})
+    // ========================================================================
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUserRoot(request.resource.data, false);
+      allow update: if isOwner(uid) && isValidUserRoot(request.resource.data, true);
+      allow delete: if isOwner(uid);
+
+      match /progress/{subjectId} {
+        allow read: if isOwner(uid) && isValidSubjectId(subjectId);
+        allow create, update: if isOwner(uid)
+          && isValidSubjectId(subjectId)
+          && isValidProgressDoc(request.resource.data);
+        allow delete: if isOwner(uid) && isValidSubjectId(subjectId);
+      }
+
+      match /exam_attempts/{attemptId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidExamAttempt(request.resource.data, attemptId);
+        allow update: if false;
+        allow delete: if isOwner(uid);
+      }
+
+      match /private/{docId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      match /ledger/{txId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+
+    // ========================================================================
+    // 4. DOMYŚLNA BLOKADA (Default Deny Catch-All)
+    // ========================================================================
     match /{document=**} {
       allow read, write: if false;
     }

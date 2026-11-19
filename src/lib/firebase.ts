@@ -17,9 +17,9 @@ export const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
 };
 
-/** Baza Firestore w projekcie `jasne-e8-prod` nazywa się `default` (nie `(default)`). */
+/** Domyślna baza Firestore w projekcie `jasne-e8-app` (`(default)`). */
 export const FIRESTORE_DATABASE_ID =
-  process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || 'default';
+  process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || '(default)';
 
 export function isFirebaseConfigured(): boolean {
   return Boolean(

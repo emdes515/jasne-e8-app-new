@@ -6,24 +6,19 @@
 
 ---
 
-## 0. Stan infrastruktury (wdrożone 2026-11-19)
+## 0. Stan infrastruktury (wdrożone 2026-11-19 — konto `mjankowski515@gmail.com`, Blaze)
 
 | Element | Wartość | Status |
 | :--- | :--- | :--- |
-| Projekt Firebase | `jasne-e8-prod` (numer `602916567036`) | ✅ utworzony |
-| Firestore | baza o ID `default`, region `europe-central2` (Warszawa), edycja Standard, plan Spark | ✅ działa |
-| Reguły Firestore | `content/**` i `meta/**` — odczyt publiczny, zapis tylko serwer; `users/{uid}/**` — tylko właściciel; `users/{uid}/private/**` — tylko serwer | ✅ wdrożone (`firebase deploy --only firestore`) |
-| Manifest treści | `meta/content_manifest`, `contentManifestVersion = 1` | ✅ zapisany |
-| Aplikacja web (Vercel) | `jasne-e8-app-new` → https://jasne-e8-app-new.vercel.app | ✅ wdrożona, `/api/firebase-health` zwraca `status: ok` |
-| Panel admina (Vercel) | `jasne-e8-admin` → https://jasne-e8-admin.vercel.app | ✅ wdrożony, `/api/health` zwraca `databaseReachable: true` |
-| Konto serwisowe | `jasne-admin@jasne-e8-prod.iam.gserviceaccount.com` (role: `datastore.user`, `firebase.sdkAdminServiceAgent`, `storage.objectAdmin`, `firebaserules.admin`) | ✅ klucz tylko w `.secrets/` (poza repo) i w Vercel Env |
-| Firebase Authentication | — | ⛔ zablokowane: Identity Platform wymaga aktywnego konta rozliczeniowego (Blaze) |
-| Firebase Storage | — | ⛔ zablokowane: utworzenie bucketu wymaga Blaze (403) |
-| Cloud Functions / Scheduler | — | ⛔ zablokowane: wymaga Blaze |
-
-**Uwaga o nazwie bazy:** nowe projekty Firebase tworzą bazę `(default)`, ale ta powstała jako `default`. Dlatego oba SDK dostają jawny `databaseId` (`NEXT_PUBLIC_FIRESTORE_DATABASE_ID` / `FIRESTORE_DATABASE_ID`). Po włączeniu Blaze można utworzyć `(default)` i zmigrować dane, albo zostać przy `default`.
-
-**Odblokowanie pozostałych usług:** użytkownik musi otworzyć konto rozliczeniowe (obecne `01ADB3-DC119B-D75A97` ma status `open: false`) i podpiąć je do `jasne-e8-prod`. Dopiero wtedy działa rejestracja/logowanie, upload plików i funkcje serwerowe.
+| Projekt Firebase | `jasne-e8-app` (numer `934617311874`, konto `mjankowski515@gmail.com`, plan Blaze — aktywne konto rozliczeniowe `01E979-286753-6687DC`) | ✅ aktywny (poprzedni `jasne-e8-prod` usunięty) |
+| Firestore | standardowa baza `(default)`, region `europe-central2` (Warszawa), edycja Native | ✅ działa (`meta/content_manifest`, `config/live_ops`, `config/shop_catalog`, `admin_tasks`) |
+| Reguły Firestore | `meta/**`, `config/**`, `content/**` — odczyt publiczny, zapis tylko serwer; `admin_tasks/**`, `server_config/**` — tylko serwer; `users/{uid}` — właściciel ze ścisłą walidacją pól; `private/**` i `ledger/**` — właściciel tylko odczyt, zapis tylko serwer | ✅ wdrożone i zweryfikowane testami live 6/6 (`firebase deploy --only firestore:rules,storage`) |
+| Firebase Authentication | Email/Hasło + Anonymous Auth włączone; domeny autoryzowane (`jasne-e8-app-new.vercel.app`, `jasne-e8-admin.vercel.app`, `localhost`); konto admina `mjankowski515@gmail.com` z `customClaims.role = "admin"` | ✅ aktywny (Google Sign-In wymaga 1 kliknięcia OAuth w konsoli Firebase) |
+| Firebase Storage | domyślny bucket `jasne-e8-app.firebasestorage.app` (`europe-central2`) + reguły `storage.rules` (`/packs/**` public read, `/users/{uid}/solutions/**` owner max 5 MB image, `/admin_uploads/**` tylko Admin SDK) | ✅ aktywny |
+| Firebase Remote Config | szablon v1 (`contentManifestVersion`, `app_update_policy`, `feature_flags`, `economy_config`) | ✅ opublikowany i edytowalny z panelu admina |
+| Aplikacja web (Vercel) | `jasne-e8-app-new` → https://jasne-e8-app-new.vercel.app | ✅ podpięta do `jasne-e8-app` |
+| Panel admina (Vercel) | `jasne-e8-admin` → https://jasne-e8-admin.vercel.app (logowanie Firebase Auth + pełne API `/api/admin/*` dla CMS, paczek, Remote Config, LiveOps/Sklepu i uprawnień) | ✅ podpięty do `jasne-e8-app` |
+| Konto serwisowe | `jasne-admin@jasne-e8-app.iam.gserviceaccount.com` (role: `datastore.user`, `firebase.sdkAdminServiceAgent`, `storage.objectAdmin`, `firebaserules.admin`, `firebase.admin`) | ✅ klucz wyłącznie w `.secrets/` (poza repo) i Vercel Env |
 
 ---
 

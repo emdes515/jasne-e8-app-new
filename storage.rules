@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Publiczne paczki treści JSON (generowane wyłącznie przez Admin SDK)
+    match /packs/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Zdjęcia rozwiązań ucznia (wyłącznie właściciel konta, maks. 5 MB, tylko obrazy)
+    match /users/{uid}/solutions/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Pliki administracyjne (np. PDF CKE) — wyłącznie przez Admin SDK
+    match /admin_uploads/{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Domyślnie wszystko zablokowane
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
