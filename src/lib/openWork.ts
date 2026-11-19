@@ -26,7 +26,7 @@ export function getOpenAnswer(draft: OpenWorkDraft, text: string): string {
 }
 
 function parseMathResult(input: string): number | null {
-  const normalized = input.trim().replace('−', '-').replaceAll(',', '.');
+  const normalized = input.trim().replaceAll('−', '-').replaceAll(',', '.');
   const match = normalized.match(/^([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:\s*\/\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+)))?$/);
   if (!match) return null;
   const parsed = Number(match[1]) / Number(match[2] ?? 1);

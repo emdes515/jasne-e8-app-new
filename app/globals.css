@@ -500,57 +500,34 @@ html:has(.study-dialog[open]) { overflow-y: hidden; }
   .task-result-action { padding: 0.25rem 1.25rem 1.25rem; }
 }
 
-/* Loading choreography & brand bulb utilities (GPU-only transform/opacity) */
-.bulb-grid-backdrop {
-  background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--border-subtle) 55%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--border-subtle) 55%, transparent) 1px, transparent 1px);
-  background-size: 2rem 2rem;
-  -webkit-mask-image: radial-gradient(circle at 50% 44%, #000 18%, transparent 74%);
-  mask-image: radial-gradient(circle at 50% 44%, #000 18%, transparent 74%);
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-@keyframes bulb-orbit-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-@keyframes bulb-orbit-counter-spin {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
+/* Minimalistyczny przesuw wiązki wolframowej (wyłącznie GPU transform/opacity) */
+@keyframes bulb-filament-sweep {
+  0% {
+    transform: translateX(-85%);
+  }
+  100% {
+    transform: translateX(195%);
+  }
 }
 
-@keyframes bulb-shimmer-slide {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(220%); }
-}
-
-@keyframes bulb-float-css {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-.bulb-orbit-spin {
-  animation: bulb-orbit-spin 22s linear infinite;
-}
-
-.bulb-orbit-counter-spin {
-  animation: bulb-orbit-counter-spin 22s linear infinite;
-}
-
-.bulb-shimmer-slide {
-  animation: bulb-shimmer-slide 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-}
-
-.bulb-float-css {
-  animation: bulb-float-css 2.2s ease-in-out infinite;
+.bulb-filament-sweep {
+  animation: bulb-filament-sweep 1.25s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bulb-orbit-spin,
-  .bulb-orbit-counter-spin,
-  .bulb-shimmer-slide,
-  .bulb-float-css {
+  .bulb-filament-sweep {
     animation: none;
+    transform: translateX(0);
+    width: 100%;
+    opacity: 0.7;
   }
 }

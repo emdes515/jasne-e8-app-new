@@ -2,7 +2,7 @@
 
 import React, { useId, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { SPRING_BOUNCY, SPRING_TACTILE } from '../../lib/motionPresets';
+import { SPRING_TACTILE } from '../../lib/motionPresets';
 
 export type BulbAnimationMode = 'none' | 'subtle' | 'ignition' | 'loading';
 
@@ -14,24 +14,26 @@ export interface JasneBulbMarkProps {
   className?: string;
 }
 
-const RAYS = [
-  { x1: 40, y1: 6.5, x2: 40, y2: 12, delay: 0 },
-  { x1: 18.5, y1: 14.5, x2: 22.5, y2: 18.5, delay: 0.16 },
-  { x1: 61.5, y1: 14.5, x2: 57.5, y2: 18.5, delay: 0.32 },
-  { x1: 10.5, y1: 33.5, x2: 15.8, y2: 34.2, delay: 0.48 },
-  { x1: 69.5, y1: 33.5, x2: 64.2, y2: 34.2, delay: 0.64 },
-] as const;
+const EASE_OUT_CUBIC = [0.22, 1, 0.36, 1] as const;
 
-const MICRO_SPARKS = [
-  { cx: 14, cy: 23, delay: 0, dx: -2 },
-  { cx: 66, cy: 22, delay: 0.55, dx: 2 },
-  { cx: 61, cy: 52, delay: 1.05, dx: 1.5 },
+const BULB_GLASS_PATH =
+  'M 40 16.5 C 29.2 16.5, 21.2 24.4, 21.2 34.8 C 21.2 41.6, 24.8 46.2, 28.0 49.8 C 29.5 51.5, 30.4 53.6, 30.6 56.0 L 49.4 56.0 C 49.6 53.6, 50.5 51.5, 52.0 49.8 C 55.2 46.2, 58.8 41.6, 58.8 34.8 C 58.8 24.4, 50.8 16.5, 40 16.5 Z';
+
+const FILAMENT_COIL_PATH =
+  'M 35.8 41.5 L 35.8 35.5 C 35.8 33.2, 38.0 33.2, 40 36.2 C 42.0 33.2, 44.2 33.2, 44.2 35.5 L 44.2 41.5';
+
+const RAYS = [
+  { x1: 40, y1: 6.5, x2: 40, y2: 12 },
+  { x1: 18.5, y1: 14.5, x2: 22.5, y2: 18.5 },
+  { x1: 61.5, y1: 14.5, x2: 57.5, y2: 18.5 },
+  { x1: 10.5, y1: 33.5, x2: 15.8, y2: 34.2 },
+  { x1: 69.5, y1: 33.5, x2: 64.2, y2: 34.2 },
 ] as const;
 
 /**
  * Autorski znak wektorowy żarówki JASNE E8 w stylu Tactile 3D Gaming.
- * Wszystkie animacje używają wyłącznie transform / opacity / pathLength (GPU 60 FPS),
- * bez pętli box-shadow/blur oraz z poszanowaniem prefers-reduced-motion.
+ * Sekwencja „Tungsten Filament Ignition”: zapłon żarnika -> rozgrzanie szkła -> precyzyjny zapłon promieni.
+ * Wyłącznie GPU transform / opacity / pathLength, zero pętli blur/box-shadow, pełny prefers-reduced-motion.
  */
 export function JasneBulbMark({
   size = 36,
@@ -43,26 +45,15 @@ export function JasneBulbMark({
   const uid = useId().replace(/:/g, '');
   const prefersReduced = useReducedMotion();
   const mode: BulbAnimationMode = prefersReduced ? 'none' : animated;
+  const isIgniting = mode === 'loading' || mode === 'ignition';
 
   const haloId = `bulb-halo-${uid}`;
+  const unlitGlassId = `bulb-unlit-${uid}`;
   const glassId = `bulb-glass-${uid}`;
+  const warmCoreId = `bulb-core-${uid}`;
   const baseId = `bulb-base-${uid}`;
   const rayStroke = framed ? '#FFC933' : 'var(--accent-text)';
   const innerSize = framed ? Math.round(size * 0.78) : size;
-
-  const bodyAnimate =
-    mode === 'loading'
-      ? { y: [0, -4.5, 0], rotate: [0, -1.5, 1.5, 0] }
-      : mode === 'ignition'
-      ? { scale: [0.76, 1.08, 1], y: [4, -2, 0] }
-      : undefined;
-
-  const bodyTransition =
-    mode === 'loading'
-      ? { duration: 2.2, repeat: Infinity, ease: 'easeInOut' as const }
-      : mode === 'ignition'
-      ? SPRING_BOUNCY
-      : undefined;
 
   const svgElement = (
     <svg
@@ -75,9 +66,15 @@ export function JasneBulbMark({
     >
       <defs>
         <radialGradient id={haloId} cx="50%" cy="44%" r="50%">
-          <stop offset="0%" stopColor="#FFB800" stopOpacity="0.22" />
-          <stop offset="55%" stopColor="#FFB800" stopOpacity="0.08" />
+          <stop offset="0%" stopColor="#FFB800" stopOpacity="0.18" />
+          <stop offset="58%" stopColor="#FFB800" stopOpacity="0.06" />
           <stop offset="100%" stopColor="#FFB800" stopOpacity="0" />
+        </radialGradient>
+
+        <radialGradient id={unlitGlassId} cx="37%" cy="30%" r="68%">
+          <stop offset="0%" stopColor="#E2E8F0" stopOpacity="0.34" />
+          <stop offset="56%" stopColor="#94A3B8" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#475569" stopOpacity="0.18" />
         </radialGradient>
 
         <radialGradient id={glassId} cx="37%" cy="30%" r="68%">
@@ -85,6 +82,12 @@ export function JasneBulbMark({
           <stop offset="26%" stopColor="#FEF08A" />
           <stop offset="62%" stopColor="#FFB800" />
           <stop offset="100%" stopColor="#D97706" />
+        </radialGradient>
+
+        <radialGradient id={warmCoreId} cx="50%" cy="48%" r="50%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.72" />
+          <stop offset="55%" stopColor="#FEF08A" stopOpacity="0.24" />
+          <stop offset="100%" stopColor="#FFB800" stopOpacity="0" />
         </radialGradient>
 
         <linearGradient id={baseId} x1="29" y1="56" x2="51" y2="56" gradientUnits="userSpaceOnUse">
@@ -95,10 +98,18 @@ export function JasneBulbMark({
         </linearGradient>
       </defs>
 
-      {/* Subtelne statyczne halo w tle (opacity <= 0.14 zgodnie ze specyfikacją) */}
-      <circle cx="40" cy="36" r="28" fill={`url(#${haloId})`} opacity="0.62" />
+      {/* Dyskretne statyczne halo za bańką (rozjaśnia się razem z rozgrzaniem szkła) */}
+      <motion.circle
+        cx="40"
+        cy="36"
+        r="28"
+        fill={`url(#${haloId})`}
+        initial={isIgniting ? { opacity: 0 } : false}
+        animate={{ opacity: 0.52 }}
+        transition={isIgniting ? { duration: 0.28, delay: 0.16, ease: EASE_OUT_CUBIC } : undefined}
+      />
 
-      {/* Impuls błysku po kliknięciu w interaktywne logo */}
+      {/* Jednorazowy pierścień impulsu przy interaktywnym kliknięciu/najechaniu logo */}
       {sparkTrigger > 0 && !prefersReduced && (
         <motion.circle
           key={`burst-${sparkTrigger}`}
@@ -106,180 +117,158 @@ export function JasneBulbMark({
           cy="35"
           r="18"
           stroke="#FFC933"
-          strokeWidth="2.5"
-          initial={{ scale: 0.7, opacity: 0.85 }}
-          animate={{ scale: 1.65, opacity: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          strokeWidth="2.2"
+          initial={{ scale: 0.82, opacity: 0.72 }}
+          animate={{ scale: 1.48, opacity: 0 }}
+          transition={{ duration: 0.34, ease: EASE_OUT_CUBIC }}
           style={{ transformOrigin: '40px 35px' }}
         />
       )}
 
-      {/* 3 unoszące się mikro-iskierki w trybie loading */}
-      {mode === 'loading' &&
-        MICRO_SPARKS.map((sp, idx) => (
-          <motion.path
-            key={idx}
-            d={`M ${sp.cx} ${sp.cy - 3.2} L ${sp.cx + 1.1} ${sp.cy - 1.1} L ${sp.cx + 3.2} ${sp.cy} L ${sp.cx + 1.1} ${sp.cy + 1.1} L ${sp.cx} ${sp.cy + 3.2} L ${sp.cx - 1.1} ${sp.cy + 1.1} L ${sp.cx - 3.2} ${sp.cy} L ${sp.cx - 1.1} ${sp.cy - 1.1} Z`}
-            fill="#FFC933"
-            animate={{
-              y: [0, -7, 0],
-              x: [0, sp.dx, 0],
-              opacity: [0.25, 0.95, 0.25],
-              scale: [0.75, 1.15, 0.75],
-            }}
-            transition={{
-              duration: 1.9,
-              delay: sp.delay,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            style={{ transformOrigin: `${sp.cx}px ${sp.cy}px` }}
+      {/* Stabilna sylwetka żarówki (brak bujania i brak scale(0)) */}
+      <motion.g
+        initial={isIgniting ? { opacity: 0, scale: 0.94 } : false}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={isIgniting ? { duration: 0.24, ease: EASE_OUT_CUBIC } : undefined}
+        style={{ transformOrigin: '40px 44px' }}
+      >
+        {/* 5 geometrycznych promieni — pojedynczy precyzyjny zapłon z micro-staggerem 28 ms */}
+        {RAYS.map((ray, index) => (
+          <motion.line
+            key={index}
+            x1={ray.x1}
+            y1={ray.y1}
+            x2={ray.x2}
+            y2={ray.y2}
+            stroke={rayStroke}
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            initial={isIgniting ? { opacity: 0, scale: 0.86 } : false}
+            animate={{ opacity: 0.95, scale: 1 }}
+            transition={
+              isIgniting
+                ? { duration: 0.2, delay: 0.24 + index * 0.028, ease: EASE_OUT_CUBIC }
+                : undefined
+            }
+            style={{ transformOrigin: '40px 35px' }}
           />
         ))}
 
-      <motion.g
-        animate={bodyAnimate}
-        transition={bodyTransition}
-        style={{ transformOrigin: '40px 44px' }}
-      >
-        {/* 5 geometrycznych promieni świetlnych */}
-        {RAYS.map((ray, index) => {
-          const rayAnimate =
-            mode === 'subtle'
-              ? { opacity: [0.55, 1, 0.55], scale: [0.95, 1.07, 0.95] }
-              : mode === 'loading'
-              ? { opacity: [0.35, 1, 0.35], scale: [0.86, 1.16, 0.86] }
-              : mode === 'ignition'
-              ? { opacity: [0, 1], scale: [0.65, 1.12, 1] }
-              : undefined;
+        {/* Warstwa 1: Zimna bańka szklana widoczna przed zapłonem */}
+        {isIgniting && (
+          <path
+            d={BULB_GLASS_PATH}
+            fill={`url(#${unlitGlassId})`}
+            stroke="#64748B"
+            strokeOpacity="0.6"
+            strokeWidth="2.6"
+            strokeLinejoin="round"
+          />
+        )}
 
-          const rayTransition =
-            mode === 'subtle'
-              ? {
-                  duration: 3.4,
-                  delay: ray.delay,
-                  repeat: Infinity,
-                  ease: 'easeInOut' as const,
-                }
-              : mode === 'loading'
-              ? {
-                  duration: 1.4,
-                  delay: index * 0.14,
-                  repeat: Infinity,
-                  ease: 'easeInOut' as const,
-                }
-              : mode === 'ignition'
-              ? { duration: 0.42, delay: 0.14 + index * 0.04 }
-              : undefined;
-
-          return (
-            <motion.line
-              key={index}
-              x1={ray.x1}
-              y1={ray.y1}
-              x2={ray.x2}
-              y2={ray.y2}
-              stroke={rayStroke}
-              strokeWidth="3.2"
-              strokeLinecap="round"
-              animate={rayAnimate}
-              transition={rayTransition}
-              style={{ transformOrigin: '40px 35px' }}
-            />
-          );
-        })}
-
-        {/* Bańka szklana 3D */}
-        <path
-          d="M 40 16.5 C 29.2 16.5, 21.2 24.4, 21.2 34.8 C 21.2 41.6, 24.8 46.2, 28.0 49.8 C 29.5 51.5, 30.4 53.6, 30.6 56.0 L 49.4 56.0 C 49.6 53.6, 50.5 51.5, 52.0 49.8 C 55.2 46.2, 58.8 41.6, 58.8 34.8 C 58.8 24.4, 50.8 16.5, 40 16.5 Z"
+        {/* Warstwa 2: Rozgrzana złota bańka 3D */}
+        <motion.path
+          d={BULB_GLASS_PATH}
           fill={`url(#${glassId})`}
           stroke="#92400E"
           strokeWidth="2.8"
           strokeLinejoin="round"
+          initial={isIgniting ? { opacity: 0 } : false}
+          animate={{ opacity: 1 }}
+          transition={
+            isIgniting
+              ? { duration: 0.26, delay: 0.14, ease: EASE_OUT_CUBIC }
+              : undefined
+          }
         />
 
-        {/* Dolne cieniowanie rim-depth wewnątrz bańki */}
-        <path
-          d="M 25.5 41.5 C 27.5 46.2, 30.2 49.2, 31.6 53.2"
-          stroke="#B45309"
-          strokeOpacity="0.28"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 54.5 41.5 C 52.5 46.2, 49.8 49.2, 48.4 53.2"
-          stroke="#B45309"
-          strokeOpacity="0.28"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
+        {/* Dolne cieniowanie rim-depth oraz połysk 3D szkła */}
+        <motion.g
+          initial={isIgniting ? { opacity: 0 } : false}
+          animate={{ opacity: 1 }}
+          transition={
+            isIgniting
+              ? { duration: 0.24, delay: 0.16, ease: EASE_OUT_CUBIC }
+              : undefined
+          }
+        >
+          <path
+            d="M 25.5 41.5 C 27.5 46.2, 30.2 49.2, 31.6 53.2"
+            stroke="#B45309"
+            strokeOpacity="0.28"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 54.5 41.5 C 52.5 46.2, 49.8 49.2, 48.4 53.2"
+            stroke="#B45309"
+            strokeOpacity="0.28"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M 26.8 31.8 C 27.4 25.6, 31.4 21.6, 36.8 20.6"
+            stroke="#FFFFFF"
+            strokeOpacity="0.82"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+          />
+          <circle cx="40.8" cy="20.4" r="1.5" fill="#FFFFFF" fillOpacity="0.72" />
+        </motion.g>
 
-        {/* Połysk 3D w lewym górnym rogu */}
-        <path
-          d="M 26.8 31.8 C 27.4 25.6, 31.4 21.6, 36.8 20.6"
-          stroke="#FFFFFF"
-          strokeOpacity="0.82"
-          strokeWidth="3.2"
-          strokeLinecap="round"
+        {/* Miękkie wewnętrzne ciepło wokół żarnika */}
+        <motion.circle
+          cx="40"
+          cy="35.5"
+          r="9"
+          fill={`url(#${warmCoreId})`}
+          initial={isIgniting ? { opacity: 0 } : false}
+          animate={{ opacity: 0.85 }}
+          transition={
+            isIgniting
+              ? { duration: 0.26, delay: 0.16, ease: EASE_OUT_CUBIC }
+              : undefined
+          }
         />
-        <circle cx="40.8" cy="20.4" r="1.5" fill="#FFFFFF" fillOpacity="0.72" />
 
         {/* Słupki doprowadzające żarnika */}
         <line x1="35.8" y1="55.2" x2="35.8" y2="41.5" stroke="#92400E" strokeWidth="2.1" strokeLinecap="round" />
         <line x1="44.2" y1="55.2" x2="44.2" y2="41.5" stroke="#92400E" strokeWidth="2.1" strokeLinecap="round" />
 
-        {/* Żarząca spirala / łuk eureka */}
+        {/* Bazowa spirala wolframowa (rysuje się jako Faza 1 zapłonu) */}
         <motion.path
-          d="M 35.8 41.5 L 35.8 35.5 C 35.8 33.2, 38.0 33.2, 40 36.2 C 42.0 33.2, 44.2 33.2, 44.2 35.5 L 44.2 41.5"
+          d={FILAMENT_COIL_PATH}
           stroke="#FFFBEB"
-          strokeWidth="2.6"
+          strokeWidth="2.7"
           strokeLinecap="round"
           strokeLinejoin="round"
-          initial={mode === 'ignition' ? { pathLength: 0, opacity: 0.4 } : false}
-          animate={
-            mode === 'ignition'
-              ? { pathLength: 1, opacity: 1 }
-              : mode === 'loading'
-              ? { opacity: [0.65, 1, 0.65] }
-              : mode === 'subtle'
-              ? { opacity: [0.85, 1, 0.85] }
-              : undefined
-          }
+          initial={isIgniting ? { pathLength: 0, opacity: 0.45 } : false}
+          animate={{ pathLength: 1, opacity: 1 }}
           transition={
-            mode === 'ignition'
-              ? { duration: 0.5, ease: 'easeOut' }
-              : mode === 'loading'
-              ? { duration: 1.3, repeat: Infinity, ease: 'easeInOut' }
-              : mode === 'subtle'
-              ? { duration: 3.8, repeat: Infinity, ease: 'easeInOut' }
+            isIgniting
+              ? { duration: 0.26, ease: EASE_OUT_CUBIC }
               : undefined
           }
         />
 
-        {/* 4-ramienna iskra eureka w sercu żarnika */}
-        <motion.path
-          d="M 40 27.5 L 41.4 31.1 L 45 32.5 L 41.4 33.9 L 40 37.5 L 38.6 33.9 L 35 32.5 L 38.6 31.1 Z"
-          fill="#FFFBEB"
-          animate={
-            mode === 'subtle'
-              ? { scale: [0.92, 1.1, 0.92], opacity: [0.78, 1, 0.78] }
-              : mode === 'loading'
-              ? { scale: [0.82, 1.24, 0.82], opacity: [0.65, 1, 0.65] }
-              : mode === 'ignition'
-              ? { scale: [0.3, 1.25, 1], opacity: [0, 1] }
-              : undefined
-          }
-          transition={
-            mode === 'subtle'
-              ? { duration: 3.8, repeat: Infinity, ease: 'easeInOut' }
-              : mode === 'loading'
-              ? { duration: 1.3, repeat: Infinity, ease: 'easeInOut' }
-              : mode === 'ignition'
-              ? { duration: 0.45, delay: 0.1 }
-              : undefined
-          }
-          style={{ transformOrigin: '40px 32.5px' }}
-        />
+        {/* Spokojne analogowe żarzenie samego rdzenia w trybie loading po zakończeniu zapłonu */}
+        {mode === 'loading' && (
+          <motion.path
+            d={FILAMENT_COIL_PATH}
+            stroke="#FFFFFF"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.72, 0] }}
+            transition={{
+              duration: 2.2,
+              delay: 0.44,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        )}
 
         {/* Tactile 3D Gwint (trzonek metaliczny) */}
         <rect
@@ -372,7 +361,7 @@ const LOGO_SIZE_MAP: Record<
 };
 
 /**
- * Pełny poziomy znak marki JASNE E8 z animowaną żarówką Tactile 3D.
+ * Pełny poziomy znak marki JASNE E8 z wektorową żarówką Tactile 3D.
  */
 export function JasneLogo({
   size = 'md',
