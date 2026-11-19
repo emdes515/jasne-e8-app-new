@@ -9,6 +9,7 @@ import { CountUpNumber } from '../ui/CountUpNumber';
 import { BottomSheet } from '../ui/BottomSheet';
 import { TactileButton } from '../ui/TactileButton';
 import { TactileHeartIcon } from '../ui/TactileHeartIcon';
+import { JasneBulbMark } from '../brand/JasneLogo';
 
 function formatCompactCoins(coins: number): string {
   if (coins >= 1000) {
@@ -43,8 +44,19 @@ export function TopHud() {
   return (
     <>
       <header className="h-14 w-full bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] px-1.5 min-[360px]:px-3 sm:px-5 flex items-center justify-between gap-1 min-[360px]:gap-2">
-        {/* Left: Subject Switcher + Optional Math Formulas quick trigger on tablet/desktop */}
+        {/* Left: Brand Mark on non-start mobile views (>=380px), Subject Switcher + Optional Math Formulas quick trigger on tablet */}
         <div className="flex items-center gap-1 min-[360px]:gap-2 shrink-0">
+          {activeTab !== 'start' && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('start')}
+              aria-label="JASNE E8 — przejdź do Startu"
+              className="hidden min-[380px]:inline-flex lg:hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-xl cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-primary)]"
+            >
+              <JasneBulbMark size={30} framed animated="subtle" />
+            </button>
+          )}
+
           <SubjectSwitcher />
 
           {/* "Wzory E8" button ONLY visible when activeSubject === 'math' and NOT in exam mode (AC-G4, AC-X4) */}

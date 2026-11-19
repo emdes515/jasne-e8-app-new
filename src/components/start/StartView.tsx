@@ -7,6 +7,7 @@ import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLesso
 import { computeDailyGoalProgress } from '../../lib/gamification';
 import { getLumiCompanionMessage } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
+import { JasneLogo } from '../brand/JasneLogo';
 import { TactileButton } from '../ui/TactileButton';
 import { DailyChallengesCard } from './DailyChallengesCard';
 import { StartStreakPanel } from './StartStreakPanel';
@@ -38,6 +39,13 @@ export function StartView() {
     <div className="space-y-5 lg:space-y-4">
       <header className={playWelcome ? 'welcome-header welcome-entrance' : 'welcome-header'}>
         <div className="min-w-0 space-y-2">
+          <JasneLogo
+            size="sm"
+            animated="subtle"
+            interactive
+            onClick={() => playSound('tap')}
+            className="lg:hidden mb-1"
+          />
           <h1 className="page-heading [overflow-wrap:anywhere]">{state.totalTasksSolved > 0 ? 'Miło Cię widzieć' : 'Cześć'}, {state.nickname}!</h1>
           {/* Speech bubble visible on mobile/tablet where Lumi sits in this header (on >=1440px Lumi + speech bubble live in DesktopCompanionPanel) */}
           <p className="min-[1440px]:hidden inline-block rounded-2xl rounded-tl-md bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)] leading-snug max-w-md">
