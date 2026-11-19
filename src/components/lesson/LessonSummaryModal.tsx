@@ -31,6 +31,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
     clearSessionSummary,
     setActiveTab,
     openLessonTheory,
+    startPracticeSession,
   } = useAppState();
   const prefersReduced = useReducedMotion();
 
@@ -117,7 +118,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
             />
           </div>
           <span className="text-[11px] font-bold text-[var(--text-secondary)]">
-            Skuteczność ({summary.correctCount}/{summary.totalCount})
+            Zdobyte punkty
           </span>
         </div>
 
@@ -181,6 +182,18 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
         </div>
       </motion.div>
 
+      {summary.source === 'lesson' && summary.reviewTaskIds.length > 0 && (
+        <section className="study-feature p-4 sm:p-5" aria-labelledby="lesson-review">
+          <h2 id="lesson-review" className="text-lg font-extrabold">Powtórz trudne zadania</h2>
+          <p className="mt-1 mb-3 text-sm text-[var(--text-secondary)]">
+            Zadania do poprawy: {summary.reviewTaskIds.length}.
+          </p>
+          <TactileButton fullWidth onClick={() => startPracticeSession('bank', 'all', summary.reviewTaskIds)}>
+            <RotateCcw size={17} /> Powtórz błędy
+          </TactileButton>
+        </section>
+      )}
+
       {/* Action Buttons */}
       <motion.div
         variants={STAGGER_ITEM_VARIANTS}
@@ -206,7 +219,7 @@ export function LessonSummaryModal({ summary }: LessonSummaryModalProps) {
               size="lg"
               onClick={() => {
                 clearSessionSummary();
-                openLessonTheory();
+                openLessonTheory(summary.contentId);
               }}
             >
               <RotateCcw className="w-4 h-4" />

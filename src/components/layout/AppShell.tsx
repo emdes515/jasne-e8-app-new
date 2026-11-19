@@ -20,12 +20,15 @@ import { RankUpModal } from '../profile/RankUpModal';
 import { ToastHost } from '../ui/ToastHost';
 
 export function AppShell() {
-  const { state, activeTab, lessonViewStage } = useAppState();
+  const { hydrated, state, activeTab, lessonViewStage } = useAppState();
   const [examInProgress, setExamInProgress] = useState(false);
+  const focusMode = examInProgress || lessonViewStage !== 'none';
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab, lessonViewStage, state.onboardingCompleted, examInProgress]);
+
+  if (!hydrated) return <div className="min-h-dvh bg-[var(--bg-canvas)]" />;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -37,13 +40,13 @@ export function AppShell() {
       ) : (
         <div className="relative min-h-dvh w-full bg-[var(--bg-canvas)] text-[var(--text-primary)] flex">
           {/* Left Desktop Sidebar (248px at >= 1024px) */}
-          {!examInProgress && <DesktopSidebar />}
+          {!focusMode && <DesktopSidebar />}
 
           {/* Main Workspace Area */}
           <div className="flex-1 min-w-0 flex flex-col">
-            {!examInProgress && <TopHud />}
+            {!focusMode && <TopHud />}
 
-            <div className="flex-1 w-full px-3.5 sm:px-6 pt-5 sm:pt-7 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10 flex justify-center gap-6">
+            <div className={`flex-1 w-full px-3.5 sm:px-6 pt-[max(0.875rem,env(safe-area-inset-top))] sm:pt-7 flex justify-center gap-6 ${focusMode ? 'pb-[max(1.5rem,env(safe-area-inset-bottom))]' : 'pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10'}`}>
               {/* Primary Content Column: max-w-[760px] on 1024-1439px, max-w-[780px] on >=1440px */}
               <main className="w-full max-w-[760px] min-[1440px]:max-w-[780px] min-w-0">
                 {lessonViewStage !== 'none' ? (
@@ -68,7 +71,7 @@ export function AppShell() {
           </div>
 
           {/* Mobile Bottom Tab Bar (< 1024px) */}
-          {!examInProgress && <BottomTabBar />}
+          {!focusMode && <BottomTabBar />}
 
           {/* Global Modals & Sheets */}
           <FormulasBottomSheet />

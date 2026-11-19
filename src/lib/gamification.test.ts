@@ -23,8 +23,9 @@ import {
   validateNickname,
 } from './gamification';
 import { evaluateOpenTaskDeterministic } from '../services/ai/aiTutorMock';
-import { MATH_LESSON_1_1 } from '../data/mathLessonMock';
-import { MATH_MINI_EXAM_TASKS } from '../data/mathExamMock';
+import { MATH_LESSON_1_1, MATH_LESSONS } from '../data/mathLessonMock';
+import { ALL_TASKS_BY_ID, MATH_MINI_EXAM_TASKS } from '../data/mathExamMock';
+import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult } from './openWork';
 import { OpenTaskRubric } from '../types/domain';
 
 test('AC-S1, AC-S5, AC-S6: Europe/Warsaw playerDay and DST-safe calendar difference', () => {
@@ -273,4 +274,54 @@ test('AC-L1, AC-L2: Lesson 1.1 and Mini-Exam tasks have complete explanations & 
     dailyTasksChecked: 5,
   });
   assert.equal(goal.percent, 50);
+});
+
+test('New math lessons have four theory cards and five uniquely registered tasks', () => {
+  const ids = MATH_LESSONS.flatMap((lesson) => lesson.tasks.map((task) => task.id));
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(MATH_LESSONS.length, 3);
+  for (const lesson of MATH_LESSONS) {
+    assert.deepEqual(lesson.theory.map((card) => card.id), ['essence', 'formulas', 'example', 'trap']);
+    assert.deepEqual(lesson.tasks.map((task) => task.type), ['abcd', 'true_false', 'abcd', 'numeric', 'open']);
+    for (const task of lesson.tasks) {
+      assert.equal(ALL_TASKS_BY_ID[task.id], task);
+      assert.equal(task.hints.length, 3);
+      assert.ok(task.hints.every((hint) => hint.trim()));
+      assert.ok(task.explanation.trim());
+    }
+  }
+});
+
+test('Handwriting and photo require work and a result, and check only that result', () => {
+  assert.equal(getOpenAnswer(EMPTY_OPEN_WORK, '120'), '');
+  assert.equal(getOpenAnswer({ ...EMPTY_OPEN_WORK, mode: 'text' }, ' 90 : 0,75 = 120 '), '90 : 0,75 = 120');
+  const drawn = { ...EMPTY_OPEN_WORK, strokes: ['M 1 1 L 12 12'], result: ' 120,0 ' };
+  assert.equal(getOpenAnswer(drawn, ''), '120,0');
+  const photo = new File(['fixture'], 'solution.png', { type: 'image/png' });
+  assert.equal(getOpenAnswer({ ...drawn, mode: 'photo', photo }, ''), '120,0');
+  assert.equal(matchesMathResult('3 / 4', '0,75'), true);
+  assert.equal(matchesMathResult('−4', '-4'), true);
+  assert.equal(matchesMathResult('1/0', '0'), false);
+  assert.equal(matchesMathResult('90 : 0,75 = 120', '120'), false);
+  assert.equal(evaluateVisualWork('120,0', '120', false).score, 1);
+  assert.equal(evaluateVisualWork('120', '120', true).score, 2);
+  assert.equal(evaluateVisualWork('12', '120', false).score, 0);
+});
+
+test('The first study streak grows across three Warsaw calendar days and counts today once', () => {
+  let streak = recordDayCompletion({ today: '2026-03-28', lastCompletedPlayerDay: null, streakDays: 0, streakShields: 0, claimedStreakMilestones: [] });
+  for (const today of ['2026-03-29', '2026-03-30', '2026-03-30']) {
+    streak = recordDayCompletion({ ...streak, today });
+  }
+  assert.equal(streak.streakDays, 3);
+  assert.equal(streak.lastCompletedPlayerDay, '2026-03-30');
+});
+
+test('A shield protecting a skipped day is not consumed again after reopening', () => {
+  const patched = reconcileStreakOnVisit({ today: '2026-03-30', lastCompletedPlayerDay: '2026-03-28', streakDays: 2, streakShields: 1 });
+  assert.equal(patched.lastCompletedPlayerDay, '2026-03-29');
+  const reopened = reconcileStreakOnVisit({ ...patched, today: '2026-03-30' });
+  assert.equal(reopened.streakDays, 2);
+  assert.equal(reopened.shieldsConsumed, 0);
+  assert.equal(recordDayCompletion({ ...reopened, today: '2026-03-30', claimedStreakMilestones: [] }).streakDays, 3);
 });

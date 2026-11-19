@@ -24,6 +24,7 @@ import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
 import { SmartMathKeyboard } from '../lesson/SmartMathKeyboard';
 import { OpenTaskAiBox } from '../lesson/OpenTaskAiBox';
+import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult, type OpenWorkDraft } from '../../lib/openWork';
 import { ExamQuestionGrid } from './ExamQuestionGrid';
 import { ExamTaskEvaluationDetail } from './ExamSummaryView';
 
@@ -52,7 +53,16 @@ export function ExamRunnerView({
 
   const tasks = MATH_MINI_EXAM_TASKS;
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [closedAnswers, setAnswers] = useState<Record<string, string>>({});
+  const [openDrafts, setOpenDrafts] = useState<Record<string, OpenWorkDraft>>({});
+  const [openTexts, setOpenTexts] = useState<Record<string, string>>({});
+  const answers = useMemo(() => {
+    const result = { ...closedAnswers };
+    for (const [id, work] of Object.entries(openDrafts)) {
+      result[id] = getOpenAnswer(work, openTexts[id] ?? '');
+    }
+    return result;
+  }, [closedAnswers, openDrafts, openTexts]);
   const [gridOpen, setGridOpen] = useState(false);
   const [abortModalOpen, setAbortModalOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
@@ -102,22 +112,15 @@ export function ExamRunnerView({
           pointsEarned = 1;
         }
       } else if (task.type === 'numeric') {
-        const cleanUser = rawAns.replace(',', '.');
-        const cleanExp = task.correctAnswer.trim().replace(',', '.');
-        const numU = Number(cleanUser);
-        const numE = Number(cleanExp);
-        if (
-          cleanUser &&
-          ((!Number.isNaN(numU) &&
-            !Number.isNaN(numE) &&
-            Math.abs(numU - numE) < 1e-9) ||
-            cleanUser === cleanExp)
-        ) {
+        if (matchesMathResult(rawAns, task.correctAnswer)) {
           outcome = 'correct';
           pointsEarned = 1;
         }
       } else if (task.type === 'open' && task.rubric) {
-        aiEvaluation = aiTutorService.evaluateOpenTaskSync(rawAns, task.rubric);
+        const work = openDrafts[task.id];
+        aiEvaluation = work && work.mode !== 'text'
+          ? evaluateVisualWork(rawAns, task.rubric.expectedResult, task.rubric.resultOnly)
+          : aiTutorService.evaluateOpenTaskSync(rawAns, task.rubric);
         pointsEarned = aiEvaluation.score;
         outcome =
           aiEvaluation.score === 2
@@ -159,12 +162,13 @@ export function ExamRunnerView({
         pointsMax,
         xpEarned,
         aiEvaluation,
+        work: rawAns ? openDrafts[task.id] : undefined,
       });
     }
 
     const record = completeMiniExam({ answers: summaryMap });
     onFinishExam(record, details);
-  }, [answers, completeMiniExam, onFinishExam, tasks]);
+  }, [answers, completeMiniExam, onFinishExam, openDrafts, tasks]);
 
   // Timer strictly computed from `deadline - Date.now()` + visibilitychange listener (AC-X1, AC-X2)
   useEffect(() => {
@@ -203,6 +207,8 @@ export function ExamRunnerView({
     `${currentTask.id}:${currentTask.subjectId}`
   );
   const currentAnswer = answers[currentTask.id] ?? '';
+  const currentOpenDraft = openDrafts[currentTask.id] ?? EMPTY_OPEN_WORK;
+  const currentOpenText = openTexts[currentTask.id] ?? '';
   const answeredCount = tasks.filter(
     (t) => (answers[t.id] ?? '').trim().length > 0
   ).length;
@@ -219,17 +225,17 @@ export function ExamRunnerView({
       <div className="space-y-4 pb-8">
         {/* Top Exam Bar: Exit | Timer (deadline - Date.now()) | Question Grid 1-5 */}
         {/* Note: "Wzory E8" button is STRICTLY OMITTED in Exam Mode per Section 6.6 & AC-X4! */}
-        <div className="p-3.5 sm:p-4 study-panel flex items-center justify-between gap-2">
+        <div className="study-panel flex items-center justify-between gap-2 p-2.5 sm:p-4">
           <button
             type="button"
             onClick={() => {
               playSound('tap');
               setAbortModalOpen(true);
             }}
-            className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--text-secondary)] hover:text-[var(--danger)] cursor-pointer"
+            className="min-h-[44px] min-w-[44px] justify-center px-2 sm:px-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--text-secondary)] hover:text-[var(--danger)] cursor-pointer"
           >
             <X className="w-4 h-4" />
-            <span>Zakończ</span>
+            <span className="sr-only min-[360px]:not-sr-only">Zakończ</span>
           </button>
 
           {/* Timer Pill with < 60s Urgent Pulse (Choreography #14) */}
@@ -244,7 +250,7 @@ export function ExamRunnerView({
                 ? { duration: 1.0, repeat: Infinity }
                 : { duration: 0.2 }
             }
-            className={`min-h-[44px] px-4 rounded-full border-2 flex items-center gap-2 font-extrabold font-display text-sm tabular-nums ${
+            className={`min-h-[44px] px-2.5 sm:px-4 rounded-full border-2 flex items-center gap-2 font-extrabold font-display text-sm tabular-nums ${
               isUrgent
                 ? 'bg-[var(--danger)]/15 border-[var(--danger)] text-[var(--danger)]'
                 : 'bg-[var(--bg-elevated)] border-[var(--border-subtle)] text-[var(--text-primary)]'
@@ -262,11 +268,11 @@ export function ExamRunnerView({
               setGridOpen(true);
             }}
             aria-label="Otwórz siatkę pytań 1-5"
-            className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] hover:border-[var(--accent-primary)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--text-primary)] tabular-nums cursor-pointer"
+            className="min-h-[44px] min-w-[44px] justify-center px-2 sm:px-3 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] hover:border-[var(--accent-primary)] flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--text-primary)] tabular-nums cursor-pointer"
           >
             <LayoutGrid className="w-4 h-4 text-[var(--accent-text)]" />
             <span>
-              Siatka ({currentIndex + 1}/{tasks.length})
+              <span className="hidden min-[360px]:inline">Siatka </span>{currentIndex + 1}/{tasks.length}
             </span>
           </button>
         </div>
@@ -413,8 +419,13 @@ export function ExamRunnerView({
             {currentTask.type === 'open' && (
               <div className="space-y-2">
                 <OpenTaskAiBox
-                  value={currentAnswer}
-                  onChange={setTaskAnswer}
+                  work={currentOpenDraft}
+                  onWorkChange={(patch) => setOpenDrafts((drafts) => ({
+                    ...drafts,
+                    [currentTask.id]: { ...(drafts[currentTask.id] ?? EMPTY_OPEN_WORK), ...patch },
+                  }))}
+                  value={currentOpenText}
+                  onChange={(text) => setOpenTexts((previous) => ({ ...previous, [currentTask.id]: text }))}
                   isEvaluating={false}
                   evaluation={null}
                   disabled={false}

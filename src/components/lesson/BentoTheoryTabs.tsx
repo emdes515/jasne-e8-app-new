@@ -100,7 +100,7 @@ export function BentoTheoryTabs({
           <TactileButton
             variant="secondary"
             size="sm"
-            className="sm:hidden"
+            className="shrink-0"
             onClick={() => {
               playSound('tap');
               setFormulasOpen(true);

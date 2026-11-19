@@ -25,6 +25,9 @@ import { LumiMascot } from '../mascot/LumiMascot';
 import { CountUpNumber } from '../ui/CountUpNumber';
 import { MathText } from '../ui/MathText';
 import { TactileButton } from '../ui/TactileButton';
+import { OpenWorkPad } from '../lesson/OpenWorkPad';
+import { OpenWorkPhoto } from '../lesson/OpenWorkPhoto';
+import type { OpenWorkDraft } from '../../lib/openWork';
 
 export interface ExamTaskEvaluationDetail {
   task: TaskDefinition;
@@ -34,6 +37,7 @@ export interface ExamTaskEvaluationDetail {
   pointsMax: number;
   xpEarned: number;
   aiEvaluation?: AiTutorEvaluationResult;
+  work?: OpenWorkDraft;
 }
 
 interface ExamSummaryViewProps {
@@ -269,6 +273,9 @@ export function ExamSummaryView({
                       </div>
                     </div>
                   </div>
+
+                  {item.work?.mode === 'draw' && <OpenWorkPad strokes={item.work.strokes} disabled onChange={() => {}} />}
+                  {item.work?.mode === 'photo' && <OpenWorkPhoto photo={item.work.photo} disabled onChange={() => {}} />}
 
                   {item.aiEvaluation && (
                     <div className="p-3.5 rounded-xl bg-[var(--info)]/10 border border-[var(--info)] space-y-1.5">

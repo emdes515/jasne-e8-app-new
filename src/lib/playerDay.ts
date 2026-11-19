@@ -4,14 +4,15 @@
  * Computes YYYY-MM-DD strictly in Europe/Warsaw timezone using Intl.DateTimeFormat(...).formatToParts()
  * as mandated by Master Spec Section 7.4 and AC-S1.
  */
+const warsawDayFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Europe/Warsaw',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
 export function getWarsawPlayerDay(date: Date = new Date()): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Warsaw',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-  const parts = formatter.formatToParts(date);
+  const parts = warsawDayFormatter.formatToParts(date);
   let year = '2026';
   let month = '01';
   let day = '01';
@@ -37,6 +38,10 @@ export function playerDayToIndex(playerDay: string): number {
  * Returns the exact calendar difference in days between two YYYY-MM-DD strings.
  * E.g. 2026-03-28 to 2026-03-30 -> 2 (which means N = 1 full missed day).
  */
+export function previousPlayerDay(playerDay: string): string {
+  return new Date((playerDayToIndex(playerDay) - 1) * 86_400_000).toISOString().slice(0, 10);
+}
+
 export function diffPlayerDays(laterDay: string, earlierDay: string): number {
   return playerDayToIndex(laterDay) - playerDayToIndex(earlierDay);
 }

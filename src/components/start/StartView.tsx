@@ -2,29 +2,33 @@
 
 import { ArrowRight, BookOpen, BookmarkCheck, Flame, Play, Timer } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { MATH_LESSON_1_1 } from '../../data/mathLessonMock';
+import { getLessonAttempt, getRecommendedMathLesson } from '../../data/mathLessonMock';
 import { computeDailyGoalProgress } from '../../lib/gamification';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 import { DailyChallengesCard } from './DailyChallengesCard';
+import { StartStreakPanel } from './StartStreakPanel';
 
 export function StartView() {
   const { state, setActiveTab, openLessonTheory, startLessonTasks, setFormulasOpen, playSound } = useAppState();
   const goal = computeDailyGoalProgress(state);
   const isMath = state.activeSubject === 'math';
-  const hasPausedLesson = state.activeSession?.source === 'lesson' || Boolean(state.pausedLessonSession);
-  const completed = state.completedLessonIds.includes(MATH_LESSON_1_1.id);
+  const lesson = getRecommendedMathLesson(state);
+  const hasPausedLesson = Boolean(getLessonAttempt(state, lesson.id));
+  const completed = state.completedLessonIds.includes(lesson.id);
   const reviewCount = state.mistakeBank.length + state.savedTasks.length;
   const accuracy = state.accuracyPointsPossible
     ? Math.round((state.accuracyPointsEarned / state.accuracyPointsPossible) * 100)
     : null;
 
-  const lessonAction = hasPausedLesson ? 'Wznów lekcję' : completed ? 'Powtórz lekcję' : 'Otwórz lekcję';
+  const lessonAction = hasPausedLesson && state.hearts > 0 ? 'Wznów lekcję' : completed ? 'Powtórz lekcję' : 'Otwórz lekcję';
   const subjectName = state.activeSubject === 'polish' ? 'Język polski' : 'Język angielski';
 
   return (
     <div className="space-y-7">
       <h1 className="page-heading [overflow-wrap:anywhere]">Cześć, {state.nickname}!</h1>
+
+      <StartStreakPanel />
 
       <section aria-labelledby="start-lesson" className="study-feature grid gap-5 p-4 sm:gap-7 sm:p-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,42%)] sm:items-center">
         <div className="study-board flex min-h-36 items-center justify-center sm:order-last sm:self-stretch" aria-hidden="true">
@@ -34,13 +38,17 @@ export function StartView() {
         </div>
         <div className="min-w-0 sm:py-2">
           <h2 id="start-lesson" className="text-xl sm:text-2xl font-extrabold tracking-tight text-pretty">
-            {isMath ? MATH_LESSON_1_1.title : subjectName}
+            {isMath ? lesson.title : subjectName}
           </h2>
           <p className="mt-2 mb-4 text-sm text-[var(--text-secondary)]">
             {isMath ? 'Krótka teoria, przykład i 5 zadań.' : 'Lekcje w przygotowaniu. Możesz już zobaczyć plan działów.'}
           </p>
           <TactileButton
-            onClick={isMath ? (hasPausedLesson ? startLessonTasks : openLessonTheory) : () => setActiveTab('learn')}
+            onClick={() => {
+              if (!isMath) setActiveTab('learn');
+              else if (hasPausedLesson && state.hearts > 0) startLessonTasks(lesson.id);
+              else openLessonTheory(lesson.id);
+            }}
             className="w-full sm:w-auto"
           >
             {isMath ? <Play size={17} /> : <ArrowRight size={17} />}

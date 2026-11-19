@@ -1,7 +1,7 @@
 // src/data/mathExamMock.ts
 
 import { TaskDefinition } from '../types/domain';
-import { MATH_LESSON_1_1 } from './mathLessonMock';
+import { MATH_LESSONS } from './mathLessonMock';
 
 export const MATH_MINI_EXAM_TASKS: TaskDefinition[] = [
   {
@@ -103,7 +103,7 @@ export const MATH_MINI_EXAM_TASKS: TaskDefinition[] = [
   },
 ];
 
-export const ALL_TASKS_BY_ID: Record<string, TaskDefinition> = [...MATH_LESSON_1_1.tasks, ...MATH_MINI_EXAM_TASKS].reduce(
+export const ALL_TASKS_BY_ID: Record<string, TaskDefinition> = [...MATH_LESSONS.flatMap((lesson) => lesson.tasks), ...MATH_MINI_EXAM_TASKS].reduce(
   (acc, task) => {
     acc[task.id] = task;
     return acc;

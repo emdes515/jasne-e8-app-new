@@ -10,7 +10,7 @@ import {
   TaskType,
 } from '../types/domain';
 import { DAILY_CHALLENGES_POOL } from '../data/dailyChallengesPool';
-import { getMissedDaysCount, hashPlayerDay } from './playerDay';
+import { getMissedDaysCount, previousPlayerDay, hashPlayerDay } from './playerDay';
 
 export const MAX_HEARTS = 5;
 export const HEART_REFILL_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
@@ -304,6 +304,7 @@ export function reconcileStreakOnVisit(params: {
   streakShields: number;
   shieldsConsumed: number;
   streakBroken: boolean;
+  lastCompletedPlayerDay: string | null;
 } {
   const { today, lastCompletedPlayerDay, streakDays, streakShields } = params;
   if (!lastCompletedPlayerDay || streakDays <= 0) {
@@ -312,6 +313,7 @@ export function reconcileStreakOnVisit(params: {
       streakShields,
       shieldsConsumed: 0,
       streakBroken: false,
+      lastCompletedPlayerDay,
     };
   }
 
@@ -322,6 +324,7 @@ export function reconcileStreakOnVisit(params: {
       streakShields,
       shieldsConsumed: 0,
       streakBroken: false,
+      lastCompletedPlayerDay,
     };
   }
 
@@ -331,6 +334,7 @@ export function reconcileStreakOnVisit(params: {
       streakShields: streakShields - missedDays,
       shieldsConsumed: missedDays,
       streakBroken: false,
+      lastCompletedPlayerDay: previousPlayerDay(today),
     };
   }
 
@@ -340,6 +344,7 @@ export function reconcileStreakOnVisit(params: {
     streakShields,
     shieldsConsumed: 0,
     streakBroken: true,
+    lastCompletedPlayerDay,
   };
 }
 

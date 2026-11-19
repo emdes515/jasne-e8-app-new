@@ -2,13 +2,17 @@
 
 import React from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bot, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { Bot, CheckCircle2, AlertCircle } from 'lucide-react';
 import { AiTutorEvaluationResult } from '../../types/repositories';
 import { LumiLoadout } from '../../types/domain';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
+import { getOpenAnswer, type OpenWorkDraft } from '../../lib/openWork';
+import { OpenWorkInput } from './OpenWorkInput';
 
 interface OpenTaskAiBoxProps {
+  work: OpenWorkDraft;
+  onWorkChange: (patch: Partial<OpenWorkDraft>) => void;
   value: string;
   onChange: (next: string) => void;
   isEvaluating: boolean;
@@ -20,6 +24,8 @@ interface OpenTaskAiBoxProps {
 }
 
 export function OpenTaskAiBox({
+  work,
+  onWorkChange,
   value,
   onChange,
   isEvaluating,
@@ -31,32 +37,20 @@ export function OpenTaskAiBox({
 }: OpenTaskAiBoxProps) {
   return (
     <div className="space-y-4">
-      <div>
-        <div className="flex items-center justify-between text-xs font-bold text-[var(--text-secondary)] mb-1.5">
-          <label htmlFor="open-task-textarea">
-            Zapisz obliczenia lub rozumowanie — AI Tutor oceni je jak
-            egzaminator CKE (0–2 pkt)
-          </label>
-          <span className="tabular-nums">{value.trim().length} zn.</span>
-        </div>
-
-        <textarea
-          id="open-task-textarea"
-          rows={4}
-          disabled={disabled || isEvaluating}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Wpisz swoje obliczenia"
-          className="w-full p-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-sm font-medium text-[var(--text-primary)] leading-relaxed resize-y"
-        />
-      </div>
+      <OpenWorkInput
+        work={work}
+        onWorkChange={onWorkChange}
+        text={value}
+        onTextChange={onChange}
+        disabled={disabled || isEvaluating}
+      />
 
       {!hideEvaluateButton && !evaluation && !isEvaluating && (
         <TactileButton
           variant="primary"
           size="lg"
           fullWidth
-          disabled={disabled}
+          disabled={disabled || !getOpenAnswer(work, value)}
           onClick={onEvaluate}
         >
           <Bot className="w-5 h-5" />
@@ -134,11 +128,10 @@ export function OpenTaskAiBox({
               {evaluation.feedback}
             </p>
 
-            {/* Matched keywords & expected result breakdown */}
-            <div className="pt-2 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] space-y-1">
+            {work.mode === 'text' && <div className="pt-2 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] space-y-1">
               <div>
                 <strong className="text-[var(--text-primary)]">
-                  Rozpoznane pojęcia z klucza ({evaluation.matchedKeywords.length}
+                  Rozpoznane pojęcia ({evaluation.matchedKeywords.length}
                   ):
                 </strong>{' '}
                 {evaluation.matchedKeywords.length > 0
@@ -151,7 +144,7 @@ export function OpenTaskAiBox({
                 </strong>{' '}
                 {evaluation.expectedResultFound ? 'Tak ✓' : 'Nie wykryto'}
               </div>
-            </div>
+            </div>}
           </motion.div>
         )}
       </AnimatePresence>

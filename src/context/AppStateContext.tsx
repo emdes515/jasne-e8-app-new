@@ -47,8 +47,46 @@ import {
   validateNickname,
 } from '../lib/gamification';
 import { ALL_TASKS_BY_ID } from '../data/mathExamMock';
-import { MATH_LESSON_1_1 } from '../data/mathLessonMock';
+import { findMathLesson, getLessonAttempt, getRecommendedMathLesson, MATH_LESSON_1_1 } from '../data/mathLessonMock';
 
+
+function parkActiveLesson(state: AppState, resumedId?: string) {
+  const parked = { ...state.pausedLessons };
+  const legacy = state.pausedLessonSession;
+  const active = state.activeSession;
+  if (legacy && !parked[legacy.contentId]) parked[legacy.contentId] = legacy;
+  if (active?.source === 'lesson') parked[active.contentId] = active;
+  if (resumedId) delete parked[resumedId];
+  return parked;
+}
+
+function updateStudyDay(state: AppState, today: string) {
+  const streak = reconcileStreakOnVisit({
+    today,
+    lastCompletedPlayerDay: state.lastCompletedPlayerDay,
+    streakDays: state.streakDays,
+    streakShields: state.streakShields,
+  });
+
+  return {
+    shieldsConsumed: streak.shieldsConsumed,
+    state: {
+      ...state,
+      ...(state.currentPlayerDay !== today ? {
+        currentPlayerDay: today,
+        dailyLessonsCompleted: 0,
+        dailyTasksChecked: 0,
+        dailyChallenges: generateDailyChallengesForDay(today),
+        rescueMissionsCompletedToday: 0,
+        rescueMissionCurrentProgress: 0,
+        rescueMissionCountedTaskIds: [],
+      } : {}),
+      streakDays: streak.streakDays,
+      streakShields: streak.streakShields,
+      lastCompletedPlayerDay: streak.lastCompletedPlayerDay,
+    },
+  };
+}
 export interface ToastMessage {
   id: string;
   text: string;
@@ -57,6 +95,8 @@ export interface ToastMessage {
 
 export interface SessionCompletionSummary {
   source: SessionSource;
+  contentId: string;
+  reviewTaskIds: string[];
   title: string;
   xpEarned: number;
   coinsEarned: number;
@@ -70,6 +110,7 @@ export interface SessionCompletionSummary {
 }
 
 interface AppStateContextValue {
+  hydrated: boolean;
   state: AppState;
   activeTab: NavTabId;
   setActiveTab: (tab: NavTabId, profileSection?: 'profile' | 'shop') => void;
@@ -123,13 +164,16 @@ interface AppStateContextValue {
   }) => { ok: boolean; error?: string };
 
   // Lesson & Practice Sessions
-  openLessonTheory: () => void;
-  startLessonTasks: () => boolean;
+  selectedLessonId: string;
+  openLessonTheory: (lessonId?: string) => void;
+  startLessonTasks: (lessonId?: string) => boolean;
   startPracticeSession: (
     source: 'saved' | 'bank' | 'rescue',
-    filterSubject?: SubjectId | 'all'
+    filterSubject?: SubjectId | 'all',
+    taskIds?: readonly string[]
   ) => boolean;
   submitSessionTaskAnswer: (params: {
+    sessionId: string;
     taskId: string;
     userAnswer: string;
     outcome: TaskEvalOutcome;
@@ -143,6 +187,7 @@ interface AppStateContextValue {
     zeroHeartsReached: boolean;
     rescueHeartJustEarned: boolean;
   };
+  resumeActiveTasks: () => void;
   advanceSessionTaskOrFinish: () => void;
   abortActiveSession: () => void;
 
@@ -188,6 +233,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(() => createInitialAppState());
   const [hydrated, setHydrated] = useState(false);
   const [activeTab, setActiveTabState] = useState<NavTabId>('start');
+  const [selectedLessonId, setSelectedLessonId] = useState(MATH_LESSON_1_1.id);
   const [profileSection, setProfileSection] = useState<'profile' | 'shop'>('profile');
   const [formulasOpen, setFormulasOpen] = useState(false);
   const [rescueModalOpen, setRescueModalOpen] = useState(false);
@@ -266,47 +312,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       heartRefillAnchorAt: heartRec.heartRefillAnchorAt,
     };
 
-    // Reconcile day rollover & Streak Shields
-    let shieldsUsedToast = false;
-    if (current.currentPlayerDay !== today) {
-      const streakRec = reconcileStreakOnVisit({
-        today,
-        lastCompletedPlayerDay: current.lastCompletedPlayerDay,
-        streakDays: current.streakDays,
-        streakShields: current.streakShields,
-      });
-      if (streakRec.shieldsConsumed > 0) {
-        shieldsUsedToast = true;
-      }
-      current = {
-        ...current,
-        currentPlayerDay: today,
-        streakDays: streakRec.streakDays,
-        streakShields: streakRec.streakShields,
-        dailyLessonsCompleted: 0,
-        dailyTasksChecked: 0,
-        dailyChallenges: generateDailyChallengesForDay(today),
-        rescueMissionsCompletedToday: 0,
-        rescueMissionCurrentProgress: 0,
-        rescueMissionCountedTaskIds: [],
-      };
-    } else {
-      // Even within same currentPlayerDay, ensure streak vs lastCompletedPlayerDay is consistent
-      const streakRec = reconcileStreakOnVisit({
-        today,
-        lastCompletedPlayerDay: current.lastCompletedPlayerDay,
-        streakDays: current.streakDays,
-        streakShields: current.streakShields,
-      });
-      if (streakRec.shieldsConsumed > 0) {
-        shieldsUsedToast = true;
-      }
-      current = {
-        ...current,
-        streakDays: streakRec.streakDays,
-        streakShields: streakRec.streakShields,
-      };
-    }
+    const day = updateStudyDay(current, today);
+    current = day.state;
 
     soundEngine.setEnabled(current.sfxEnabled);
 
@@ -319,7 +326,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       }, 200);
     }
 
-    if (shieldsUsedToast) {
+    if (day.shieldsConsumed > 0) {
       setTimeout(() => {
         pushToast('Tarcza Serii uratowała Twoją serię!', 'info');
       }, 350);
@@ -380,6 +387,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const now = Date.now();
       setNowTick(now);
       const cur = stateRef.current;
+      const today = getWarsawPlayerDay(new Date(now));
+      if (cur.currentPlayerDay !== today) {
+        const day = updateStudyDay(cur, today);
+        setState((previous) => updateStudyDay(previous, today).state);
+        if (day.shieldsConsumed > 0) pushToast('Tarcza serii ochroniła Twój postęp.', 'info');
+      }
       if (cur.hearts < MAX_HEARTS && cur.heartRefillAnchorAt !== null) {
         const rec = reconcileHearts(cur.hearts, cur.heartRefillAnchorAt, now);
         if (rec.restoredCount > 0) {
@@ -394,7 +407,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [hydrated]);
+  }, [hydrated, pushToast]);
 
   const secondsToNextHeart = useMemo(() => {
     if (state.hearts >= MAX_HEARTS || state.heartRefillAnchorAt === null) {
@@ -515,6 +528,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       if (params.startFirstLesson) {
         setState((prev) => ({ ...prev, activeSubject: 'math' }));
         setActiveTabState('learn');
+        setSelectedLessonId(MATH_LESSON_1_1.id);
         setLessonViewStage('theory');
       } else {
         setActiveTabState('start');
@@ -524,60 +538,56 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     [playSound]
   );
 
-  const openLessonTheory = useCallback(() => {
+
+  const openLessonTheory = useCallback((lessonId?: string) => {
+    const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(stateRef.current);
+    if (!lesson) return;
     playSound('tap');
-    setState((prev) => ({ ...prev, activeSubject: 'math' }));
+    setSelectedLessonId(lesson.id);
+    setState((prev) => ({ ...prev, activeSubject: lesson.subjectId }));
     setLessonViewStage('theory');
   }, [playSound]);
 
-  const startLessonTasks = useCallback((): boolean => {
-    const cur = stateRef.current;
-    if (cur.hearts <= 0) {
+  const startLessonTasks = useCallback((lessonId?: string): boolean => {
+    const current = stateRef.current;
+    const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(current);
+    if (!lesson) return false;
+    if (current.hearts <= 0) {
       playSound('wrong');
       setRescueModalOpen(true);
       return false;
     }
 
-    playSound('tap');
-
-    const lessonSession = cur.activeSession?.source === 'lesson'
-      ? cur.activeSession
-      : cur.pausedLessonSession;
-
-    if (lessonSession) {
-      const firstUnansweredIdx = lessonSession.taskIds.findIndex((taskId) => !lessonSession.answers[taskId]);
-      setState((prev) => ({
-        ...prev,
-        activeSubject: lessonSession.subjectId,
-        pausedLessonSession: undefined,
-        activeSession: {
-          ...lessonSession,
-          currentIndex: firstUnansweredIdx >= 0 ? firstUnansweredIdx : lessonSession.currentIndex,
+    const savedAttempt = getLessonAttempt(current, lesson.id);
+    const nextIndex = savedAttempt?.taskIds.findIndex((taskId) => !savedAttempt.answers[taskId]) ?? 0;
+    const nextSession: ActiveTaskSession = savedAttempt
+      ? {
+          ...savedAttempt,
+          currentIndex: nextIndex >= 0 ? nextIndex : savedAttempt.taskIds.length - 1,
           interruptedByZeroHearts: false,
-        },
-      }));
-      setLessonViewStage('tasks');
-      return true;
-    }
+        }
+      : {
+          sessionId: 'sess-lesson-' + Date.now(),
+          source: 'lesson',
+          contentId: lesson.id,
+          subjectId: lesson.subjectId,
+          title: lesson.title,
+          taskIds: lesson.tasks.map((task) => task.id),
+          currentIndex: 0,
+          answers: {},
+          comboCount: 0,
+          lastAnsweredAt: null,
+          interruptedByZeroHearts: false,
+        };
 
-    const newSession: ActiveTaskSession = {
-      sessionId: 'sess-lesson-' + Date.now(),
-      source: 'lesson',
-      contentId: MATH_LESSON_1_1.id,
-      subjectId: 'math',
-      title: MATH_LESSON_1_1.title,
-      taskIds: MATH_LESSON_1_1.tasks.map((t) => t.id),
-      currentIndex: 0,
-      answers: {},
-      comboCount: 0,
-      lastAnsweredAt: null,
-      interruptedByZeroHearts: false,
-    };
-
-    setState((prev) => ({
-      ...prev,
-      activeSubject: 'math',
-      activeSession: newSession,
+    playSound('tap');
+    setSelectedLessonId(lesson.id);
+    setState((previous) => ({
+      ...previous,
+      activeSubject: lesson.subjectId,
+      pausedLessonSession: undefined,
+      pausedLessons: parkActiveLesson(previous, lesson.id),
+      activeSession: nextSession,
     }));
     setLessonViewStage('tasks');
     return true;
@@ -586,7 +596,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const startPracticeSession = useCallback(
     (
       source: 'saved' | 'bank' | 'rescue',
-      filterSubject: SubjectId | 'all' = 'all'
+      filterSubject: SubjectId | 'all' = 'all',
+      reviewTaskIds?: readonly string[]
     ): boolean => {
       const cur = stateRef.current;
 
@@ -622,7 +633,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      if (source === 'saved') {
+      if (reviewTaskIds) {
+        taskIds.push(...new Set(reviewTaskIds.filter((id) => ALL_TASKS_BY_ID[id])));
+      } else if (source === 'saved') {
         addEntries(cur.savedTasks);
       } else if (source === 'bank') {
         addEntries(cur.mistakeBank);
@@ -645,7 +658,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       const titleMap: Record<'saved' | 'bank' | 'rescue', string> = {
         saved: 'Powtórka: Zapisane zadania',
-        bank: 'Powtórka: Bank Błędów',
+        bank: reviewTaskIds ? 'Powtórka po lekcji' : 'Powtórka: Bank błędów',
         rescue: 'Misja Ratunkowa (+1 Serce za 2 poprawne)',
       };
 
@@ -665,7 +678,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
       setState((prev) => ({
         ...prev,
-        pausedLessonSession: prev.activeSession?.source === 'lesson' ? prev.activeSession : prev.pausedLessonSession,
+        pausedLessonSession: undefined,
+        pausedLessons: parkActiveLesson(prev),
         activeSession: newSession,
       }));
       setLessonViewStage('tasks');
@@ -685,6 +699,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
    */
   const submitSessionTaskAnswer = useCallback(
     (params: {
+      sessionId: string;
       taskId: string;
       userAnswer: string;
       outcome: TaskEvalOutcome;
@@ -698,7 +713,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const task = ALL_TASKS_BY_ID[params.taskId];
       const nowMs = Date.now();
 
-      if (!session || !task) {
+      if (!session || session.sessionId !== params.sessionId || session.taskIds[session.currentIndex] !== params.taskId || session.answers[params.taskId] || !task) {
         return {
           xpAwarded: 0,
           newComboCount: 0,
@@ -962,11 +977,18 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const answersList = Object.values(session.answers);
     const rawSessionXp = answersList.reduce((acc, a) => acc + a.xpAwarded, 0);
     const correctCount = answersList.filter(
-      (a) => a.outcome === 'correct' || a.outcome === 'partial'
+      (answer) => answer.outcome === 'correct'
     ).length;
     const totalCount = session.taskIds.length;
-    const accuracyPercent =
-      totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 100;
+    let pointsEarned = 0;
+    let pointsPossible = 0;
+    for (const taskId of session.taskIds) {
+      const answer = session.answers[taskId];
+      const isOpen = ALL_TASKS_BY_ID[taskId]?.type === 'open';
+      pointsPossible += isOpen ? 2 : 1;
+      pointsEarned += isOpen ? (answer?.aiScore ?? 0) : Number(answer?.outcome === 'correct');
+    }
+    const accuracyPercent = pointsPossible ? Math.round((pointsEarned / pointsPossible) * 100) : 0;
 
     const today = getWarsawPlayerDay();
     const isLesson = session.source === 'lesson';
@@ -988,7 +1010,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const rewardRes = computeCompletionRewards({
         playerDay: today,
         contentId: session.contentId,
-        baseCoins: MATH_LESSON_1_1.rewardCoins,
+        baseCoins: findMathLesson(session.contentId)?.rewardCoins ?? MATH_LESSON_1_1.rewardCoins,
         rawSessionXp,
         rewardLedger: cur.rewardLedger,
       });
@@ -1037,6 +1059,11 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     setLastSessionSummary({
       source: session.source,
+      contentId: session.contentId,
+      reviewTaskIds: session.taskIds.filter((id) => {
+        const answer = session.answers[id];
+        return answer && (answer.outcome === 'wrong' || answer.outcome === 'partial');
+      }),
       title: session.title,
       xpEarned: xpAwarded,
       coinsEarned: coinsAwarded,
@@ -1072,6 +1099,25 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
     setLessonViewStage('summary');
   }, [playSound]);
+
+  const resumeActiveTasks = useCallback(() => {
+    const { activeSession, hearts } = stateRef.current;
+    if (!activeSession || hearts <= 0) return;
+    if (activeSession.source === 'lesson') {
+      startLessonTasks(activeSession.contentId);
+      return;
+    }
+    const nextIndex = activeSession.taskIds.findIndex((id) => !activeSession.answers[id]);
+    setState((previous) => ({
+      ...previous,
+      activeSession: {
+        ...activeSession,
+        currentIndex: nextIndex >= 0 ? nextIndex : activeSession.taskIds.length - 1,
+        interruptedByZeroHearts: false,
+      },
+    }));
+    setLessonViewStage('tasks');
+  }, [startLessonTasks]);
 
   const abortActiveSession = useCallback(() => {
     playSound('tap');
@@ -1502,6 +1548,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AppStateContextValue>(
     () => ({
+      hydrated,
       state,
       activeTab,
       setActiveTab,
@@ -1531,10 +1578,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setTheme,
       setSfxEnabled,
       updateProfileSettings,
+      selectedLessonId,
       openLessonTheory,
       startLessonTasks,
       startPracticeSession,
       submitSessionTaskAnswer,
+      resumeActiveTasks,
       advanceSessionTaskOrFinish,
       abortActiveSession,
       toggleTaskSaved,
@@ -1546,6 +1595,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       resetAllLocalProgress,
     }),
     [
+      hydrated,
       state,
       activeTab,
       setActiveTab,
@@ -1571,10 +1621,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setTheme,
       setSfxEnabled,
       updateProfileSettings,
+      selectedLessonId,
       openLessonTheory,
       startLessonTasks,
       startPracticeSession,
       submitSessionTaskAnswer,
+      resumeActiveTasks,
       advanceSessionTaskOrFinish,
       abortActiveSession,
       toggleTaskSaved,

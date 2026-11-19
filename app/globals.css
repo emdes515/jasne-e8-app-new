@@ -224,3 +224,9 @@ html:has(.study-dialog[open]) { overflow-y: hidden; }
 @media (min-width: 40rem) {
   .study-dialog[open] { align-items: center; padding: 1rem; }
 }
+.answer-grid {
+  background-image:
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 1.25rem 1.25rem;
+}

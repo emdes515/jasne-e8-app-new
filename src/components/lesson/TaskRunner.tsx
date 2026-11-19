@@ -33,8 +33,15 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { AnswerOptionCard } from './AnswerOptionCard';
 import { SmartMathKeyboard } from './SmartMathKeyboard';
 import { OpenTaskAiBox } from './OpenTaskAiBox';
+import { EMPTY_OPEN_WORK, evaluateVisualWork, getOpenAnswer, matchesMathResult } from '../../lib/openWork';
 
 export function TaskRunner() {
+  const { state: { activeSession: session } } = useAppState();
+  if (!session) return null;
+  return <TaskRunnerQuestion key={session.sessionId + ':' + session.currentIndex} />;
+}
+
+function TaskRunnerQuestion() {
   const {
     state,
     submitSessionTaskAnswer,
@@ -44,7 +51,7 @@ export function TaskRunner() {
     setFormulasOpen,
     setRescueModalOpen,
     buyHeartWithCoins,
-    startLessonTasks,
+    resumeActiveTasks,
     playSound,
   } = useAppState();
   const prefersReduced = useReducedMotion();
@@ -52,11 +59,13 @@ export function TaskRunner() {
   const session = state.activeSession;
   const currentTaskId = session?.taskIds[session.currentIndex] ?? '';
   const currentTask = ALL_TASKS_BY_ID[currentTaskId];
+  const priorAnswer = session?.answers[currentTaskId];
 
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [numericAnswer, setNumericAnswer] = useState<string>('');
   const [openAnswer, setOpenAnswer] = useState<string>('');
-  const [hintsUsed, setHintsUsed] = useState<number>(0);
+  const [openWork, setOpenWork] = useState(EMPTY_OPEN_WORK);
+  const [hintsUsed, setHintsUsed] = useState(priorAnswer?.hintsUsed ?? 0);
   const [hintsSheetOpen, setHintsSheetOpen] = useState<boolean>(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState<boolean>(false);
   const [bookmarkAnimTick, setBookmarkAnimTick] = useState<number>(0);
@@ -69,7 +78,11 @@ export function TaskRunner() {
     outcome: TaskEvalOutcome;
     xpAwarded: number;
     lumiMood: LumiMood;
-  } | null>(null);
+  } | null>(() => priorAnswer ? {
+    outcome: priorAnswer.outcome,
+    xpAwarded: priorAnswer.xpAwarded,
+    lumiMood: 'focused',
+  } : null);
 
   const [nowMs, setNowMs] = useState<number>(() => Date.now());
 
@@ -78,17 +91,6 @@ export function TaskRunner() {
     const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-
-  // Reset local input states when currentTaskId changes
-  useEffect(() => {
-    setSelectedOption('');
-    setNumericAnswer('');
-    setOpenAnswer('');
-    setHintsUsed(0);
-    setAiEvaluation(null);
-    setIsAiEvaluating(false);
-    setCheckedFeedback(null);
-  }, [currentTaskId]);
 
   // Surprised mood transitions to supportive after 1s on wrong answer (Master Spec Section 3.2 #5)
   useEffect(() => {
@@ -134,11 +136,11 @@ export function TaskRunner() {
             size="lg"
             fullWidth
             onClick={() => {
-              startLessonTasks();
+              resumeActiveTasks();
             }}
           >
             <Play className="w-5 h-5" />
-            <span>Kontynuuj lekcję (od zadania {session.currentIndex + 2})</span>
+            <span>Wznów zadania</span>
           </TactileButton>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -201,6 +203,7 @@ export function TaskRunner() {
       const isCorrect = selectedOption === currentTask.correctAnswer;
       const outcome: TaskEvalOutcome = isCorrect ? 'correct' : 'wrong';
       const res = submitSessionTaskAnswer({
+        sessionId: session.sessionId,
         taskId: currentTask.id,
         userAnswer: selectedOption,
         outcome,
@@ -220,19 +223,12 @@ export function TaskRunner() {
     }
 
     if (currentTask.type === 'numeric') {
-      const cleaned = numericAnswer.trim().replace(',', '.');
-      if (!cleaned) return;
-      const expected = currentTask.correctAnswer.trim().replace(',', '.');
-      const numUser = Number(cleaned);
-      const numExp = Number(expected);
-      const isCorrect =
-        (!Number.isNaN(numUser) &&
-          !Number.isNaN(numExp) &&
-          Math.abs(numUser - numExp) < 1e-9) ||
-        cleaned === expected;
+      if (!numericAnswer.trim()) return;
+      const isCorrect = matchesMathResult(numericAnswer, currentTask.correctAnswer);
 
       const outcome: TaskEvalOutcome = isCorrect ? 'correct' : 'wrong';
       const res = submitSessionTaskAnswer({
+        sessionId: session.sessionId,
         taskId: currentTask.id,
         userAnswer: numericAnswer.trim(),
         outcome,
@@ -252,14 +248,14 @@ export function TaskRunner() {
   };
 
   const handleEvaluateOpenTask = async () => {
-    if (checkedFeedback || isAiEvaluating || !currentTask.rubric) return;
+    const answer = getOpenAnswer(openWork, openAnswer);
+    if (checkedFeedback || isAiEvaluating || !currentTask.rubric || !answer) return;
     playSound('tap');
     setIsAiEvaluating(true);
 
-    const evalRes = await aiTutorService.evaluateOpenTask(
-      openAnswer,
-      currentTask.rubric
-    );
+    const evalRes = openWork.mode === 'text'
+      ? await aiTutorService.evaluateOpenTask(answer, currentTask.rubric)
+      : evaluateVisualWork(answer, currentTask.rubric.expectedResult, currentTask.rubric.resultOnly);
     setIsAiEvaluating(false);
     setAiEvaluation(evalRes);
 
@@ -272,8 +268,9 @@ export function TaskRunner() {
         : 'wrong';
 
     const res = submitSessionTaskAnswer({
+      sessionId: session.sessionId,
       taskId: currentTask.id,
-      userAnswer: openAnswer,
+      userAnswer: answer,
       outcome,
       hintsUsed,
       aiScore: evalRes.score,
@@ -300,7 +297,7 @@ export function TaskRunner() {
       ? 'Prawda / Fałsz'
       : currentTask.type === 'numeric'
       ? 'Wpisz wynik'
-      : 'Otwarte • AI Tutor';
+      : 'Zadanie otwarte';
 
   return (
     <>
@@ -320,9 +317,9 @@ export function TaskRunner() {
           </button>
 
           {/* Animated Progress Bar with Shimmer & Combo x3.0 Border Opacity Pulse (Choreography #5 & #6) */}
-          <div className="flex-1 flex flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex items-center justify-between text-xs font-extrabold font-display tabular-nums">
-              <span className="text-[var(--text-secondary)] truncate">
+              <span className="min-w-0 truncate text-[var(--text-secondary)]">
                 {session.source === 'rescue'
                   ? `Misja Ratunkowa (${state.rescueMissionCurrentProgress}/2 do +1 Serca)`
                   : session.title}
@@ -531,6 +528,8 @@ export function TaskRunner() {
             {/* Task Type 3: Open Task with AI Tutor */}
             {currentTask.type === 'open' && (
               <OpenTaskAiBox
+                work={openWork}
+                onWorkChange={(patch) => setOpenWork((work) => ({ ...work, ...patch }))}
                 value={openAnswer}
                 onChange={setOpenAnswer}
                 isEvaluating={isAiEvaluating}
@@ -601,7 +600,7 @@ export function TaskRunner() {
                         {checkedFeedback.outcome === 'correct'
                           ? 'Świetna robota!'
                           : checkedFeedback.outcome === 'partial'
-                          ? 'Częściowe punkty (1/2 pkt CKE — bez utraty serca!)'
+                          ? 'Częściowe punkty'
                           : 'Tym razem pudło — zadanie trafiło do Banku Błędów'}
                       </h3>
                     </div>

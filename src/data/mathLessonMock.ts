@@ -1,6 +1,7 @@
 // src/data/mathLessonMock.ts
 
-import { LessonDefinition, SubjectId, TaskDefinition } from '../types/domain';
+import type { AppState, LessonDefinition, SubjectId } from '../types/domain';
+import { MATH_LESSON_1_2, MATH_LESSON_1_3 } from './mathExtraLessons';
 
 export interface ChapterNodeMeta {
   id: string;
@@ -201,6 +202,28 @@ export const MATH_LESSON_1_1: LessonDefinition = {
   ],
 };
 
+export const MATH_LESSONS = [MATH_LESSON_1_1, MATH_LESSON_1_2, MATH_LESSON_1_3];
+
+export function findMathLesson(id: string) {
+  return MATH_LESSONS.find((lesson) => lesson.id === id);
+}
+
+export function getLessonAttempt(state: AppState, id: string) {
+  if (state.activeSession?.source === 'lesson' && state.activeSession.contentId === id) {
+    return state.activeSession;
+  }
+  return state.pausedLessons?.[id] ??
+    (state.pausedLessonSession?.contentId === id ? state.pausedLessonSession : undefined);
+}
+
+export function getRecommendedMathLesson(state: AppState) {
+  const activeId = state.activeSession?.source === 'lesson' ? state.activeSession.contentId : '';
+  return findMathLesson(activeId) ??
+    MATH_LESSONS.find((lesson) => getLessonAttempt(state, lesson.id)) ??
+    MATH_LESSONS.find((lesson) => !state.completedLessonIds.includes(lesson.id)) ??
+    MATH_LESSON_1_1;
+}
+
 export const MATH_CHAPTERS_MAP: ChapterMeta[] = [
   {
     chapterNumber: 1,
@@ -208,44 +231,9 @@ export const MATH_CHAPTERS_MAP: ChapterMeta[] = [
     title: 'Liczby, Potęgi i Pierwiastki',
     subtitle: 'Fundament każdego arkusza CKE — pewne punkty na start',
     unlocked: true,
-    nodes: [
-      {
-        id: 'lesson:1.1',
-        nodeNumber: '1.1',
-        title: 'Potęgi i pierwiastki w zadaniach E8',
-        subtitle: 'Teoria i 5 zadań',
-        unlocked: true,
-        rewardCoins: 20,
-      },
-      {
-        id: 'lesson:1.2',
-        nodeNumber: '1.2',
-        title: 'Ułamki i działania na liczbach wymiernych',
-        subtitle: 'Wkrótce w Fazie 2 • +20 monet',
-        unlocked: false,
-        comingSoon: true,
-        rewardCoins: 20,
-        previewTopics: [
-          'Skracanie i rozszerzanie ułamków zwykłych i dziesiętnych',
-          'Zamiana ułamków okresowych i zaokrąglanie liczb',
-          'Zadania CKE na oś liczbową',
-        ],
-      },
-      {
-        id: 'lesson:1.3',
-        nodeNumber: '1.3',
-        title: 'Procenty i podwyżki/obniżki E8',
-        subtitle: 'Wkrótce w Fazie 2 • +20 monet',
-        unlocked: false,
-        comingSoon: true,
-        rewardCoins: 20,
-        previewTopics: [
-          'Obliczanie ceny po dwukrotnej obniżce lub podwyżce',
-          'Punkty procentowe vs procenty',
-          'Diagramy procentowe z arkuszy CKE',
-        ],
-      },
-    ],
+    nodes: MATH_LESSONS.map(({ id, nodeNumber, title, subtitle, rewardCoins }) => ({
+      id, nodeNumber, title, subtitle, rewardCoins, unlocked: true,
+    })),
   },
   {
     chapterNumber: 2,
