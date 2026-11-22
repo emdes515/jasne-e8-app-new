@@ -10,6 +10,13 @@ export type StudyStageId = 'grade8' | 'grade7' | 'revision';
 
 export type DailyGoalMinutes = 5 | 10 | 15;
 
+export type OnboardingAudience = 'student' | 'guardian';
+
+export interface StudyReminder {
+  time: string;
+  days: number[];
+}
+
 export type LumiMood =
   | 'idle'
   | 'happy'
@@ -257,6 +264,8 @@ export interface AppState {
   accountMode: 'guest';
   guestId: string;
   onboardingCompleted: boolean;
+  onboardingAudience?: OnboardingAudience;
+  studyReminder?: StudyReminder | null;
   nickname: string;
   studyStage: StudyStageId;
   activeSubject: SubjectId;

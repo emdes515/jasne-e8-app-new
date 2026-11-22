@@ -62,7 +62,7 @@ function Reminder({ suppressed }: { suppressed: boolean }) {
             <div className="flex min-w-0 items-center gap-2">
               <LockKeyhole aria-hidden="true" size={17} className="shrink-0 text-[var(--accent-text)]" />
               <p className="min-w-0 text-[11px] leading-snug text-[var(--text-secondary)] sm:text-xs">
-                <strong className="block font-extrabold text-[var(--accent-text)] sm:inline sm:mr-1.5">Darmowe konto</strong>
+                <strong className="block font-extrabold text-[var(--accent-text)] sm:inline sm:mr-1.5">Konto ucznia</strong>
                 Odblokuj lekcje po pierwszej
               </p>
             </div>
@@ -84,7 +84,7 @@ function Reminder({ suppressed }: { suppressed: boolean }) {
       <BottomSheet
         open={panel === 'reminder'}
         onClose={dismiss}
-        title="Ucz się dalej z darmowym kontem"
+        title="Ucz się dalej z kontem ucznia"
         maxWidthClass="max-w-md"
       >
         <div className="space-y-4">

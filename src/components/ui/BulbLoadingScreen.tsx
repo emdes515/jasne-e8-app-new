@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { JasneBulbMark } from '../brand/JasneLogo';
+import { useHydrationSafeReducedMotion } from '../../lib/useHydrationSafeReducedMotion';
 
 export type SplashVariant = 'boot' | 'lesson' | 'exam' | 'sync';
 
@@ -40,7 +41,7 @@ export function AppSplashLoader({
   fullscreen = true,
   className = '',
 }: AppSplashLoaderProps) {
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = useHydrationSafeReducedMotion();
 
   useEffect(() => {
     if (!allowSkip || !onSkip) return;

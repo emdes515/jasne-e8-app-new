@@ -45,6 +45,7 @@ import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
 import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
+import { StudyReminderSettings } from '../reminders/StudyReminderSettings';
 import { MascotDressingRoom } from './MascotDressingRoom';
 
 export function ProfileShopView() {
@@ -298,11 +299,11 @@ export function ProfileShopView() {
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-sm sm:text-base font-extrabold font-display text-[var(--text-primary)]">
-                    {cloudUser ? 'Konto w chmurze połączone' : 'Zapisz swoje postępy w chmurze'}
+                    Konto ucznia
                   </h2>
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
                     {cloudUser
-                      ? cloudUser.email ?? 'Zalogowano przez Firebase Auth'
+                      ? cloudUser.email ?? 'Konto aktywne'
                       : 'Uczysz się jako Gość. Zaloguj się przez Google lub e-mail, aby nie stracić serii i monet.'}
                   </p>
                 </div>
@@ -313,7 +314,7 @@ export function ProfileShopView() {
                 className="shrink-0"
                 onClick={() => setAccountModalOpen(true)}
               >
-                {cloudUser ? 'Zarządzaj kontem' : 'Zaloguj / Połącz'}
+                {cloudUser ? 'Zarządzaj kontem' : 'Przejdź do konta'}
               </TactileButton>
             </motion.section>
 
@@ -442,7 +443,9 @@ export function ProfileShopView() {
                 Ustawienia
               </h2>
 
-              {/* 1. Theme Switcher: Nocturne Dark / Solar Light */}
+              <StudyReminderSettings />
+
+              {/* 1. Wybór motywu */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
                 <div>
                   <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">

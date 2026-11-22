@@ -4,16 +4,13 @@ import { useState } from 'react';
 import { BookOpen, Check, ChevronRight, Lock, Flag, Play, RotateCcw, Timer } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson, MATH_CHAPTERS_MAP, MATH_LESSONS, type ChapterMeta } from '../../data/mathLessonMock';
-import { CloudAccountModal, useCloudAuthUser } from '../auth/CloudAccountModal';
 import { TactileButton } from '../ui/TactileButton';
 import { BottomSheet } from '../ui/BottomSheet';
 import { SubjectComingSoonView } from './SubjectComingSoonView';
 
 export function LearnPathView() {
-  const { state, openLessonTheory, startLessonTasks, startPracticeSession, setFormulasOpen, setActiveTab } = useAppState();
+  const { state, hasStudentAccount, openLessonTheory, startLessonTasks, startPracticeSession, setFormulasOpen, setActiveTab } = useAppState();
   const [previewChapter, setPreviewChapter] = useState<ChapterMeta | null>(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const { user: cloudUser } = useCloudAuthUser();
 
   if (state.activeSubject !== 'math') return <SubjectComingSoonView />;
 
@@ -45,7 +42,7 @@ export function LearnPathView() {
           const theoryIndex = theoryCard ? lesson.theory.findIndex((card) => card.id === theoryCard) : -1;
           const reviewIds = state.lessonReviewTasks?.[lesson.id] ??
             lesson.tasks.filter((task) => state.mistakeBank.some((entry) => entry.taskId === task.id)).map((task) => task.id);
-          const lockedByGuest = lessonIdx > 0 && !cloudUser;
+          const lockedByGuest = lessonIdx > 0 && !hasStudentAccount;
           const current = !done && !lockedByGuest && lesson.id === recommendedId;
           return (
             <li key={lesson.id} className="learn-stop" data-state={lockedByGuest ? 'locked' : done ? 'done' : current ? 'current' : 'ready'}>
@@ -56,7 +53,7 @@ export function LearnPathView() {
                 <p className="mb-1 text-xs font-bold text-[var(--accent-text)]">
                   Lekcja {lesson.nodeNumber}
                   {lockedByGuest
-                    ? ' · Odblokuj za darmo po zalogowaniu'
+                    ? ' · Wymagane konto ucznia'
                     : done
                     ? ' · Ukończona'
                     : current
@@ -67,8 +64,8 @@ export function LearnPathView() {
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">{lesson.subtitle}</p>
                 {lockedByGuest ? (
                   <div className="mt-3">
-                    <TactileButton variant="info" size="sm" onClick={() => setLoginModalOpen(true)}>
-                      <Lock size={15} /> Odblokuj za darmo (Zaloguj)
+                    <TactileButton variant="info" size="sm" onClick={() => openLessonTheory(lesson.id)}>
+                      <Lock size={15} /> Odblokuj lekcję
                     </TactileButton>
                   </div>
                 ) : (
@@ -132,12 +129,6 @@ export function LearnPathView() {
         </TactileButton>
       </BottomSheet>
 
-      <CloudAccountModal
-        open={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
-        titleOverride="Odblokuj wszystkie lekcje za darmo"
-        subtitleOverride="Pierwsza lekcja jest otwarta dla Gościa. Zaloguj się za darmo, aby odblokować kolejne lekcje."
-      />
     </div>
   );
 }
