@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { BookOpen, Info, Search, Sparkles, X } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -15,6 +15,17 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { MathText } from '../ui/MathText';
 
 export function FormulasBottomSheet() {
+  const { state, formulasOpen } = useAppState();
+
+  // Strict guard: only Math has Formulas E8 (AC-G4); mounted content resets cleanly per open.
+  if (state.activeSubject !== 'math' || !formulasOpen) {
+    return null;
+  }
+
+  return <FormulasBottomSheetContent />;
+}
+
+function FormulasBottomSheetContent() {
   const {
     state,
     selectedLessonId,
@@ -57,25 +68,9 @@ export function FormulasBottomSheet() {
   }, [state.activeSession, selectedLessonId, lessonViewStage]);
 
   const [activeCategoryId, setActiveCategoryId] = useState<string>(
-    detectedContext.matchedCategoryId ?? 'all'
+    () => detectedContext.matchedCategoryId ?? 'all'
   );
   const [query, setQuery] = useState('');
-
-  // Auto-select the matching category whenever the sheet opens inside a lesson/task
-  useEffect(() => {
-    if (!formulasOpen) return;
-    setQuery('');
-    if (detectedContext.matchedCategoryId) {
-      setActiveCategoryId(detectedContext.matchedCategoryId);
-    } else {
-      setActiveCategoryId('all');
-    }
-  }, [formulasOpen, detectedContext.matchedCategoryId]);
-
-  // Strict guard: only Math has Formulas E8 (AC-G4)
-  if (state.activeSubject !== 'math') {
-    return null;
-  }
 
   const normalizedQuery = query.trim().toLowerCase();
 
