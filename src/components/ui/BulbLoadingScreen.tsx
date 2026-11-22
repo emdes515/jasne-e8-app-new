@@ -12,6 +12,7 @@ export interface AppSplashLoaderProps {
   title?: string;
   subtitle?: string;
   progress?: number;
+  previewBadge?: string;
   allowSkip?: boolean;
   onSkip?: () => void;
   fullscreen?: boolean;
@@ -36,6 +37,7 @@ export function AppSplashLoader({
   title,
   subtitle,
   progress,
+  previewBadge,
   allowSkip = false,
   onSkip,
   fullscreen = true,
@@ -86,6 +88,11 @@ export function AppSplashLoader({
       />
 
       <div className="relative z-10 flex flex-col items-center text-center max-w-sm w-full">
+        {previewBadge && (
+          <span className="mb-3 px-3 py-1 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-xs font-bold text-[var(--text-secondary)]">
+            {previewBadge}
+          </span>
+        )}
         {/* Samodzielna żarówka bez kart, orbit ani iskier */}
         <div className="mb-4 flex items-center justify-center">
           <JasneBulbMark size={84} animated="loading" />
@@ -154,7 +161,7 @@ export function AppSplashLoader({
               e.stopPropagation();
               onSkip();
             }}
-            className="mt-5 min-h-[44px] px-4 rounded-xl text-xs font-semibold text-[var(--text-secondary)]/75 hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            className="mt-5 min-h-[44px] px-4 rounded-xl text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
           >
             Dotknij, aby pominąć
           </button>

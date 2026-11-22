@@ -89,11 +89,11 @@ export function ProfileShopView() {
   const getFrameBorderClass = (frame: LumiLoadout['profileFrame']) => {
     switch (frame) {
       case 'emerald_impulse_frame':
-        return 'border-[#10B981] shadow-[0_6px_0_0_#047857]';
+        return 'border-[var(--success)] shadow-[0_6px_0_0_var(--success-edge)]';
       case 'gold_ring_frame':
-        return 'border-[#FFB800] shadow-[0_6px_0_0_#B45309]';
+        return 'border-[var(--accent-primary)] shadow-[0_6px_0_0_var(--accent-primary-edge)]';
       case 'cyber_plasma_frame':
-        return 'border-[#38BDF8] shadow-[0_6px_0_0_#0284C7]';
+        return 'border-[var(--info)] shadow-[0_6px_0_0_var(--info-edge)]';
       default:
         return 'border-[var(--border-subtle)] shadow-[0_6px_0_0_var(--border-3d-edge)]';
     }
@@ -301,7 +301,7 @@ export function ProfileShopView() {
                   <h2 className="text-sm sm:text-base font-extrabold font-display text-[var(--text-primary)]">
                     Konto ucznia
                   </h2>
-                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">
+                  <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed [overflow-wrap:anywhere]">
                     {cloudUser
                       ? cloudUser.email ?? 'Konto aktywne'
                       : 'Uczysz się jako Gość. Zaloguj się przez Google lub e-mail, aby nie stracić serii i monet.'}
@@ -326,7 +326,7 @@ export function ProfileShopView() {
               <h2 className="text-base font-extrabold font-display text-[var(--text-primary)]">
                 Kolor Lumi
               </h2>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {(
                   [
                     {
@@ -392,7 +392,7 @@ export function ProfileShopView() {
                         className="w-4 h-4 rounded-full border border-black/30"
                         style={{ backgroundColor: skin.swatch }}
                       />
-                      <span className="text-[11px] truncate max-w-full">
+                      <span className="text-[11px] leading-tight text-center break-words">
                         {LUMI_COLOR_LABELS[skin.id]}
                       </span>
                     </button>
@@ -418,10 +418,16 @@ export function ProfileShopView() {
                       className={`p-3 rounded-2xl border-2 text-center ${
                         unlocked
                           ? 'bg-[var(--bg-elevated)] border-[var(--accent-primary)]'
-                          : 'bg-[var(--bg-canvas)]/40 border-[var(--border-subtle)] opacity-60'
+                          : 'bg-[var(--bg-canvas)]/60 border-dashed border-[var(--border-subtle)]'
                       }`}
                     >
-                      <div className="text-xs font-extrabold font-display text-[var(--text-primary)]">
+                      <div
+                        className={`text-xs font-extrabold font-display ${
+                          unlocked
+                            ? 'text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)]'
+                        }`}
+                      >
                         {r.name}
                       </div>
                       <div className="text-[11px] font-bold text-[var(--accent-text)] tabular-nums mt-0.5">
@@ -447,13 +453,8 @@ export function ProfileShopView() {
 
               {/* 1. Wybór motywu */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
-                <div>
-                  <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">
-                    Motyw
-                  </div>
-                  <div className="text-xs text-[var(--text-secondary)]">
-
-                  </div>
+                <div className="text-sm font-extrabold font-display text-[var(--text-primary)]">
+                  Motyw
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 shrink-0">

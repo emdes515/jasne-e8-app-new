@@ -12,9 +12,10 @@ export const SUBJECT_META: Record<
   {
     id: SubjectId;
     name: string;
-    shortName: string; // below 380px: Mat., Pol., Ang.
+    shortName: string; // below 430px: Mat., Pol., Ang.
     mediumName: string;
     accentColor: string;
+    accentTextClass: string;
     statusLabel: string;
     icon: React.ComponentType<{ className?: string }>;
   }
@@ -24,7 +25,8 @@ export const SUBJECT_META: Record<
     name: 'Matematyka',
     shortName: 'Mat.',
     mediumName: 'Matma',
-    accentColor: '#FFB800',
+    accentColor: 'var(--accent-primary)',
+    accentTextClass: 'text-[var(--on-accent)]',
     statusLabel: 'Lekcja i miniarkusz',
     icon: Calculator,
   },
@@ -33,7 +35,8 @@ export const SUBJECT_META: Record<
     name: 'Język polski',
     shortName: 'Pol.',
     mediumName: 'Polski',
-    accentColor: '#F43F5E',
+    accentColor: 'var(--danger)',
+    accentTextClass: 'text-[var(--on-danger)]',
     statusLabel: 'Plan działów',
     icon: BookType,
   },
@@ -42,7 +45,8 @@ export const SUBJECT_META: Record<
     name: 'Język angielski',
     shortName: 'Ang.',
     mediumName: 'Angielski',
-    accentColor: '#10B981',
+    accentColor: 'var(--success)',
+    accentTextClass: 'text-[var(--on-success)]',
     statusLabel: 'Plan działów',
     icon: Globe,
   },
@@ -99,9 +103,9 @@ export function SubjectSwitcher() {
         className="min-h-[44px] min-w-[44px] px-1.5 min-[360px]:px-2.5 sm:px-3.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center gap-1.5 text-xs sm:text-sm font-extrabold font-display text-[var(--text-primary)] hover:border-[var(--accent-primary)] transition-colors cursor-pointer shrink-0"
       >
         <IconComp className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
-        {/* Below 380px shows Mat./Pol./Ang., >= 380px shows Matma/Polski/Angielski */}
-        <span className="inline min-[380px]:hidden">{currentMeta.shortName}</span>
-        <span className="hidden min-[380px]:inline">{currentMeta.mediumName}</span>
+        {/* Below 430px shows Mat./Pol./Ang., >= 430px shows Matma/Polski/Angielski */}
+        <span className="inline min-[430px]:hidden">{currentMeta.shortName}</span>
+        <span className="hidden min-[430px]:inline">{currentMeta.mediumName}</span>
         <ChevronDown className="w-3.5 h-3.5 text-[var(--text-secondary)] shrink-0" />
       </button>
 
@@ -165,7 +169,7 @@ export function SubjectSwitcher() {
                 >
                   <div className="flex items-center gap-3.5">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center border border-black/20 text-[#080C16]"
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center border border-black/20 ${meta.accentTextClass}`}
                       style={{ backgroundColor: meta.accentColor }}
                     >
                       <SubIcon className="w-5 h-5" />

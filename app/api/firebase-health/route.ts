@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getFirebaseAdminApp } from '../../../src/lib/firebaseAdmin';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '';
@@ -11,9 +13,15 @@ const DATABASE_ID = process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || '(default)'
  * Czyta publiczny manifest treści przez REST — nie wymaga konta ucznia.
  */
 export async function GET() {
+  const adminConfigured = Boolean(getFirebaseAdminApp());
+
   if (!PROJECT_ID || !API_KEY) {
     return NextResponse.json(
-      { status: 'unconfigured', message: 'Brak konfiguracji Firebase w zmiennych środowiskowych.' },
+      {
+        status: 'unconfigured',
+        message: 'Brak konfiguracji Firebase w zmiennych środowiskowych.',
+        adminConfigured,
+      },
       { status: 503 }
     );
   }
@@ -32,6 +40,7 @@ export async function GET() {
           projectId: PROJECT_ID,
           databaseId: DATABASE_ID,
           httpStatus: response.status,
+          adminConfigured,
           latencyMs,
         },
         { status: 502 }
@@ -48,6 +57,7 @@ export async function GET() {
       databaseId: DATABASE_ID,
       contentManifestVersion: doc.fields?.contentManifestVersion?.integerValue ?? null,
       manifestUpdatedAt: doc.fields?.updatedAt?.timestampValue ?? null,
+      adminConfigured,
       latencyMs,
     });
   } catch (error) {
@@ -57,6 +67,7 @@ export async function GET() {
         projectId: PROJECT_ID,
         databaseId: DATABASE_ID,
         message: error instanceof Error ? error.message : 'Nieznany błąd',
+        adminConfigured,
         latencyMs: Date.now() - startedAt,
       },
       { status: 502 }

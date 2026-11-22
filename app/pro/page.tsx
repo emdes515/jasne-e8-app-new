@@ -41,10 +41,6 @@ export default function ProPage() {
             <a href="#plany" className={styles.jump}>Porównaj plany <ArrowDown size={17} aria-hidden="true" /></a>
           </div>
           <div className={styles.art} aria-hidden="true">
-            <div className={styles.orbit} />
-            <div className={styles.orbitInner} />
-            <span className={styles.formula}>x²</span>
-            <span className={styles.mark}>π</span>
             <div className={styles.mascot}><LumiMascot mood="happy" size="xl" /></div>
           </div>
         </section>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ArrowRight, BookOpen, GraduationCap, ShieldCheck, Timer } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -25,15 +25,20 @@ export function FamilyOnboarding() {
   const [stage, setStage] = useState<StudyStageId>('grade8');
   const [reminder, setReminder] = useState<StudyReminder | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
-  const heading = useRef<HTMLHeadingElement>(null);
+  const pendingFocusStepRef = useRef<number | null>(null);
   const schedule = parseStudyReminder(reminder);
 
-  useLayoutEffect(() => {
-    if (step !== 0) heading.current?.focus({ preventScroll: true });
-  }, [step]);
+  const setHeadingRef = useCallback((node: HTMLHeadingElement | null) => {
+    if (!node) return;
+    const nodeStep = Number(node.dataset.step);
+    if (pendingFocusStepRef.current !== nodeStep) return;
+    pendingFocusStepRef.current = null;
+    node.focus({ preventScroll: true });
+  }, []);
 
   function goTo(next: number) {
     playSound('tap');
+    pendingFocusStepRef.current = next;
     setStep(next);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
@@ -68,21 +73,20 @@ export function FamilyOnboarding() {
 
       <div className={styles.workspace}>
         <div className={styles.art} aria-hidden="true">
-          <div className={styles.orbit} />
-          <span className={styles.formula}>x²</span>
-          <span className={styles.pi}>π</span>
-          <motion.div
-            className={styles.lumi}
-            initial={reduced ? false : { y: 14, scale: 0.9, opacity: 0 }}
-            animate={{ y: 0, scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          >
-            <LumiMascot size="xl" mood={step === 3 ? 'celebrate' : step === 2 ? 'thinking' : 'happy'} />
-          </motion.div>
+          <div className={styles.mascotScale}>
+            <motion.div
+              className={styles.lumi}
+              initial={reduced ? false : { y: 14, scale: 0.9, opacity: 0 }}
+              animate={{ y: 0, scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            >
+              <LumiMascot size="xl" mood={step === 3 ? 'celebrate' : step === 2 ? 'thinking' : 'happy'} />
+            </motion.div>
+          </div>
           <span className={styles.stamp}>{step === 3 ? 'Gotowe do startu' : 'Matematyka E8'}</span>
         </div>
 
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence mode="wait" initial={false}>
           <motion.section
             key={step}
             className={styles.card}
@@ -94,7 +98,7 @@ export function FamilyOnboarding() {
           >
             {step === 0 && (
               <>
-                <h1 id="family-step-0" ref={heading}>Matematyka E8.<em>Po jednym kroku.</em></h1>
+                <h1 id="family-step-0" data-step={0} tabIndex={-1} ref={setHeadingRef}>Matematyka E8.<em>Po jednym kroku.</em></h1>
                 <p>Krótka teoria, zadania jak na egzaminie i jasne wyjaśnienia. Kto zaczyna?</p>
                 <div className={styles.roles}>
                   <button type="button" onClick={() => { setAudience('student'); goTo(1); }}>
@@ -114,7 +118,7 @@ export function FamilyOnboarding() {
 
             {step === 1 && (
               <>
-                <h2 id="family-step-1" tabIndex={-1} ref={heading}>{audience === 'guardian' ? 'Ustalcie tempo nauki' : 'Ile czasu masz na matematykę?'}</h2>
+                <h2 id="family-step-1" data-step={1} tabIndex={-1} ref={setHeadingRef}>{audience === 'guardian' ? 'Ustalcie tempo nauki' : 'Ile czasu masz na matematykę?'}</h2>
                 <p>{audience === 'guardian' ? 'Wybierzcie krótki cel, który pasuje do planu ucznia.' : 'Wybierz dzienny cel. Możesz zmienić go później w ustawieniach.'}</p>
                 <fieldset className={styles.goal}>
                   <legend className="sr-only">Dzienny cel nauki</legend>
@@ -139,8 +143,8 @@ export function FamilyOnboarding() {
 
             {step === 2 && (
               <>
-                <h2 id="family-step-2" tabIndex={-1} ref={heading}>Kiedy pasuje powtórka?</h2>
-                <p>{audience === 'guardian' ? 'Wybierzcie porę, która mieści się między szkołą a odpoczynkiem.' : 'Wybierz porę, w której zwykle masz chwilę na matematykę.'}</p>
+                <h2 id="family-step-2" data-step={2} tabIndex={-1} ref={setHeadingRef}>Przypomnienia o nauce</h2>
+                <p>Możesz włączyć codzienne przypomnienie teraz albo pominąć ten krok i wrócić w ustawieniach.</p>
                 <ReminderPreferences value={reminder} onChange={setReminder} />
                 <TactileButton fullWidth disabled={reminder !== null && !schedule} onClick={() => goTo(3)}>
                   {schedule ? 'Dalej z tym planem' : 'Dalej bez przypomnień'} <ArrowRight size={18} aria-hidden="true" />
@@ -150,7 +154,7 @@ export function FamilyOnboarding() {
 
             {step === 3 && (
               <>
-                <h2 id="family-step-3" tabIndex={-1} ref={heading}>Zacznij od jednego zadania</h2>
+                <h2 id="family-step-3" data-step={3} tabIndex={-1} ref={setHeadingRef}>Zacznij od jednego zadania</h2>
                 <p>Lumi pokaże Ci przykład i pomoże przejść do ćwiczeń.</p>
                 <dl className={styles.summary}>
                   <div><dt>Dzienny cel</dt><dd>{goal} min</dd></div>

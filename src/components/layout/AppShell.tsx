@@ -173,6 +173,7 @@ export function AppShell() {
             <AppSplashLoader
               variant="boot"
               progress={splashState === 'pinned' ? undefined : splashProgress}
+              previewBadge={splashState === 'pinned' ? 'Tryb podglądu (?splash=1)' : undefined}
               allowSkip={splashState !== 'checking'}
               onSkip={() => setSplashState('done')}
               fullscreen
@@ -228,7 +229,7 @@ export function AppShell() {
                 <button
                   type="button"
                   onClick={() => setRescueModalOpen(true)}
-                  className="shrink-0 rounded-lg bg-[var(--danger)] px-2.5 py-1 text-[11px] font-extrabold font-display text-[var(--on-danger)] cursor-pointer hover:opacity-95 transition-opacity"
+                  className="shrink-0 min-h-[44px] rounded-xl bg-[var(--danger)] px-3.5 py-2 text-xs font-extrabold font-display text-[var(--on-danger)] cursor-pointer hover:opacity-95 transition-opacity"
                 >
                   Odzyskaj serce
                 </button>

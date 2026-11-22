@@ -21,7 +21,7 @@ export function RankingView() {
       {/* Header Card */}
       <header className="study-feature p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider font-display text-[var(--accent-text)]">
+          <div className="inline-flex items-center gap-1.5 text-xs font-extrabold font-display text-[var(--accent-text)]">
             <Trophy className="w-4 h-4" />
             <span>Liga E8 · Podgląd rankingu</span>
           </div>
@@ -50,11 +50,11 @@ export function RankingView() {
           const isTop3 = player.rank <= 3;
           const medalColor =
             player.rank === 1
-              ? 'text-[#FFB800]'
+              ? 'text-[var(--medal-gold)]'
               : player.rank === 2
-              ? 'text-[#CBD5E1]'
+              ? 'text-[var(--medal-silver)]'
               : player.rank === 3
-              ? 'text-[#D97706]'
+              ? 'text-[var(--medal-bronze)]'
               : 'text-[var(--text-secondary)]';
 
           return (

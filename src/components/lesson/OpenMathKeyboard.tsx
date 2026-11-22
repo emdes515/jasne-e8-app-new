@@ -171,7 +171,7 @@ export function OpenMathKeyboard({
               aria-label={key.ariaLabel}
               onMouseDown={preventFocusLoss}
               onClick={() => onKeyAction(key.action)}
-              className={`min-h-[38px] min-w-[34px] px-2 shrink-0 rounded-lg text-sm font-display tabular-nums flex items-center justify-center transition-transform active:translate-y-[1px] cursor-pointer select-none ${getKeyButtonClass(
+              className={`min-h-[44px] min-w-[44px] px-2 shrink-0 rounded-lg text-sm font-display tabular-nums flex items-center justify-center transition-transform active:translate-y-[1px] cursor-pointer select-none ${getKeyButtonClass(
                 key.tone
               )}`}
             >
@@ -190,7 +190,7 @@ export function OpenMathKeyboard({
           }
           onMouseDown={preventFocusLoss}
           onClick={onToggleExpanded}
-          className={`shrink-0 min-h-[38px] px-2.5 rounded-lg border font-display font-extrabold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer select-none ${
+          className={`shrink-0 min-h-[44px] px-2.5 rounded-lg border font-display font-extrabold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer select-none ${
             expanded
               ? 'bg-[var(--accent-primary)] text-[var(--on-accent)] border-[var(--accent-primary-edge)]'
               : 'bg-[var(--bg-surface)] text-[var(--accent-text)] border-[var(--accent-primary)]/45 hover:border-[var(--accent-primary)]'
@@ -240,7 +240,7 @@ export function OpenMathKeyboard({
                   title={tab.title}
                   onMouseDown={preventFocusLoss}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`min-h-[34px] min-w-0 px-1 rounded-lg text-xs font-extrabold font-display truncate transition-colors cursor-pointer select-none ${
+                  className={`min-h-[44px] min-w-0 px-1 rounded-lg text-xs font-extrabold font-display truncate transition-colors cursor-pointer select-none ${
                     selected
                       ? 'bg-[var(--accent-primary)] text-[var(--on-accent)]'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -255,7 +255,7 @@ export function OpenMathKeyboard({
           {/* Zawartość aktywnej zakładki */}
           {activeTab === 'calc' && (
             <div className="space-y-1.5">
-              <div className="grid grid-cols-6 gap-1">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
                 {CALC_TOP_ROW.map((key) => (
                   <button
                     key={key.id}
@@ -263,7 +263,7 @@ export function OpenMathKeyboard({
                     aria-label={key.ariaLabel}
                     onMouseDown={preventFocusLoss}
                     onClick={() => onKeyAction(key.action)}
-                    className={`min-h-[38px] min-w-0 px-0 rounded-lg text-[13px] font-display flex items-center justify-center transition-transform active:translate-y-[1px] cursor-pointer select-none ${getKeyButtonClass(
+                    className={`min-h-[44px] min-w-0 px-0 rounded-lg text-[13px] font-display flex items-center justify-center transition-transform active:translate-y-[1px] cursor-pointer select-none ${getKeyButtonClass(
                       key.tone
                     )}`}
                   >
@@ -292,7 +292,7 @@ export function OpenMathKeyboard({
 
           {activeTab === 'algebra' && (
             <div className="space-y-1.5">
-              <div className="grid grid-cols-6 gap-1">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
                 {ALGEBRA_TOP_ROW.map((key) => (
                   <button
                     key={key.id}
@@ -300,7 +300,7 @@ export function OpenMathKeyboard({
                     aria-label={key.ariaLabel}
                     onMouseDown={preventFocusLoss}
                     onClick={() => onKeyAction(key.action)}
-                    className={`min-h-[38px] min-w-0 px-0 rounded-lg text-[13px] font-display flex items-center justify-center transition-transform active:translate-y-[1px] cursor-pointer select-none ${getKeyButtonClass(
+                    className={`min-h-[44px] min-w-0 px-0 rounded-lg text-[13px] font-display flex items-center justify-center transition-transform active:translate-y-[1px] cursor-pointer select-none ${getKeyButtonClass(
                       key.tone
                     )}`}
                   >
@@ -376,7 +376,7 @@ export function OpenMathKeyboard({
           )}
 
           {/* Przypięty dolny pasek sterowania widoczny na każdej zakładce (bezpieczny od 320px wzwyż) */}
-          <div className="grid grid-cols-[1.25fr_0.9fr_0.9fr_1.15fr_0.9fr_1.15fr] gap-1 pt-0.5">
+          <div className="grid grid-cols-3 sm:grid-cols-[1.25fr_0.9fr_0.9fr_1.15fr_0.9fr_1.15fr] gap-1 pt-0.5">
             <button
               type="button"
               aria-label="Przełącz na klawiaturę systemową ABC"

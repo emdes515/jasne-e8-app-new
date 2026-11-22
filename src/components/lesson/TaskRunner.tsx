@@ -484,7 +484,7 @@ function TaskRunnerQuestion() {
                 <span className="text-[var(--accent-text)]">{taskTypeLabel}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* 1. Bookmark "Zapisz do powtórki" (Choreography #7) */}
                 <motion.button
                   type="button"

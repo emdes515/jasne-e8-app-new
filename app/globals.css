@@ -21,14 +21,19 @@
   --success: #10B981;
   --success-edge: #047857;
   --on-success: #080C16;
+  --success-text: #34D399;
   --danger: #F43F5E;
   --danger-edge: #BE123C;
   --on-danger: #080C16;
   --info: #38BDF8;
   --info-edge: #0284C7;
   --on-info: #080C16;
+  --info-text: #38BDF8;
   --combo-fire: #F97316;
   --rarity-epic: #A855F7;
+  --medal-gold: #FFB800;
+  --medal-silver: #CBD5E1;
+  --medal-bronze: #F59E0B;
 }
 
 /* Solar Gaming (Light) */
@@ -44,18 +49,23 @@
   --accent-primary: #D97706;
   --accent-primary-edge: #92400E;
   --on-accent: #0F172A;
-  --accent-text: #B45309;
+  --accent-text: #92400E;
   --success: #047857;
   --success-edge: #065F46;
   --on-success: #FFFFFF;
+  --success-text: #065F46;
   --danger: #BE123C;
   --danger-edge: #9F1239;
   --on-danger: #FFFFFF;
   --info: #0369A1;
   --info-edge: #0369A1;
   --on-info: #FFFFFF;
+  --info-text: #075985;
   --combo-fire: #C2410C;
   --rarity-epic: #7E22CE;
+  --medal-gold: #92400E;
+  --medal-silver: #475569;
+  --medal-bronze: #9A3412;
 }
 
 html { scroll-padding-block: 4rem 5rem; }

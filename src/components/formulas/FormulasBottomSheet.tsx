@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { BookOpen, Info, Search, Sparkles, X } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -15,6 +15,17 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { MathText } from '../ui/MathText';
 
 export function FormulasBottomSheet() {
+  const { state, formulasOpen } = useAppState();
+
+  // Strict guard: only Math has Formulas E8 (AC-G4); mounted content resets cleanly per open.
+  if (state.activeSubject !== 'math' || !formulasOpen) {
+    return null;
+  }
+
+  return <FormulasBottomSheetContent />;
+}
+
+function FormulasBottomSheetContent() {
   const {
     state,
     selectedLessonId,
@@ -57,25 +68,10 @@ export function FormulasBottomSheet() {
   }, [state.activeSession, selectedLessonId, lessonViewStage]);
 
   const [activeCategoryId, setActiveCategoryId] = useState<string>(
-    detectedContext.matchedCategoryId ?? 'all'
+    () => detectedContext.matchedCategoryId ?? 'all'
   );
   const [query, setQuery] = useState('');
-
-  // Auto-select the matching category whenever the sheet opens inside a lesson/task
-  useEffect(() => {
-    if (!formulasOpen) return;
-    setQuery('');
-    if (detectedContext.matchedCategoryId) {
-      setActiveCategoryId(detectedContext.matchedCategoryId);
-    } else {
-      setActiveCategoryId('all');
-    }
-  }, [formulasOpen, detectedContext.matchedCategoryId]);
-
-  // Strict guard: only Math has Formulas E8 (AC-G4)
-  if (state.activeSubject !== 'math') {
-    return null;
-  }
+  const searchId = useId();
 
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -143,20 +139,24 @@ export function FormulasBottomSheet() {
 
         {/* Quick Search Input */}
         <div className="relative">
+          <label htmlFor={searchId} className="sr-only">
+            Szukaj wzoru matematycznego
+          </label>
           <Search className="w-4 h-4 text-[var(--text-secondary)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
+            id={searchId}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj wzoru (np. Pitagoras, procent, ułamek)…"
-            className="w-full min-h-[42px] pl-10 pr-9 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-xs sm:text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
+            placeholder="Szukaj wzoru (np. Pitagoras, pole)…"
+            className="w-full min-h-[44px] pl-10 pr-12 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-xs sm:text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
           />
           {query && (
             <button
               type="button"
               aria-label="Wyczyść wyszukiwanie"
               onClick={() => setQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              className="absolute right-0.5 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -183,7 +183,7 @@ export function FormulasBottomSheet() {
                   setQuery('');
                   setActiveCategoryId(cat.id);
                 }}
-                className="relative min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-extrabold font-display cursor-pointer select-none flex items-center gap-1.5"
+                className="relative min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-extrabold font-display cursor-pointer select-none flex items-center gap-1.5"
               >
                 {isSelected && (
                   <motion.span
