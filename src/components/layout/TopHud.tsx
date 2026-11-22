@@ -40,18 +40,19 @@ export function TopHud() {
   } = useAppState();
 
   const [streakInfoOpen, setStreakInfoOpen] = useState(false);
+  const [dismissedLossTick, setDismissedLossTick] = useState(0);
 
   return (
     <>
       <header className="h-14 w-full bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] px-1.5 min-[360px]:px-3 sm:px-5 flex items-center justify-between gap-1 min-[360px]:gap-2">
-        {/* Left: Brand Mark on non-start mobile views (>=380px), Subject Switcher + Optional Math Formulas quick trigger on tablet */}
+        {/* Left: Brand Mark on non-start mobile views (>=430px), Subject Switcher + Optional Math Formulas quick trigger on tablet */}
         <div className="flex items-center gap-1 min-[360px]:gap-2 shrink-0">
           {activeTab !== 'start' && (
             <button
               type="button"
               onClick={() => setActiveTab('start')}
               aria-label="JASNE E8 — przejdź do Startu"
-              className="hidden min-[380px]:inline-flex lg:hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-xl cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-primary)]"
+              className="hidden min-[430px]:inline-flex lg:hidden min-h-[44px] min-w-[44px] items-center justify-center rounded-xl cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent-primary)]"
             >
               <JasneBulbMark size={30} framed animated="subtle" />
             </button>
@@ -107,14 +108,14 @@ export function TopHud() {
                 title={`Aktywne Tarcze Serii: ${state.streakShields}/2`}
               >
                 <Shield className="w-3.5 h-3.5 fill-[var(--info)]/20" />
-                <span className="hidden min-[380px]:inline">
+                <span className="hidden min-[430px]:inline">
                   {state.streakShields}
                 </span>
               </motion.span>
             )}
           </button>
 
-          {/* 2. Hearts (below 380px shows just number e.g. '5', >= 380px shows '5/5') */}
+          {/* 2. Hearts (below 430px shows just number e.g. '5', >= 430px shows '5/5') */}
           <motion.button
             type="button"
             key={heartEventTick?.tick ?? 'hearts-idle'}
@@ -145,8 +146,8 @@ export function TopHud() {
               size={18}
               variant={state.hearts > 0 ? 'full' : 'cracked'}
             />
-            <span className="inline min-[380px]:hidden">{state.hearts}</span>
-            <span className="hidden min-[380px]:inline">
+            <span className="inline min-[430px]:hidden">{state.hearts}</span>
+            <span className="hidden min-[430px]:inline">
               {state.hearts}/5
             </span>
             {state.hearts < 5 && secondsToNextHeart !== null && (
@@ -163,17 +164,22 @@ export function TopHud() {
 
             {/* Floating -1 indicator on heart loss (Choreography #8) */}
             <AnimatePresence>
-              {heartEventTick?.type === 'loss' && (
-                <motion.span
-                  initial={{ opacity: 1, y: 0 }}
-                  animate={{ opacity: 0, y: -22 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.65 }}
-                  className="absolute -top-3 right-1 text-xs font-extrabold text-[var(--danger)] pointer-events-none"
-                >
-                  -1
-                </motion.span>
-              )}
+              {heartEventTick?.type === 'loss' &&
+                dismissedLossTick !== heartEventTick.tick && (
+                  <motion.span
+                    key={heartEventTick.tick}
+                    initial={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 0, y: -22 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.65 }}
+                    onAnimationComplete={() =>
+                      setDismissedLossTick(heartEventTick.tick)
+                    }
+                    className="absolute -top-3 right-1 text-xs font-extrabold text-[var(--danger)] pointer-events-none"
+                  >
+                    -1
+                  </motion.span>
+                )}
             </AnimatePresence>
           </motion.button>
 
@@ -188,10 +194,10 @@ export function TopHud() {
             className="min-h-[44px] min-w-[44px] px-1.5 min-[360px]:px-2.5 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] flex items-center justify-center gap-1 min-[360px]:gap-1.5 text-xs sm:text-sm font-extrabold font-display tabular-nums cursor-pointer hover:border-[var(--accent-primary)] transition-colors"
           >
             <Coins className="w-4 h-4 text-[var(--accent-text)] shrink-0" />
-            <span className="inline min-[380px]:hidden">
+            <span className="inline min-[430px]:hidden">
               {formatCompactCoins(state.coins)}
             </span>
-            <span className="hidden min-[380px]:inline">
+            <span className="hidden min-[430px]:inline">
               <CountUpNumber value={state.coins} />
             </span>
           </button>

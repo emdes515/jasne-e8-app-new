@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { BookOpen, Info, Search, Sparkles, X } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -71,6 +71,7 @@ function FormulasBottomSheetContent() {
     () => detectedContext.matchedCategoryId ?? 'all'
   );
   const [query, setQuery] = useState('');
+  const searchId = useId();
 
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -138,20 +139,24 @@ function FormulasBottomSheetContent() {
 
         {/* Quick Search Input */}
         <div className="relative">
+          <label htmlFor={searchId} className="sr-only">
+            Szukaj wzoru matematycznego
+          </label>
           <Search className="w-4 h-4 text-[var(--text-secondary)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
+            id={searchId}
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj wzoru (np. Pitagoras, procent, ułamek)…"
-            className="w-full min-h-[42px] pl-10 pr-9 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-xs sm:text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
+            placeholder="Szukaj wzoru (np. Pitagoras, pole)…"
+            className="w-full min-h-[44px] pl-10 pr-12 rounded-xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-xs sm:text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]"
           />
           {query && (
             <button
               type="button"
               aria-label="Wyczyść wyszukiwanie"
               onClick={() => setQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              className="absolute right-0.5 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -178,7 +183,7 @@ function FormulasBottomSheetContent() {
                   setQuery('');
                   setActiveCategoryId(cat.id);
                 }}
-                className="relative min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-extrabold font-display cursor-pointer select-none flex items-center gap-1.5"
+                className="relative min-h-[44px] px-3 py-1.5 rounded-xl text-xs font-extrabold font-display cursor-pointer select-none flex items-center gap-1.5"
               >
                 {isSelected && (
                   <motion.span

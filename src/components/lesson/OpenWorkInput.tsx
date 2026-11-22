@@ -233,7 +233,7 @@ export function OpenWorkInput({
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={handleUndo}
                     aria-label="Cofnij ostatnią zmianę"
-                    className={`min-h-[32px] px-2 rounded-lg border text-xs font-bold inline-flex items-center gap-1 transition-colors select-none ${
+                    className={`min-h-[44px] min-w-[44px] px-2.5 rounded-lg border text-xs font-bold inline-flex items-center justify-center gap-1 transition-colors select-none ${
                       undoStack.length === 0
                         ? 'border-transparent text-[var(--text-secondary)]/45 cursor-not-allowed'
                         : 'border-[var(--border-subtle)] bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer'
@@ -249,7 +249,7 @@ export function OpenWorkInput({
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={handleClear}
                       aria-label="Wyczyść zapis rozwiązania"
-                      className="min-h-[32px] px-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--danger)] inline-flex items-center gap-1 transition-colors cursor-pointer select-none"
+                      className="min-h-[44px] min-w-[44px] px-2.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--danger)] inline-flex items-center justify-center gap-1 transition-colors cursor-pointer select-none"
                     >
                       <Eraser className="w-3.5 h-3.5" aria-hidden="true" />
                       <span className="hidden min-[440px]:inline">Wyczyść</span>

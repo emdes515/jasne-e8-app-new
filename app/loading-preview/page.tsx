@@ -49,7 +49,7 @@ export default function LoadingPreviewPage() {
             <div className="space-y-2">
               <Link
                 href="/"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                className="inline-flex items-center gap-1.5 min-h-[44px] px-1 -ml-1 rounded-lg text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Wróć do aplikacji</span>

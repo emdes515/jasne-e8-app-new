@@ -88,41 +88,42 @@ export function BentoTheoryTabs({
   return (
     <div className="space-y-3.5 sm:space-y-4 pb-5">
       {/* Top Bar */}
-      <div className="flex items-center justify-between gap-3 p-4 study-panel">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 study-panel">
+        <div className="flex items-center justify-between gap-2 sm:contents">
           <button
             type="button"
             onClick={() => onClose()}
             aria-label="Wróć z lekcji"
-            className="min-w-[44px] min-h-[44px] rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer shrink-0"
+            className="sm:order-1 min-w-[44px] min-h-[44px] rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="min-w-0">
-            <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-              Lekcja {lesson.nodeNumber}
-            </div>
-            <h1 className="text-base sm:text-lg font-extrabold font-display text-[var(--text-primary)] [overflow-wrap:anywhere]">
-              {lesson.title}
-            </h1>
-          </div>
+
+          {/* "Wzory E8" strictly only when activeSubject === 'math' */}
+          {state.activeSubject === 'math' && (
+            <TactileButton
+              variant="secondary"
+              size="sm"
+              className="sm:order-3 shrink-0"
+              onClick={() => {
+                playSound('tap');
+                setFormulasOpen(true);
+              }}
+            >
+              <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
+              <span>Wzory E8</span>
+            </TactileButton>
+          )}
         </div>
 
-        {/* "Wzory E8" strictly only when activeSubject === 'math' */}
-        {state.activeSubject === 'math' && (
-          <TactileButton
-            variant="secondary"
-            size="sm"
-            className="shrink-0"
-            onClick={() => {
-              playSound('tap');
-              setFormulasOpen(true);
-            }}
-          >
-            <BookOpen className="w-4 h-4 text-[var(--accent-text)]" />
-            <span>Wzory E8</span>
-          </TactileButton>
-        )}
+        <div className="min-w-0 sm:order-2 sm:flex-1 sm:px-2">
+          <div className="text-xs font-extrabold font-display text-[var(--accent-text)]">
+            Lekcja {lesson.nodeNumber}
+          </div>
+          <h1 className="text-base sm:text-lg font-extrabold font-display text-[var(--text-primary)] break-words">
+            {lesson.title}
+          </h1>
+        </div>
       </div>
 
       {/* 4 Pill Tabs with Shared layoutId Capsule */}

@@ -75,7 +75,7 @@ export function SmartMathKeyboard({
             setUseSystemKeyboard((prev) => !prev);
             setTimeout(() => inputRef.current?.focus(), 60);
           }}
-          className="min-h-[38px] px-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] inline-flex items-center gap-1.5 text-xs font-bold text-[var(--accent-text)] hover:border-[var(--accent-primary)] cursor-pointer self-start sm:self-auto"
+          className="min-h-[44px] px-3 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] inline-flex items-center gap-1.5 text-xs font-bold text-[var(--accent-text)] hover:border-[var(--accent-primary)] cursor-pointer self-start sm:self-auto"
         >
           <Keyboard className="w-3.5 h-3.5" />
           <span>
@@ -101,7 +101,7 @@ export function SmartMathKeyboard({
             onSubmit();
           }
         }}
-        placeholder="Wpisz wynik (np. 0 lub 10)"
+        placeholder="Wpisz wynik, np. 10"
         className="w-full min-h-[54px] px-4 rounded-2xl bg-[var(--bg-elevated)] border-2 border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none text-lg font-extrabold font-display tabular-nums text-[var(--text-primary)]"
       />
 

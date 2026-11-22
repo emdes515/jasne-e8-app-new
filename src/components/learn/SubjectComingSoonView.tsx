@@ -20,7 +20,8 @@ export function SubjectComingSoonView() {
   const isPolish = state.activeSubject === 'polish';
 
   const subjectTitle = isPolish ? 'Język polski' : 'Język angielski';
-  const accentColor = isPolish ? '#F43F5E' : '#10B981';
+  const accentColor = isPolish ? 'var(--danger)' : 'var(--success)';
+  const onAccentTextClass = isPolish ? 'text-[var(--on-danger)]' : 'text-[var(--on-success)]';
   const contextPreviewTitle = isPolish
     ? 'Lektury i formy wypowiedzi'
     : 'Zwroty i czasy';
@@ -90,7 +91,7 @@ export function SubjectComingSoonView() {
       >
         <div className="flex items-start gap-3.5">
           <div
-            className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 text-[#080C16]"
+            className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${onAccentTextClass}`}
             style={{ backgroundColor: accentColor }}
           >
             <FileText className="w-5 h-5" />

@@ -186,7 +186,7 @@ export function VaultView() {
                   playSound('tap');
                   setSubjectFilter(f.id);
                 }}
-                className={`min-h-[38px] px-3.5 rounded-xl border text-xs font-extrabold font-display transition-colors cursor-pointer ${
+                className={`min-h-[44px] px-3.5 rounded-xl border text-xs font-extrabold font-display transition-colors cursor-pointer ${
                   active
                     ? 'bg-[var(--bg-elevated)] border-[var(--accent-primary)] text-[var(--accent-text)]'
                     : 'bg-[var(--bg-canvas)]/40 border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'

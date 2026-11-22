@@ -3,7 +3,8 @@
 import { getFirebaseApp } from './firebase';
 
 export const CURRENT_APP_VERSION = '1.0.0';
-export const CURRENT_WEB_BUILD = '2026.11.19.2';
+export const CURRENT_WEB_BUILD =
+  process.env.NEXT_PUBLIC_APP_BUILD || '2026.11.22.1';
 
 export interface AppUpdatePolicy {
   ios?: {

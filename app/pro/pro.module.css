@@ -23,7 +23,9 @@
   font-weight: 700;
 }
 
-.back:hover { color: var(--text-primary); }
+@media (hover: hover) {
+  .back:hover { color: var(--text-primary); }
+}
 
 .hero {
   display: grid;
@@ -42,10 +44,8 @@
 
 .eyebrow {
   color: var(--accent-text);
-  font-size: .75rem;
-  font-weight: 800;
-  letter-spacing: .07em;
-  text-transform: uppercase;
+  font-size: .8125rem;
+  font-weight: 700;
 }
 
 .hero h1 {
@@ -83,7 +83,9 @@
   box-shadow: 0 3px var(--accent-primary-edge);
 }
 
-.jump:hover { filter: brightness(1.08); }
+@media (hover: hover) {
+  .jump:hover { filter: brightness(1.08); }
+}
 .jump:active { translate: 0 2px; box-shadow: 0 1px var(--accent-primary-edge); }
 
 .art {
@@ -94,35 +96,11 @@
   place-items: center;
   background:
     radial-gradient(ellipse at center, color-mix(in srgb, var(--accent-primary) 14%, transparent), transparent 70%),
-    repeating-linear-gradient(0deg, transparent 0 23px, color-mix(in srgb, var(--border-subtle) 68%, transparent) 23px 24px),
-    repeating-linear-gradient(90deg, transparent 0 23px, color-mix(in srgb, var(--border-subtle) 68%, transparent) 23px 24px),
     var(--bg-elevated);
   border-inline-start: 1px solid var(--border-subtle);
 }
 
-.orbit, .orbitInner {
-  position: absolute;
-  width: min(77%, 18rem);
-  aspect-ratio: 1;
-  border: 1px dashed color-mix(in srgb, var(--accent-text) 60%, var(--border-subtle));
-  border-radius: 50%;
-}
-
-.orbitInner {
-  width: min(57%, 13.4rem);
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--accent-text) 26%, var(--border-subtle));
-}
-
 .mascot { position: relative; }
-.formula, .mark {
-  position: absolute;
-  color: var(--accent-text);
-  font-weight: 800;
-  font-size: clamp(1.15rem, 3vw, 2.4rem);
-}
-.formula { inset: 19% auto auto 17%; rotate: -13deg; }
-.mark { inset: auto 16% 19% auto; rotate: 14deg; }
 
 .sectionTitle {
   margin-bottom: .9rem;
@@ -188,7 +166,10 @@
 .note { margin-top: auto; }
 .freeAction { margin-top: auto; color: var(--info); text-align: start; cursor: pointer; }
 .freeAction:disabled { opacity: .6; cursor: default; }
-.freeAction:hover { text-decoration: underline; }
+
+@media (hover: hover) {
+  .freeAction:hover { text-decoration: underline; }
+}
 
 @media (max-width: 42rem) {
   .hero, .plans { grid-template-columns: 1fr; }

@@ -44,9 +44,12 @@ const SHOP_CATEGORIES: Array<{ id: ShopCategory; label: string }> = [
 ];
 
 const FRAME_PREVIEW_CLASSES: Record<string, string> = {
-  emerald_impulse_frame: 'border-[#10B981] bg-[#10B981]/15 text-[#10B981]',
-  gold_ring_frame: 'border-[#FFB800] bg-[#FFB800]/15 text-[#FFB800]',
-  cyber_plasma_frame: 'border-[#38BDF8] bg-[#38BDF8]/15 text-[#38BDF8]',
+  emerald_impulse_frame:
+    'border-[var(--success)] bg-[var(--success)]/10 text-[var(--success-text)]',
+  gold_ring_frame:
+    'border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-text)]',
+  cyber_plasma_frame:
+    'border-[var(--info)] bg-[var(--info)]/10 text-[var(--info-text)]',
 };
 
 function ShopItemVisualThumbnail({
@@ -537,7 +540,7 @@ export function MascotDressingRoom() {
                     type="button"
                     aria-disabled="true"
                     onClick={() => handleBuyOrEquip(item)}
-                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border-2 border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] text-xs font-extrabold font-display opacity-50 cursor-pointer tabular-nums"
+                    className="w-full min-h-[44px] px-3.5 py-2 rounded-xl border-2 border-dashed border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-[var(--text-secondary)] text-xs font-extrabold font-display cursor-pointer tabular-nums"
                   >
                     Brakuje {missingCoins} monet
                   </button>

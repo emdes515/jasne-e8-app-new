@@ -290,7 +290,7 @@ export function ExamRunnerView({
                   playSound('tap');
                   setCurrentIndex(idx);
                 }}
-                className={`min-h-[40px] rounded-xl border-2 text-xs font-extrabold font-display tabular-nums cursor-pointer transition-all ${
+                className={`min-h-[44px] rounded-xl border-2 text-xs font-extrabold font-display tabular-nums cursor-pointer transition-all ${
                   active
                     ? 'bg-[var(--accent-primary)] text-[var(--on-accent)] border-[var(--accent-primary-edge)]'
                     : answered
@@ -440,10 +440,11 @@ export function ExamRunnerView({
             )}
 
             {/* Bottom Navigation Prev / Next / Submit */}
-            <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
               <TactileButton
                 variant="secondary"
                 size="md"
+                className="max-w-full"
                 disabled={currentIndex === 0}
                 onClick={() => {
                   playSound('tap');
@@ -458,6 +459,7 @@ export function ExamRunnerView({
                 <TactileButton
                   variant="primary"
                   size="md"
+                  className="max-w-full"
                   onClick={() => {
                     playSound('tap');
                     setCurrentIndex((i) => Math.min(tasks.length - 1, i + 1));
@@ -470,6 +472,7 @@ export function ExamRunnerView({
                 <TactileButton
                   variant="success"
                   size="md"
+                  className="max-w-full"
                   onClick={() => {
                     playSound('tap');
                     setSubmitModalOpen(true);

@@ -79,6 +79,7 @@ function AccountForm({
 }: AccountModalProps) {
   const { user, configured } = useCloudAuthUser();
   const emailId = useId();
+  const passwordId = useId();
   const [email, setEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'entry' | 'login' | 'register' | 'fallback'>('entry');
   const [fallbackMode, setFallbackMode] = useState<'login' | 'register'>('login');
@@ -337,7 +338,7 @@ function AccountForm({
                     setError(null);
                     setInfo(null);
                   }}
-                  className="inline-flex items-center gap-1 font-bold text-[var(--accent-text)] hover:underline cursor-pointer shrink-0"
+                  className="min-h-[44px] inline-flex items-center gap-1 px-2.5 -mr-1.5 rounded-lg font-bold text-[var(--accent-text)] hover:underline cursor-pointer shrink-0"
                 >
                   <ArrowLeft className="w-3 h-3" />
                   Zmień
@@ -349,7 +350,7 @@ function AccountForm({
                   <button
                     type="button"
                     onClick={() => setFallbackMode('login')}
-                    className={`min-h-[36px] rounded-lg text-xs font-extrabold font-display cursor-pointer ${
+                    className={`min-h-[44px] rounded-lg text-xs font-extrabold font-display cursor-pointer ${
                       fallbackMode === 'login'
                         ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]'
                         : 'text-[var(--text-secondary)]'
@@ -360,7 +361,7 @@ function AccountForm({
                   <button
                     type="button"
                     onClick={() => setFallbackMode('register')}
-                    className={`min-h-[36px] rounded-lg text-xs font-extrabold font-display cursor-pointer ${
+                    className={`min-h-[44px] rounded-lg text-xs font-extrabold font-display cursor-pointer ${
                       fallbackMode === 'register'
                         ? 'bg-[var(--bg-surface)] text-[var(--text-primary)]'
                         : 'text-[var(--text-secondary)]'
@@ -372,13 +373,15 @@ function AccountForm({
               )}
 
               <form onSubmit={(e) => handlePasswordSubmit(e, activePasswordMode)} className="space-y-2.5">
+                <label htmlFor={passwordId} className="block text-xs font-bold text-[var(--text-secondary)]">
+                  Hasło
+                </label>
                 <input
+                  id={passwordId}
                   type="password"
-                  aria-label="Hasło"
                   autoComplete={activePasswordMode === 'register' ? 'new-password' : 'current-password'}
                   required
                   minLength={6}
-                  autoFocus
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={
@@ -403,7 +406,7 @@ function AccountForm({
                   type="button"
                   disabled={busy}
                   onClick={handleSendMagicLink}
-                  className="inline-flex items-center gap-1 font-bold text-[var(--info)] hover:underline cursor-pointer"
+                  className="min-h-[44px] inline-flex items-center gap-1 px-2 -ml-2 rounded-lg font-bold text-[var(--info)] hover:underline cursor-pointer"
                 >
                   <Mail className="w-3.5 h-3.5" />
                   <span>Wyślij link bez hasła</span>
@@ -413,7 +416,7 @@ function AccountForm({
                     type="button"
                     disabled={busy}
                     onClick={handleResetPassword}
-                    className="font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+                    className="min-h-[44px] inline-flex items-center px-2 -mr-2 rounded-lg font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
                   >
                     Nie pamiętam hasła
                   </button>
