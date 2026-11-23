@@ -635,7 +635,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       setLessonAccountRequest({ lessonId: lesson.id, action: 'tasks' });
       return false;
     }
-    if (current.hearts <= 0) {
+    if (lesson.id !== MATH_LESSON_1_1.id && current.hearts <= 0) {
       playSound('wrong');
       setRescueModalOpen(true);
       return false;
@@ -964,8 +964,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      const isFirstLesson = session.source === 'lesson' && session.contentId === MATH_LESSON_1_1.id;
       const zeroHeartsReached =
-        params.outcome === 'wrong' && nextHearts <= 0 && session.source !== 'rescue';
+        !isFirstLesson && params.outcome === 'wrong' && nextHearts <= 0 && session.source !== 'rescue';
 
       // Accuracy stats (excluding practice sessions, per Section 6.3.2)
       let addPointsEarned = 0;

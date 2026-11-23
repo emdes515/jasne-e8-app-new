@@ -34,7 +34,7 @@ export function ReminderPreferences({
         />
       </label>
       <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-        Przypomnienie pojawia się w otwartej aplikacji. Możesz je wyłączyć w ustawieniach.
+        Przypomnienie pojawia się wyłącznie w otwartej, widocznej aplikacji (bez powiadomień w tle). Możesz je wyłączyć w ustawieniach.
       </p>
 
       {value && (

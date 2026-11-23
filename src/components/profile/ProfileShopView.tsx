@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import {
   User,
@@ -308,14 +309,22 @@ export function ProfileShopView() {
                   </p>
                 </div>
               </div>
-              <TactileButton
-                variant={cloudUser ? 'secondary' : 'info'}
-                size="sm"
-                className="shrink-0"
-                onClick={() => setAccountModalOpen(true)}
-              >
-                {cloudUser ? 'Zarządzaj kontem' : 'Przejdź do konta'}
-              </TactileButton>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Link
+                  href="/pro#opiekunowie"
+                  className="inline-flex min-h-11 items-center rounded-xl px-3 text-xs font-bold text-[var(--info)] hover:underline"
+                >
+                  Informacje dla opiekunów
+                </Link>
+                <TactileButton
+                  variant={cloudUser ? 'secondary' : 'info'}
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => setAccountModalOpen(true)}
+                >
+                  {cloudUser ? 'Zarządzaj kontem' : 'Przejdź do konta'}
+                </TactileButton>
+              </div>
             </motion.section>
 
             {/* Quick Starter Color Switcher */}

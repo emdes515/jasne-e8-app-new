@@ -4,6 +4,7 @@ import { ArrowDown, ArrowLeft, BookOpen, Check, Heart, Lightbulb, Target } from 
 import { LumiMascot } from '../../src/components/mascot/LumiMascot';
 import { AppStateProvider } from '../../src/context/AppStateContext';
 import { FreeAccountAction } from './FreeAccountAction';
+import { ShareGuardianInfoButton } from './ShareGuardianInfoButton';
 import styles from './pro.module.css';
 
 export const metadata: Metadata = {
@@ -80,6 +81,22 @@ export default function ProPage() {
               <p className={styles.note}>Zakres, cena i warunki dostępu pojawią się przed premierą.</p>
             </article>
           </div>
+        </section>
+
+        <section id="opiekunowie" aria-labelledby="guardians-title" className="mt-8">
+          <article className={styles.card}>
+            <h2 id="guardians-title" className="text-lg font-extrabold font-display">
+              Informacje dla opiekunów
+            </h2>
+            <p className={styles.cardSubtitle}>
+              Pierwsza lekcja działa lokalnie bez zakładania konta. Dla uczniów poniżej 16 lat konto zakłada rodzic lub
+              opiekun prawny swoim adresem e-mail albo kontem Google. W aplikacji nie ma ukrytych opłat ani automatycznych
+              subskrypcji.
+            </p>
+            <div className="pt-2">
+              <ShareGuardianInfoButton />
+            </div>
+          </article>
         </section>
       </main>
     </AppStateProvider>
