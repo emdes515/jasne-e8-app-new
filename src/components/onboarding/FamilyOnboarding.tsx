@@ -2,31 +2,22 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, ArrowRight, BookOpen, GraduationCap, ShieldCheck, Timer } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, ShieldCheck } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { parseStudyReminder, WEEKDAYS } from '../../lib/studyReminders';
-import type { DailyGoalMinutes, OnboardingAudience, StudyReminder, StudyStageId } from '../../types/domain';
 import { CloudAccountModal } from '../auth/CloudAccountModal';
 import { LumiMascot } from '../mascot/LumiMascot';
-import { ReminderCloudActions } from '../reminders/ReminderCloudActions';
-import { ReminderPreferences } from '../reminders/ReminderPreferences';
 import { TactileButton } from '../ui/TactileButton';
 import styles from './familyOnboarding.module.css';
 
-const GOALS: DailyGoalMinutes[] = [5, 10, 15];
-const STEPS = ['Start', 'Tempo', 'Plan', 'Pierwsza lekcja'];
+const STEPS = ['Start', 'Dla opiekuna'];
 
 export function FamilyOnboarding() {
   const { completeOnboarding, playSound } = useAppState();
   const reduced = useReducedMotion();
   const [step, setStep] = useState(0);
-  const [audience, setAudience] = useState<OnboardingAudience>('student');
-  const [goal, setGoal] = useState<DailyGoalMinutes>(10);
-  const [stage, setStage] = useState<StudyStageId>('grade8');
-  const [reminder, setReminder] = useState<StudyReminder | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [skipGuardianGate, setSkipGuardianGate] = useState(false);
   const pendingFocusStepRef = useRef<number | null>(null);
-  const schedule = parseStudyReminder(reminder);
 
   const setHeadingRef = useCallback((node: HTMLHeadingElement | null) => {
     if (!node) return;
@@ -43,26 +34,36 @@ export function FamilyOnboarding() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
-  function finish(startFirstLesson: boolean) {
+  function finish(startFirstLesson: boolean, audience: 'student' | 'guardian' = 'student') {
     completeOnboarding({
       nickname: 'BłyskLogiki',
-      studyStage: stage,
+      studyStage: 'grade8',
       activeSubject: 'math',
-      dailyGoalMinutes: goal,
+      dailyGoalMinutes: 10,
       starterColor: 'gold_spark',
       audience,
-      studyReminder: schedule,
+      studyReminder: null,
       startFirstLesson,
     });
+  }
+
+  function openAccountModal(skipGate: boolean) {
+    playSound('tap');
+    setSkipGuardianGate(skipGate);
+    setAccountOpen(true);
   }
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
         {step > 0 ? (
-          <button type="button" className={styles.back} onClick={() => goTo(step - 1)}><ArrowLeft size={18} aria-hidden="true" /> Wstecz</button>
-        ) : <span className="font-display font-extrabold">JASNE E8</span>}
-        <ol className={styles.steps} aria-label="Przebieg konfiguracji">
+          <button type="button" className={styles.back} onClick={() => goTo(0)}>
+            <ArrowLeft size={18} aria-hidden="true" /> Wstecz
+          </button>
+        ) : (
+          <span className="font-display font-extrabold">JASNE E8</span>
+        )}
+        <ol className={styles.steps} aria-label="Przebieg startu">
           {STEPS.map((label, index) => (
             <li key={label} data-done={index <= step} aria-current={index === step ? 'step' : undefined}>
               <span className="sr-only">{label}</span>
@@ -80,10 +81,10 @@ export function FamilyOnboarding() {
               animate={{ y: 0, scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             >
-              <LumiMascot size="xl" mood={step === 3 ? 'celebrate' : step === 2 ? 'thinking' : 'happy'} />
+              <LumiMascot size="xl" mood={step === 1 ? 'supportive' : 'happy'} />
             </motion.div>
           </div>
-          <span className={styles.stamp}>{step === 3 ? 'Gotowe do startu' : 'Matematyka E8'}</span>
+          <span className={styles.stamp}>{step === 1 ? 'Dla opiekuna' : 'Matematyka E8'}</span>
         </div>
 
         <AnimatePresence mode="wait" initial={false}>
@@ -98,77 +99,67 @@ export function FamilyOnboarding() {
           >
             {step === 0 && (
               <>
-                <h1 id="family-step-0" data-step={0} tabIndex={-1} ref={setHeadingRef}>Matematyka E8.<em>Po jednym kroku.</em></h1>
-                <p>Krótka teoria, zadania jak na egzaminie i jasne wyjaśnienia. Kto zaczyna?</p>
+                <h1 id="family-step-0" data-step={0} tabIndex={-1} ref={setHeadingRef}>
+                  Matematyka E8.<em>Po jednym kroku.</em>
+                </h1>
+                <p>
+                  Krótka teoria, zadania jak na egzaminie i jasne wyjaśnienia. Pierwszą lekcję zrobisz od razu bez konta.
+                </p>
+                <TactileButton fullWidth size="lg" onClick={() => finish(true, 'student')}>
+                  <BookOpen size={19} aria-hidden="true" />
+                  <span>Zacznij pierwszą lekcję</span>
+                </TactileButton>
                 <div className={styles.roles}>
-                  <button type="button" onClick={() => { setAudience('student'); goTo(1); }}>
-                    <GraduationCap className={styles.roleIcon} aria-hidden="true" />
-                    <span><strong>Uczę się</strong><small>Zacznij pierwszą lekcję bez konta</small></span>
-                    <ArrowRight size={17} aria-hidden="true" />
-                  </button>
-                  <button type="button" onClick={() => { setAudience('guardian'); goTo(1); }}>
+                  <button type="button" onClick={() => goTo(1)}>
                     <ShieldCheck className={styles.roleIcon} aria-hidden="true" />
-                    <span><strong>Jestem rodzicem lub opiekunem</strong><small>Ustaw plan razem z uczniem</small></span>
+                    <span>
+                      <strong>Jestem rodzicem lub opiekunem</strong>
+                      <small>Zobacz jak działa nauka i kiedy potrzebne jest konto</small>
+                    </span>
                     <ArrowRight size={17} aria-hidden="true" />
                   </button>
                 </div>
-                <button type="button" className={styles.textButton} onClick={() => setAccountOpen(true)}>Mam już konto ucznia</button>
+                <button type="button" className={styles.textButton} onClick={() => openAccountModal(true)}>
+                  Mam już konto
+                </button>
               </>
             )}
 
             {step === 1 && (
               <>
-                <h2 id="family-step-1" data-step={1} tabIndex={-1} ref={setHeadingRef}>{audience === 'guardian' ? 'Ustalcie tempo nauki' : 'Ile czasu masz na matematykę?'}</h2>
-                <p>{audience === 'guardian' ? 'Wybierzcie krótki cel, który pasuje do planu ucznia.' : 'Wybierz dzienny cel. Możesz zmienić go później w ustawieniach.'}</p>
-                <fieldset className={styles.goal}>
-                  <legend className="sr-only">Dzienny cel nauki</legend>
-                  {GOALS.map((minutes) => (
-                    <button key={minutes} type="button" aria-pressed={goal === minutes} onClick={() => setGoal(minutes)}>
-                      <Timer size={16} aria-hidden="true" /> <strong>{minutes} min</strong>
-                    </button>
-                  ))}
-                </fieldset>
-                <label className={styles.stage}>
-                  Przygotowania
-                  <select value={stage} onChange={(event) => setStage(event.target.value as StudyStageId)}>
-                    <option value="grade8">Klasa 8</option>
-                    <option value="grade7">Klasa 7</option>
-                    <option value="revision">Powtórka materiału</option>
-                  </select>
-                </label>
-                <TactileButton fullWidth onClick={() => goTo(2)}>Dalej <ArrowRight size={18} aria-hidden="true" /></TactileButton>
-                {audience === 'student' && <button type="button" className={styles.textButton} onClick={() => finish(true)}>Otwórz lekcję od razu</button>}
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <h2 id="family-step-2" data-step={2} tabIndex={-1} ref={setHeadingRef}>Przypomnienia o nauce</h2>
-                <p>Możesz włączyć codzienne przypomnienie teraz albo pominąć ten krok i wrócić w ustawieniach.</p>
-                <ReminderPreferences value={reminder} onChange={setReminder} />
-                <TactileButton fullWidth disabled={reminder !== null && !schedule} onClick={() => goTo(3)}>
-                  {schedule ? 'Dalej z tym planem' : 'Dalej bez przypomnień'} <ArrowRight size={18} aria-hidden="true" />
+                <h2 id="family-step-1" data-step={1} tabIndex={-1} ref={setHeadingRef}>
+                  Nauka do E8 pod kontrolą
+                </h2>
+                <p>
+                  Pierwsza lekcja działa od razu lokalnie na urządzeniu bez rejestracji. Od drugiej lekcji wymagane jest
+                  bezpłatne konto — dla uczniów poniżej 16 lat zakłada je rodzic lub opiekun swoim adresem e-mail.
+                </p>
+                <p>
+                  Aplikacja jest bezpłatna i nie zawiera ukrytych opłat. Dzienny cel nauki oraz przypomnienia w otwartej
+                  aplikacji ustawicie później w Profilu.
+                </p>
+                <TactileButton fullWidth size="lg" onClick={() => finish(true, 'guardian')}>
+                  <BookOpen size={19} aria-hidden="true" />
+                  <span>Uruchom pierwszą lekcję</span>
                 </TactileButton>
-              </>
-            )}
-
-            {step === 3 && (
-              <>
-                <h2 id="family-step-3" data-step={3} tabIndex={-1} ref={setHeadingRef}>Zacznij od jednego zadania</h2>
-                <p>Lumi pokaże Ci przykład i pomoże przejść do ćwiczeń.</p>
-                <dl className={styles.summary}>
-                  <div><dt>Dzienny cel</dt><dd>{goal} min</dd></div>
-                  <div><dt>Przypomnienia</dt><dd>{schedule ? `${schedule.time} · ${schedule.days.map((day) => WEEKDAYS[day - 1]).join(', ')}` : 'Wyłączone'}</dd></div>
-                </dl>
-                <TactileButton fullWidth size="lg" onClick={() => finish(true)}><BookOpen size={19} aria-hidden="true" /> Otwórz pierwszą lekcję</TactileButton>
-                <button type="button" className={styles.textButton} onClick={() => finish(false)}>Przejdź do Startu</button>
-                {audience === 'guardian' && <ReminderCloudActions schedule={schedule} onLoad={setReminder} />}
+                <button type="button" className={styles.textButton} onClick={() => openAccountModal(false)}>
+                  Załóż konto lub zaloguj się
+                </button>
               </>
             )}
           </motion.section>
         </AnimatePresence>
       </div>
-      {accountOpen && <CloudAccountModal open onClose={() => setAccountOpen(false)} showPlanLink={false} />}
+
+      {accountOpen && (
+        <CloudAccountModal
+          open
+          onClose={() => setAccountOpen(false)}
+          onSuccess={() => finish(false, step === 1 ? 'guardian' : 'student')}
+          skipGuardianGate={skipGuardianGate}
+          showPlanLink={false}
+        />
+      )}
     </main>
   );
 }

@@ -43,6 +43,7 @@ type AccountModalProps = {
   titleOverride?: string;
   subtitleOverride?: string;
   showPlanLink?: boolean;
+  skipGuardianGate?: boolean;
 };
 
 export function CloudAccountModal(props: AccountModalProps) {
@@ -52,17 +53,34 @@ export function CloudAccountModal(props: AccountModalProps) {
 function AccountEntry(props: AccountModalProps) {
   const { user, loading, configured } = useCloudAuthUser();
   const [confirmed, setConfirmed] = useState(false);
-  if (!configured || user || confirmed) return <AccountForm {...props} />;
+  const [preferLogin, setPreferLogin] = useState(false);
+  if (!configured || user || confirmed || props.skipGuardianGate) {
+    return <AccountForm {...props} defaultFallbackMode={preferLogin || props.skipGuardianGate ? 'login' : 'register'} />;
+  }
 
   return (
     <BottomSheet open onClose={props.onClose} title="Konto ucznia" subtitle={props.subtitleOverride} maxWidthClass="max-w-md">
       <div className="space-y-3">
         <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-          Rodzicu lub opiekunie, załóż konto ucznia przy użyciu własnego adresu e-mail. Konto daje dostęp do kolejnych lekcji.
+          Bezpłatne konto odblokowuje kolejne lekcje. Wybierz, kto zakłada konto:
         </p>
         <TactileButton fullWidth disabled={loading} onClick={() => setConfirmed(true)}>
-          Jestem rodzicem lub opiekunem
+          Jestem rodzicem lub opiekunem (uczeń &lt; 16 lat)
         </TactileButton>
+        <TactileButton fullWidth variant="secondary" disabled={loading} onClick={() => setConfirmed(true)}>
+          Mam ukończone 16 lat — zakładam konto samodzielnie
+        </TactileButton>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => {
+            setPreferLogin(true);
+            setConfirmed(true);
+          }}
+          className="min-h-11 w-full cursor-pointer rounded-xl text-sm font-bold text-[var(--info)] hover:underline"
+        >
+          Mam już konto — zaloguj się
+        </button>
         <TactileButton fullWidth variant="secondary" onClick={props.onClose}>Wróć do nauki</TactileButton>
       </div>
     </BottomSheet>
@@ -76,13 +94,14 @@ function AccountForm({
   titleOverride,
   subtitleOverride,
   showPlanLink = true,
-}: AccountModalProps) {
+  defaultFallbackMode = 'login',
+}: AccountModalProps & { defaultFallbackMode?: 'login' | 'register' }) {
   const { user, configured } = useCloudAuthUser();
   const emailId = useId();
   const passwordId = useId();
   const [email, setEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'entry' | 'login' | 'register' | 'fallback'>('entry');
-  const [fallbackMode, setFallbackMode] = useState<'login' | 'register'>('login');
+  const [fallbackMode, setFallbackMode] = useState<'login' | 'register'>(defaultFallbackMode);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
