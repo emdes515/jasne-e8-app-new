@@ -14,7 +14,6 @@ import {
   LogIn,
   ShieldCheck,
   Shuffle,
-  Sparkles,
   UserCheck,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
@@ -49,7 +48,6 @@ type StarterColorId = Extract<LumiColorSchemeId, 'gold_spark' | 'blue_wave' | 'e
 const SUBJECT_OPTIONS: ReadonlyArray<{
   id: SubjectId;
   label: string;
-  badge: string;
   description: string;
   tone: 'math' | 'polish' | 'english';
   icon: typeof Calculator;
@@ -57,7 +55,6 @@ const SUBJECT_OPTIONS: ReadonlyArray<{
   {
     id: 'math',
     label: 'Matematyka',
-    badge: 'Gotowe teraz',
     description: 'Lekcje Bento, zadania CKE i 1. lekcja dostępna od razu.',
     tone: 'math',
     icon: Calculator,
@@ -65,7 +62,6 @@ const SUBJECT_OPTIONS: ReadonlyArray<{
   {
     id: 'polish',
     label: 'Język polski',
-    badge: 'Plan działów',
     description: 'Lektury, gramatyka i wypracowanie — sprawdź mapę tematów.',
     tone: 'polish',
     icon: BookType,
@@ -73,7 +69,6 @@ const SUBJECT_OPTIONS: ReadonlyArray<{
   {
     id: 'english',
     label: 'Język angielski',
-    badge: 'Plan działów',
     description: 'Słownictwo, funkcje językowe i struktury E8 na jednej mapie.',
     tone: 'english',
     icon: Globe,
@@ -129,7 +124,7 @@ function getStageLabel(stageId: StudyStageId): string {
 }
 
 function getAgeSummaryLabel(ageBracket: AgeBracket | null, adultConsentPath: ConsentPath): string {
-  if (!ageBracket) return 'Do wyboru w kroku 3';
+  if (!ageBracket) return '—';
   if (ageBracket === 'under_13') return '< 13 lat · lokalnie / opiekun';
   if (ageBracket === 'age_13_15') return '13–15 lat · lokalnie / opiekun';
   if (ageBracket === 'age_16_17') return '16–17 lat · darmowe konto';
@@ -510,11 +505,6 @@ export function FamilyOnboarding() {
             </div>
 
             <div className={styles.stageCopy}>
-              <span className={styles.stamp}>
-                <Sparkles size={13} aria-hidden="true" />
-                <span>Lumi · Twój przewodnik E8</span>
-              </span>
-
               <div className={styles.speechBubble} aria-live="polite">
                 <p>{lumiSpeech}</p>
               </div>
@@ -586,10 +576,7 @@ export function FamilyOnboarding() {
                             <Icon size={20} />
                           </span>
                           <span className={styles.subjectBody}>
-                            <span className={styles.subjectHeader}>
-                              <strong>{subject.label}</strong>
-                              <span className={styles.subjectBadge}>{subject.badge}</span>
-                            </span>
+                            <strong>{subject.label}</strong>
                             <small>{subject.description}</small>
                           </span>
                           <span className={styles.subjectCheck} aria-hidden="true">

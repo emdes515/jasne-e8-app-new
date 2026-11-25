@@ -159,27 +159,12 @@
   min-width: 0;
 }
 
-.stamp {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  max-width: 100%;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent-text) 35%, var(--border-subtle));
-  background: var(--bg-surface);
-  padding: 0.3rem 0.75rem;
-  color: var(--accent-text);
-  font-size: 0.75rem;
-  font-weight: 750;
-  line-height: 1.2;
-}
-
 .speechBubble {
   width: 100%;
   border: 1px solid var(--border-subtle);
-  border-radius: 1rem;
+  border-radius: 0.9rem;
   background: var(--bg-surface);
-  padding: 0.75rem 0.875rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .speechBubble p {
@@ -193,16 +178,14 @@
 .planSummary {
   display: none;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0.75rem 1rem;
   margin: 0;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .planSummary > div {
   min-width: 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: 0.75rem;
-  background: var(--bg-surface);
-  padding: 0.55rem 0.7rem;
 }
 
 .planSummary dt {
@@ -351,31 +334,11 @@
   min-width: 0;
 }
 
-.subjectHeader {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem;
-}
-
 .subjectBody strong {
   color: var(--text-primary);
   font-size: 0.9375rem;
   font-weight: 750;
   line-height: 1.25;
-}
-
-.subjectBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--subject-color) 40%, var(--border-subtle));
-  background: color-mix(in srgb, var(--subject-color) 14%, var(--bg-surface));
-  color: var(--subject-text);
-  font-size: 0.7rem;
-  font-weight: 750;
-  line-height: 1.2;
 }
 
 .subjectBody small {
@@ -842,15 +805,16 @@
   }
 
   .workspace {
-    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     gap: 1.5rem;
-    align-items: stretch;
+    align-items: start;
   }
 
   .art {
-    justify-content: space-between;
-    padding: 1.5rem;
-    min-height: 32rem;
+    position: sticky;
+    top: 1.5rem;
+    justify-content: flex-start;
+    padding: 1.25rem 1.375rem;
   }
 
   .stageHero {
