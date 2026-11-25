@@ -12,8 +12,10 @@ import React, {
 import {
   ActiveTaskSession,
   AppState,
+  AgeBracket,
   DailyGoalMinutes,
   ExamAttemptRecord,
+  LegalConsentRecord,
   LumiLoadout,
   NavTabId,
   RankDefinition,
@@ -168,8 +170,13 @@ interface AppStateContextValue {
     startFirstLesson: boolean;
     audience: NonNullable<AppState['onboardingAudience']>;
     studyReminder: AppState['studyReminder'];
+    ageBracket?: AgeBracket;
+    preferredSubjects?: SubjectId[];
+    openTab?: NavTabId;
   }) => void;
   setSubject: (subject: SubjectId) => void;
+  setAgeBracket: (bracket: AgeBracket) => void;
+  recordLegalConsent: (consent: LegalConsentRecord) => void;
   setTheme: (theme: ThemeMode) => void;
   setSfxEnabled: (enabled: boolean) => void;
   updateProfileSettings: (params: {
@@ -534,6 +541,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       startFirstLesson: boolean;
       audience: NonNullable<AppState['onboardingAudience']>;
       studyReminder: AppState['studyReminder'];
+      ageBracket?: AgeBracket;
+      preferredSubjects?: SubjectId[];
+      openTab?: NavTabId;
     }) => {
       const v = validateNickname(params.nickname);
       const safeNick = v.valid ? v.trimmed : 'BłyskLogiki';
@@ -546,7 +556,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         studyReminder: params.studyReminder,
         nickname: safeNick,
         studyStage: params.studyStage,
-        activeSubject: params.activeSubject,
+        activeSubject: params.startFirstLesson ? 'math' : params.activeSubject,
+        ...(params.ageBracket !== undefined ? { ageBracket: params.ageBracket } : {}),
+        preferredSubjects:
+          params.preferredSubjects ?? prev.preferredSubjects ?? ['math', 'polish', 'english'],
         dailyGoalMinutes: params.dailyGoalMinutes,
         coins: 120,
         hearts: MAX_HEARTS,
@@ -565,17 +578,30 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       playSound('purchase');
 
       if (params.startFirstLesson) {
-        setState((prev) => ({ ...prev, activeSubject: 'math' }));
         setActiveTabState('learn');
         setSelectedLessonId(MATH_LESSON_1_1.id);
         setLessonViewStage('theory');
       } else {
-        setActiveTabState('start');
+        setActiveTabState(
+          params.openTab ?? (params.activeSubject !== 'math' ? 'learn' : 'start')
+        );
         setLessonViewStage('none');
       }
     },
     [playSound]
   );
+
+  const setAgeBracket = useCallback((bracket: AgeBracket) => {
+    setState((prev) => ({ ...prev, ageBracket: bracket }));
+  }, []);
+
+  const recordLegalConsent = useCallback((consent: LegalConsentRecord) => {
+    setState((prev) => ({
+      ...prev,
+      ageBracket: consent.ageBracket,
+      legalConsent: consent,
+    }));
+  }, []);
 
 
   const canOpenLesson = useCallback((lessonId: string) => {
@@ -1718,6 +1744,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       setStudyReminder,
       setSubject,
+      setAgeBracket,
+      recordLegalConsent,
       setTheme,
       setSfxEnabled,
       updateProfileSettings,
@@ -1769,6 +1797,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       completeOnboarding,
       setStudyReminder,
       setSubject,
+      setAgeBracket,
+      recordLegalConsent,
       setTheme,
       setSfxEnabled,
       updateProfileSettings,

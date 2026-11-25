@@ -5,6 +5,7 @@ import { type SessionCompletionSummary, useAppState } from '../../context/AppSta
 import { MATH_LESSONS } from '../../data/mathLessonMock';
 import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
 import { getRankForXp } from '../../lib/gamification';
+import { requiresGuardianConsent } from '../../lib/legalAgeGate';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { TactileButton } from '../ui/TactileButton';
 
@@ -70,9 +71,15 @@ export function LessonSummaryModal({ summary }: { summary: SessionCompletionSumm
         )}
         {nextLesson && (
           <div className="space-y-2">
-            {!hasStudentAccount && <p className="text-sm text-[var(--text-secondary)]">Kolejne lekcje są dostępne z bezpłatnym kontem ucznia.</p>}
+            {!hasStudentAccount && (
+              <p className="text-sm text-[var(--text-secondary)]">
+                {state.ageBracket && requiresGuardianConsent(state.ageBracket)
+                  ? 'Kolejne lekcje odblokujesz po założeniu bezpłatnego konta przez rodzica lub opiekuna.'
+                  : 'Kolejne lekcje odblokujesz po założeniu bezpłatnego konta ucznia.'}
+              </p>
+            )}
             <TactileButton onClick={() => openLessonTheory(nextLesson.id)}>
-              {hasStudentAccount ? 'Otwórz następną lekcję' : 'Odblokuj następną lekcję'}
+              {hasStudentAccount ? 'Otwórz następną lekcję' : 'Odblokuj kolejną lekcję'}
               <ArrowRight size={17} aria-hidden="true" />
             </TactileButton>
           </div>

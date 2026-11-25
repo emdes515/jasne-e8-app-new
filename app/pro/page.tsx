@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowDown, ArrowLeft, BookOpen, Check, Heart, Lightbulb, Target } from 'lucide-react';
+import { ArrowDown, ArrowLeft, BookOpen, Check, Heart, Lightbulb, ShieldCheck, Target } from 'lucide-react';
 import { LumiMascot } from '../../src/components/mascot/LumiMascot';
 import { AppStateProvider } from '../../src/context/AppStateContext';
 import { FreeAccountAction } from './FreeAccountAction';
@@ -9,12 +9,13 @@ import styles from './pro.module.css';
 
 export const metadata: Metadata = {
   title: 'Porównanie planów | JASNE E8',
-  description: 'Zobacz, co daje darmowe konto JASNE E8 i jakie funkcje planujemy w Pass E8 Pro.',
+  description:
+    'Przygotowanie do Egzaminu Ósmoklasisty (E8): gotowe lekcje i zadania z matematyki oraz plany języka polskiego i angielskiego. Zobacz darmowe konto i planowany Pass E8 Pro.',
 };
 
 const freeFeatures = [
-  'Dostępne lekcje matematyki z teorią i przykładami',
-  'Zadania zamknięte ze wskazówkami i rozwiązaniami',
+  'Gotowe lekcje i zadania z matematyki — teoria, przykłady i wskazówki',
+  'Plany działów języka polskiego i angielskiego do podglądu',
   'Zapisane zadania i powtórki z Banku błędów',
   'Odzyskiwanie serc w Misji ratunkowej',
 ];
@@ -36,9 +37,13 @@ export default function ProPage() {
 
         <section className={styles.hero} aria-labelledby="pro-title">
           <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>Matematyka do egzaminu ósmoklasisty</p>
+            <p className={styles.eyebrow}>Przygotowanie do Egzaminu Ósmoklasisty (E8)</p>
             <h1 id="pro-title">Wiesz, co umiesz.<br /><em>Poćwicz to, co trudne.</em></h1>
-            <p>Rozwiązuj zadania w swoim tempie. Zobacz, co daje darmowe konto i jak planujemy rozbudować naukę w Pass E8 Pro.</p>
+            <p>
+              Matematyka ma już gotowe lekcje, zadania i powtórki. Język polski i język angielski są w przygotowaniu —
+              plany ich działów widzisz już w aplikacji. Sprawdź, co daje darmowe konto i jak planujemy rozbudować
+              naukę w Pass E8 Pro.
+            </p>
             <a href="#plany" className={styles.jump}>Porównaj plany <ArrowDown size={17} aria-hidden="true" /></a>
           </div>
           <div className={styles.art} aria-hidden="true">
@@ -89,12 +94,23 @@ export default function ProPage() {
               Informacje dla opiekunów
             </h2>
             <p className={styles.cardSubtitle}>
-              Pierwsza lekcja działa lokalnie bez zakładania konta. Dla uczniów poniżej 16 lat konto zakłada rodzic lub
-              opiekun prawny swoim adresem e-mail albo kontem Google. W aplikacji nie ma ukrytych opłat ani automatycznych
-              subskrypcji.
+              Pierwsza lekcja działa lokalnie bez zakładania konta — postępy zostają na urządzeniu.
             </p>
-            <div className="pt-2">
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+              Dla uczniów poniżej 16 lat konto zakłada rodzic lub opiekun prawny. Dotyczy to także uczniów w wieku
+              13–15 lat: mimo ograniczonej zdolności do czynności prawnych w drobnych bieżących sprawach (art. 15 i 20
+              Kodeksu cywilnego) próg 16 lat z art. 8 RODO w Polsce nadal obowiązuje. W aplikacji nie ma ukrytych opłat
+              ani automatycznych subskrypcji.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-3">
               <ShareGuardianInfoButton />
+              <Link
+                href="/prywatnosc"
+                className="inline-flex min-h-11 items-center gap-2 rounded-2xl border-2 border-[var(--border-subtle)] bg-[var(--bg-elevated)] px-5 py-2.5 font-display text-sm font-bold tracking-tight text-[var(--text-primary)] transition-colors hover:border-[var(--text-secondary)]"
+              >
+                <ShieldCheck size={17} aria-hidden="true" />
+                Polityka prywatności i zasady RODO
+              </Link>
             </div>
           </article>
         </section>

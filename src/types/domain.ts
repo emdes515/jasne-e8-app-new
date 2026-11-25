@@ -12,6 +12,20 @@ export type DailyGoalMinutes = 5 | 10 | 15;
 
 export type OnboardingAudience = 'student' | 'guardian';
 
+export type AgeBracket = 'under_13' | 'age_13_15' | 'age_16_17' | 'adult_or_guardian';
+
+export type ConsentPath = 'guardian_for_minor' | 'self_16_plus';
+
+export interface LegalConsentRecord {
+  consentPath: ConsentPath;
+  ageBracket: AgeBracket;
+  policyVersion: string;
+  acceptedAt: number;
+  ageOrGuardianConfirmed: boolean;
+  privacyAndTermsAccepted: boolean;
+  uid?: string;
+}
+
 export interface StudyReminder {
   time: string;
   days: number[];
@@ -265,6 +279,9 @@ export interface AppState {
   guestId: string;
   onboardingCompleted: boolean;
   onboardingAudience?: OnboardingAudience;
+  ageBracket?: AgeBracket;
+  preferredSubjects?: SubjectId[];
+  legalConsent?: LegalConsentRecord | null;
   studyReminder?: StudyReminder | null;
   nickname: string;
   studyStage: StudyStageId;
