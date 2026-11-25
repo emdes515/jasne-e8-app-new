@@ -11,7 +11,8 @@ import {
   Play,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
+import { contentRegistry, useContentRegistryVersion } from '../../services/content/contentRegistry';
+import { CompositeTaskInput, isCompositeAnswerComplete } from './CompositeTaskInput';
 import { loadLessonDraftPhoto, saveLessonDraftPhoto } from '../../services/storage/lessonDraftPhoto';
 import { aiTutorService, AI_ANALYSIS_UI_DURATION_MS } from '../../services/ai/aiTutorMock';
 import { AiTutorEvaluationResult } from '../../types/repositories';
@@ -58,9 +59,10 @@ function TaskRunnerQuestion() {
   } = useAppState();
   const prefersReduced = useReducedMotion();
 
+  useContentRegistryVersion();
   const session = state.activeSession;
   const currentTaskId = session?.taskIds[session.currentIndex] ?? '';
-  const currentTask = ALL_TASKS_BY_ID[currentTaskId];
+  const currentTask = contentRegistry.getTaskById(currentTaskId);
   const priorAnswer = session?.answers[currentTaskId];
 
   const savedDraft = session?.draft?.taskId === currentTaskId ? session.draft : undefined;
@@ -242,9 +244,12 @@ function TaskRunnerQuestion() {
 
     if (
       currentTask.type === 'abcd' ||
-      currentTask.type === 'true_false'
+      currentTask.type === 'true_false' ||
+      currentTask.type === 'true_false_multi' ||
+      currentTask.type === 'dual_choice' ||
+      currentTask.type === 'choice_with_reason'
     ) {
-      if (!selectedOption) return;
+      if (!isCompositeAnswerComplete(currentTask, selectedOption)) return;
       const isCorrect = selectedOption === currentTask.correctAnswer;
       const outcome: TaskEvalOutcome = isCorrect ? 'correct' : 'wrong';
       const res = submitSessionTaskAnswer({
@@ -337,6 +342,12 @@ function TaskRunnerQuestion() {
       ? 'Wybór ABCD'
       : currentTask.type === 'true_false'
       ? 'Prawda / Fałsz'
+      : currentTask.type === 'true_false_multi'
+      ? 'Prawda / Fałsz (zestaw)'
+      : currentTask.type === 'dual_choice'
+      ? 'Wybór podwójny'
+      : currentTask.type === 'choice_with_reason'
+      ? 'Wybór z uzasadnieniem'
       : currentTask.type === 'numeric'
       ? 'Wpisz wynik'
       : 'Zadanie otwarte';
@@ -600,6 +611,19 @@ function TaskRunnerQuestion() {
                     </div>
                   )}
 
+                {/* Task Type 1b: Composite Closed (True/False Multi, Dual Choice, Choice With Reason) */}
+                {(currentTask.type === 'true_false_multi' ||
+                  currentTask.type === 'dual_choice' ||
+                  currentTask.type === 'choice_with_reason') && (
+                  <CompositeTaskInput
+                    task={currentTask}
+                    value={selectedOption}
+                    onChange={setSelectedOption}
+                    disabled={Boolean(revealPhase) || Boolean(checkedFeedback)}
+                    onTapSound={() => playSound('tap')}
+                  />
+                )}
+
                 {/* Task Type 2: Numeric Input with SmartMathKeyboard */}
                 {currentTask.type === 'numeric' && (
                   <SmartMathKeyboard
@@ -635,12 +659,9 @@ function TaskRunnerQuestion() {
                       fullWidth
                       disabled={
                         Boolean(revealPhase) ||
-                        ((currentTask.type === 'abcd' ||
-                          currentTask.type === 'true_false') &&
-                        !selectedOption
-                          ? true
-                          : currentTask.type === 'numeric' &&
-                            !numericAnswer.trim())
+                        (currentTask.type === 'numeric'
+                          ? !numericAnswer.trim()
+                          : !isCompositeAnswerComplete(currentTask, selectedOption))
                       }
                       onClick={handleCheckClosedOrNumeric}
                     >

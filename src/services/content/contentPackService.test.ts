@@ -192,3 +192,55 @@ test('mapRemoteTaskToTaskDefinition zachowuje visual i mapuje wskazówki oraz od
   assert.equal(mapped.hints.length, 3);
   assert.deepEqual(mapped.explanationSteps, ['1,4 - (-2,6) = 4']);
 });
+
+test('mapRemoteTaskToTaskDefinition poprawnie mapuje true_false_multi, dual_choice i choice_with_reason', () => {
+  const tfMulti = mapRemoteTaskToTaskDefinition({
+    ...SAMPLE_TASK,
+    id: 'tf_multi_1',
+    kind: 'true_false_multi',
+    statements: [
+      { id: 'S1', text: 'Zdanie 1' },
+      { id: 'S2', text: 'Zdanie 2' },
+    ],
+    correctAnswer: 'PF',
+  });
+  assert.equal(tfMulti.type, 'true_false_multi');
+  assert.equal(tfMulti.statements?.length, 2);
+  assert.equal(tfMulti.correctAnswer, 'PF');
+
+  const dual = mapRemoteTaskToTaskDefinition({
+    ...SAMPLE_TASK,
+    id: 'dual_1',
+    kind: 'dual_choice',
+    options: [
+      { id: 'A', label: '490' },
+      { id: 'B', label: '610' },
+    ],
+    reasons: [
+      { id: 'C', label: 'MDCL' },
+      { id: 'D', label: 'MCDL' },
+    ],
+    correctAnswer: 'AC',
+  });
+  assert.equal(dual.type, 'dual_choice');
+  assert.equal(dual.options?.length, 2);
+  assert.equal(dual.reasons?.length, 2);
+  assert.equal(dual.correctAnswer, 'AC');
+
+  const withReason = mapRemoteTaskToTaskDefinition({
+    ...SAMPLE_TASK,
+    id: 'reason_1',
+    kind: 'choice_with_reason',
+    options: [
+      { id: 'A', label: 'Tak' },
+      { id: 'B', label: 'Nie' },
+    ],
+    reasons: [
+      { id: '1', label: 'bo NWW = 36' },
+      { id: '2', label: 'bo suma = 30' },
+    ],
+    correctAnswer: 'A1',
+  });
+  assert.equal(withReason.type, 'choice_with_reason');
+  assert.equal(withReason.correctAnswer, 'A1');
+});

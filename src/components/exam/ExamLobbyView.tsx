@@ -5,12 +5,14 @@ import { AnimatePresence, motion } from 'motion/react';
 import {
   Timer,
   Coins,
-  Lock,
+  FileText,
   Play,
   History,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { ExamAttemptRecord } from '../../types/domain';
+import { contentRegistry, useSubjectContent } from '../../services/content/contentRegistry';
+import { ExamAttemptRecord, TaskDefinition } from '../../types/domain';
+import type { RemoteCkeSheet } from '../../types/contentPacks';
 import {
   STAGGER_CONTAINER_VARIANTS,
   STAGGER_ITEM_VARIANTS,
@@ -26,14 +28,55 @@ import {
 
 export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: boolean) => void }) {
   const { state, playSound } = useAppState();
+  const { sheets, loading } = useSubjectContent(state.activeSubject);
   const [examMode, setExamMode] = useState<'lobby' | 'running' | 'summary'>(
     'lobby'
   );
   const [startingExam, setStartingExam] = useState(false);
+  const [activeExamConfig, setActiveExamConfig] = useState<{
+    title: string;
+    subtitle: string;
+    tasks: TaskDefinition[];
+    durationMinutes: number;
+  } | null>(null);
   const [lastRecord, setLastRecord] = useState<ExamAttemptRecord | null>(null);
   const [lastDetails, setLastDetails] = useState<ExamTaskEvaluationDetail[]>(
     []
   );
+
+  const subjectLabel =
+    state.activeSubject === 'polish'
+      ? 'Język polski'
+      : state.activeSubject === 'english'
+      ? 'Język angielski'
+      : 'Matematyka';
+
+  function startMiniExam() {
+    const miniTasks = contentRegistry.getMiniExamTasksForSubject(state.activeSubject);
+    setActiveExamConfig({
+      title: `Miniarkusz · ${subjectLabel} E8`,
+      subtitle: `${miniTasks.length} zadań · 15 minut · bez utraty serc`,
+      tasks: miniTasks,
+      durationMinutes: 15,
+    });
+    playSound('tap');
+    setStartingExam(true);
+  }
+
+  function startCkeSheet(sheet: RemoteCkeSheet) {
+    const resolved = sheet.taskIds
+      .map((id) => contentRegistry.getTaskById(id))
+      .filter((t): t is TaskDefinition => Boolean(t));
+    if (resolved.length === 0) return;
+    setActiveExamConfig({
+      title: sheet.title,
+      subtitle: `${resolved.length} zadań · ${sheet.durationMinutes} minut · ${sheet.maxPoints} pkt CKE`,
+      tasks: resolved,
+      durationMinutes: sheet.durationMinutes || 100,
+    });
+    playSound('tap');
+    setStartingExam(true);
+  }
 
   useEffect(() => {
     onRunningChange(examMode === 'running');
@@ -43,6 +86,8 @@ export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: 
   if (examMode === 'running') {
     return (
       <ExamRunnerView
+        tasks={activeExamConfig?.tasks}
+        durationMinutes={activeExamConfig?.durationMinutes}
         onAbortExam={() => setExamMode('lobby')}
         onFinishExam={(rec, det) => {
           setLastRecord(rec);
@@ -74,8 +119,8 @@ export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: 
           <SessionTransitionLoader
             key="exam-transition-loader"
             mode="exam"
-            title="Miniarkusz · Matematyka E8"
-            subtitle="5 zadań · 15 minut · bez utraty serc"
+            title={activeExamConfig?.title ?? `Miniarkusz · ${subjectLabel} E8`}
+            subtitle={activeExamConfig?.subtitle ?? '5 zadań · 15 minut · bez utraty serc'}
             onDone={() => {
               setStartingExam(false);
               setExamMode('running');
@@ -116,7 +161,7 @@ export function ExamLobbyView({ onRunningChange }: { onRunningChange: (running: 
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-extrabold font-display text-[var(--accent-text)]">
-                Matematyka
+                {subjectLabel}
               </span>
               <Timer className="w-5 h-5 text-[var(--accent-text)]" />
             </div>
@@ -144,46 +189,63 @@ Cztery zadania zamknięte lub liczbowe i jedno otwarte. Po oddaniu zobaczysz wyn
             variant="primary"
             size="lg"
             fullWidth
-            onClick={() => {
-              playSound('tap');
-              setStartingExam(true);
-            }}
+            onClick={startMiniExam}
           >
             <Play className="w-5 h-5" />
             <span>Rozpocznij miniarkusz</span>
           </TactileButton>
         </div>
 
-        {/* Card 2: Pełny arkusz próbny (COMING SOON — PHASE 2) */}
-        <div className="study-panel p-5 sm:p-6 flex flex-col justify-between gap-5 opacity-95">
+        {/* Card 2: Oficjalne Arkusze CKE z Firebase */}
+        <div className="study-panel p-5 sm:p-6 flex flex-col justify-between gap-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-extrabold font-display text-[var(--text-secondary)]">
-                W przygotowaniu
+              <span className="text-xs font-extrabold font-display text-[var(--accent-text)]">
+                Arkusze CKE · {subjectLabel}
               </span>
-              <Lock className="w-4 h-4 text-[var(--text-secondary)]" />
+              <FileText className="w-4 h-4 text-[var(--accent-text)]" />
             </div>
 
             <h2 className="text-xl font-extrabold font-display text-[var(--text-primary)]">
-              Pełny arkusz próbny
+              Oficjalne arkusze E8
             </h2>
 
-            <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[var(--text-secondary)]">
-              <span>19 zadań</span>
-              <span aria-hidden="true">·</span>
-              <span>100 minut</span>
-              <span aria-hidden="true">·</span>
-              <span className="text-[var(--accent-text)]">+80 monet</span>
-              <span aria-hidden="true">·</span>
-              <span>25 punktów CKE</span>
-            </div>
-
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-              Pełna symulacja majowego egzaminu: 15 zadań zamkniętych (15 pkt)
-              oraz 4 rozbudowane zadania otwarte (10 pkt) z raportem działów.
+              {loading && sheets.length === 0
+                ? 'Ładuję arkusze CKE z Firebase…'
+                : sheets.length > 0
+                ? `Dostępnych ${sheets.length} arkuszy egzaminacyjnych CKE dla przedmiotu ${subjectLabel}.`
+                : 'Rozwiąż arkusze rocznikowe CKE z oceną punktową.'}
             </p>
           </div>
 
+          {sheets.length > 0 && (
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {sheets.map((sheet) => (
+                <div
+                  key={sheet.id}
+                  className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-elevated)] p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-extrabold text-[var(--text-primary)] truncate">
+                      {sheet.title}
+                    </p>
+                    <p className="text-[11px] font-semibold text-[var(--text-secondary)] tabular-nums">
+                      {sheet.taskCount} zadań · {sheet.durationMinutes} min · {sheet.maxPoints} pkt
+                    </p>
+                  </div>
+                  <TactileButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => startCkeSheet(sheet)}
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>Start</span>
+                  </TactileButton>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </motion.section>
 

@@ -2,8 +2,7 @@
 
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { type SessionCompletionSummary, useAppState } from '../../context/AppStateContext';
-import { MATH_LESSONS } from '../../data/mathLessonMock';
-import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
+import { contentRegistry } from '../../services/content/contentRegistry';
 import { getRankForXp } from '../../lib/gamification';
 import { requiresGuardianConsent } from '../../lib/legalAgeGate';
 import { LumiMascot } from '../mascot/LumiMascot';
@@ -13,12 +12,13 @@ export function LessonSummaryModal({ summary }: { summary: SessionCompletionSumm
   const { state, hasStudentAccount, clearSessionSummary, setActiveTab, openLessonTheory, startPracticeSession } = useAppState();
   const rank = getRankForXp(state.xp);
   const isLesson = summary.source === 'lesson';
-  const lessonIndex = MATH_LESSONS.findIndex((lesson) => lesson.id === summary.contentId);
-  const nextLesson = isLesson && lessonIndex >= 0 ? MATH_LESSONS[lessonIndex + 1] : undefined;
+  const subjectLessons = contentRegistry.getLessonsForSubject(state.activeSubject);
+  const lessonIndex = subjectLessons.findIndex((lesson) => lesson.id === summary.contentId);
+  const nextLesson = isLesson && lessonIndex >= 0 ? subjectLessons[lessonIndex + 1] : undefined;
   const isRescue = summary.source === 'rescue';
   const hasReview = isLesson && summary.reviewTaskIds.length > 0;
   const assessedCount = summary.totalCount - summary.ungradedCount;
-  const reviewTopics = [...new Set(summary.reviewTaskIds.map((id) => ALL_TASKS_BY_ID[id]?.topicTag).filter(Boolean))];
+  const reviewTopics = [...new Set(summary.reviewTaskIds.map((id) => contentRegistry.getTaskById(id)?.topicTag).filter(Boolean))];
 
   function leaveSummary() {
     clearSessionSummary();

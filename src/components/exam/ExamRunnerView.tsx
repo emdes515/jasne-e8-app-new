@@ -12,8 +12,9 @@ import {
   X,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { MATH_MINI_EXAM_TASKS } from '../../data/mathExamMock';
-import { ExamAttemptRecord, TaskEvalOutcome } from '../../types/domain';
+import { contentRegistry } from '../../services/content/contentRegistry';
+import { ExamAttemptRecord, TaskDefinition, TaskEvalOutcome } from '../../types/domain';
+import { CompositeTaskInput } from '../lesson/CompositeTaskInput';
 import { aiTutorService } from '../../services/ai/aiTutorMock';
 import {
   calculateTaskXp,
@@ -31,6 +32,8 @@ import { ExamTaskEvaluationDetail } from './ExamSummaryView';
 const EXAM_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 interface ExamRunnerViewProps {
+  tasks?: TaskDefinition[];
+  durationMinutes?: number;
   onAbortExam: () => void;
   onFinishExam: (
     record: ExamAttemptRecord,
@@ -45,13 +48,18 @@ function formatTimerMMSS(secondsLeft: number): string {
 }
 
 export function ExamRunnerView({
+  tasks: propTasks,
+  durationMinutes = 15,
   onAbortExam,
   onFinishExam,
 }: ExamRunnerViewProps) {
   const { state, toggleTaskSaved, completeMiniExam, playSound } = useAppState();
   const prefersReduced = useReducedMotion();
 
-  const tasks = MATH_MINI_EXAM_TASKS;
+  const tasks = useMemo(
+    () => propTasks && propTasks.length > 0 ? propTasks : contentRegistry.getMiniExamTasksForSubject(state.activeSubject),
+    [propTasks, state.activeSubject]
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [closedAnswers, setAnswers] = useState<Record<string, string>>({});
   const [openDrafts, setOpenDrafts] = useState<Record<string, OpenWorkDraft>>({});
@@ -69,11 +77,12 @@ export function ExamRunnerView({
   const [bookmarkAnimTick, setBookmarkAnimTick] = useState(0);
 
   // Deadline timestamp strictly in memory (F5 discards incomplete exam attempt per AC-X3!)
-  const [deadline] = useState(() => Date.now() + EXAM_DURATION_MS);
+  const totalDurationMs = durationMinutes * 60 * 1000 || EXAM_DURATION_MS;
+  const [deadline] = useState(() => Date.now() + totalDurationMs);
   const warningPlayedRef = useRef<boolean>(false);
   const submittedRef = useRef<boolean>(false);
 
-  const [secondsLeft, setSecondsLeft] = useState<number>(15 * 60);
+  const [secondsLeft, setSecondsLeft] = useState<number>(durationMinutes * 60);
 
   const currentTask = tasks[currentIndex];
 
@@ -106,7 +115,13 @@ export function ExamRunnerView({
       const pointsMax = task.type === 'open' ? 2 : 1;
       let aiEvaluation = undefined;
 
-      if (task.type === 'abcd' || task.type === 'true_false') {
+      if (
+        task.type === 'abcd' ||
+        task.type === 'true_false' ||
+        task.type === 'true_false_multi' ||
+        task.type === 'dual_choice' ||
+        task.type === 'choice_with_reason'
+      ) {
         if (rawAns && rawAns === task.correctAnswer) {
           outcome = 'correct';
           pointsEarned = 1;
@@ -277,8 +292,8 @@ export function ExamRunnerView({
           </button>
         </div>
 
-        {/* Quick Question Step Strip 1..5 */}
-        <div className="grid grid-cols-5 gap-2">
+        {/* Quick Question Step Strip */}
+        <div className={tasks.length <= 5 ? 'grid grid-cols-5 gap-2' : 'flex gap-1.5 overflow-x-auto pb-1'}>
           {tasks.map((t, idx) => {
             const active = idx === currentIndex;
             const answered = (answers[t.id] ?? '').trim().length > 0;
@@ -290,7 +305,7 @@ export function ExamRunnerView({
                   playSound('tap');
                   setCurrentIndex(idx);
                 }}
-                className={`min-h-[44px] rounded-xl border-2 text-xs font-extrabold font-display tabular-nums cursor-pointer transition-all ${
+                className={`min-h-[44px] ${tasks.length > 5 ? 'shrink-0 px-3' : ''} rounded-xl border-2 text-xs font-extrabold font-display tabular-nums cursor-pointer transition-all ${
                   active
                     ? 'bg-[var(--accent-primary)] text-[var(--on-accent)] border-[var(--accent-primary-edge)]'
                     : answered
@@ -406,6 +421,18 @@ export function ExamRunnerView({
                   })}
                 </div>
               )}
+
+            {/* Composite Closed Types */}
+            {(currentTask.type === 'true_false_multi' ||
+              currentTask.type === 'dual_choice' ||
+              currentTask.type === 'choice_with_reason') && (
+              <CompositeTaskInput
+                task={currentTask}
+                value={currentAnswer}
+                onChange={setTaskAnswer}
+                onTapSound={() => playSound('tap')}
+              />
+            )}
 
             {/* Numeric Input */}
             {currentTask.type === 'numeric' && (

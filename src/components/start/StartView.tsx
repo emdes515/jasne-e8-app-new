@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, BookOpen, BookmarkCheck, Flame, Lock, Play, Timer, Trophy } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { getLessonAttempt, getRecommendedMathLesson, MATH_LESSON_1_1 } from '../../data/mathLessonMock';
+import { getLessonAttempt, MATH_LESSON_1_1 } from '../../data/mathLessonMock';
+import { contentRegistry, useSubjectContent } from '../../services/content/contentRegistry';
 import { computeDailyGoalProgress } from '../../lib/gamification';
 import { getLumiCompanionMessage } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
@@ -14,10 +15,15 @@ import { StartStreakPanel } from './StartStreakPanel';
 
 export function StartView() {
   const { state, hasStudentAccount, setActiveTab, openLessonTheory, startLessonTasks, setFormulasOpen, playSound } = useAppState();
+  useSubjectContent(state.activeSubject);
   const goal = computeDailyGoalProgress(state);
   const isMath = state.activeSubject === 'math';
-  const lesson = getRecommendedMathLesson(state);
-  const requiresAccount = isMath && lesson.id !== MATH_LESSON_1_1.id && !hasStudentAccount;
+  const lesson = contentRegistry.getRecommendedLesson(state, state.activeSubject);
+  const isStarter =
+    lesson.id === MATH_LESSON_1_1.id ||
+    lesson.id === 'lesson:p1.1' ||
+    lesson.id === 'lesson:e1.1';
+  const requiresAccount = !isStarter && !hasStudentAccount;
   const hasPausedTasks = Boolean(getLessonAttempt(state, lesson.id));
   const hasPausedTheory = Boolean(state.theoryCards?.[lesson.id]);
   const [playWelcome] = useState(() => {
@@ -74,22 +80,21 @@ export function StartView() {
         </div>
         <div className="min-w-0 sm:py-2">
           <h2 id="start-lesson" className="text-xl sm:text-2xl font-extrabold tracking-tight text-pretty">
-            {isMath ? lesson.title : subjectName}
+            {lesson.title}
           </h2>
           <p className="mt-2 mb-4 text-sm text-[var(--text-secondary)]">
-            {requiresAccount ? 'Do tej lekcji potrzebne jest bezpłatne konto ucznia.' : isMath ? 'Krótka teoria, przykład i 5 zadań.' : 'Lekcje w przygotowaniu. Możesz już zobaczyć plan działów.'}
+            {requiresAccount ? 'Do tej lekcji potrzebne jest bezpłatne konto ucznia.' : lesson.subtitle}
           </p>
           <TactileButton
             onClick={() => {
-              if (!isMath) setActiveTab('learn');
-              else if (state.hearts <= 0) openLessonTheory(lesson.id, completed);
+              if (state.hearts <= 0 && !isStarter) openLessonTheory(lesson.id, completed);
               else if (hasPausedTasks && !hasPausedTheory) startLessonTasks(lesson.id);
               else openLessonTheory(lesson.id, completed);
             }}
             className="w-full sm:w-auto"
           >
-            {requiresAccount ? <Lock size={17} aria-hidden="true" /> : isMath ? <Play size={17} /> : <ArrowRight size={17} />}
-            {requiresAccount ? 'Odblokuj lekcję' : isMath ? lessonAction : 'Zobacz plan działów'}
+            {requiresAccount ? <Lock size={17} aria-hidden="true" /> : <Play size={17} />}
+            {requiresAccount ? 'Odblokuj lekcję' : lessonAction}
           </TactileButton>
         </div>
       </section>

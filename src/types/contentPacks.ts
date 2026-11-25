@@ -127,7 +127,9 @@ export interface ContentManifest {
 
 function mapKindToTaskType(kind: MathTaskKind): TaskType {
   if (kind === 'single_choice') return 'abcd';
-  if (kind === 'true_false_multi') return 'true_false';
+  if (kind === 'true_false_multi') return 'true_false_multi';
+  if (kind === 'dual_choice') return 'dual_choice';
+  if (kind === 'choice_with_reason') return 'choice_with_reason';
   if (kind === 'numeric_input') return 'numeric';
   return 'open';
 }
@@ -172,17 +174,22 @@ export function mapRemoteTaskToTaskDefinition(remote: RemoteTaskRecord): TaskDef
     prompt: remote.prompt,
     visual: remote.visual,
     options: normalizeOptions(remote.options),
+    statements: Array.isArray(remote.statements) && remote.statements.length > 0
+      ? remote.statements.map((s) => ({ id: s.id, text: s.text }))
+      : undefined,
+    reasons: normalizeOptions(remote.reasons),
+    maxPoints: remote.maxPoints,
     correctAnswer: correctAnswerStr,
     rubric: isOpen
       ? {
           keywords: remote.taxonomy.skillTags,
-          expectedResult: remote.explanation.finalAnswerDisplay,
+          expectedResult: remote.explanation?.finalAnswerDisplay || correctAnswerStr,
           resultOnly: false,
         }
       : undefined,
-    explanation: remote.explanation.finalAnswerDisplay,
-    explanationSteps: remote.explanation.steps,
-    ckeTrapNote: remote.explanation.ckeTrapNote,
+    explanation: remote.explanation?.finalAnswerDisplay ?? '',
+    explanationSteps: remote.explanation?.steps,
+    ckeTrapNote: remote.explanation?.ckeTrapNote,
     hints,
   };
 }

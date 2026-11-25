@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Bookmark,
@@ -11,7 +11,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
+import { contentRegistry, useContentRegistryVersion } from '../../services/content/contentRegistry';
 import { SubjectId } from '../../types/domain';
 import { MAX_FREE_RESCUE_PER_DAY, MAX_HEARTS } from '../../lib/gamification';
 import {
@@ -35,6 +35,11 @@ export function VaultView() {
     setActiveTab,
     playSound,
   } = useAppState();
+
+  useContentRegistryVersion();
+  useEffect(() => {
+    void contentRegistry.ensureAllSubjectsLoaded();
+  }, []);
 
   const [vaultTab, setVaultTab] = useState<'saved' | 'bank'>('saved');
   const [subjectFilter, setSubjectFilter] = useState<SubjectId | 'all'>('all');
@@ -231,7 +236,7 @@ export function VaultView() {
 
               <div className="space-y-3">
                 {filteredSaved.map((entry) => {
-                  const task = ALL_TASKS_BY_ID[entry.taskId];
+                  const task = contentRegistry.getTaskById(entry.taskId);
                   if (!task) return null;
                   const subMeta = SUBJECT_META[entry.subjectId];
 
@@ -330,7 +335,7 @@ export function VaultView() {
 
               <div className="space-y-3">
                 {filteredBank.map((entry) => {
-                  const task = ALL_TASKS_BY_ID[entry.taskId];
+                  const task = contentRegistry.getTaskById(entry.taskId);
                   if (!task) return null;
                   const subMeta = SUBJECT_META[entry.subjectId];
 
