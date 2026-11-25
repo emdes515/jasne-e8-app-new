@@ -21,6 +21,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
+import { getAgeBracketRule, isValidAgeBracket } from '../../lib/legalAgeGate';
 import {
   DailyGoalMinutes,
   LumiColorSchemeId,
@@ -305,8 +306,15 @@ export function ProfileShopView() {
                   <p className="text-xs text-[var(--text-secondary)] mt-0.5 leading-relaxed [overflow-wrap:anywhere]">
                     {cloudUser
                       ? cloudUser.email ?? 'Konto aktywne'
-                      : 'Uczysz się jako Gość. Zaloguj się przez Google lub e-mail, aby nie stracić serii i monet.'}
+                      : 'Uczysz się lokalnie jako Gość. Konto ucznia odblokowuje kolejne lekcje; w pilotażu postępy zapisują się na tym urządzeniu.'}
                   </p>
+                  {((state.legalConsent && (!state.legalConsent.uid || (cloudUser && state.legalConsent.uid === cloudUser.uid))) || isValidAgeBracket(state.ageBracket)) && (
+                    <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+                      {state.legalConsent && (!state.legalConsent.uid || (cloudUser && state.legalConsent.uid === cloudUser.uid))
+                        ? `Zgoda RODO zapisana (v${state.legalConsent.policyVersion})`
+                        : isValidAgeBracket(state.ageBracket) && getAgeBracketRule(state.ageBracket).label}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -315,6 +323,12 @@ export function ProfileShopView() {
                   className="inline-flex min-h-11 items-center rounded-xl px-3 text-xs font-bold text-[var(--info)] hover:underline"
                 >
                   Informacje dla opiekunów
+                </Link>
+                <Link
+                  href="/prywatnosc"
+                  className="inline-flex min-h-11 items-center rounded-xl px-3 text-xs font-bold text-[var(--info)] hover:underline"
+                >
+                  Prywatność i RODO
                 </Link>
                 <TactileButton
                   variant={cloudUser ? 'secondary' : 'info'}

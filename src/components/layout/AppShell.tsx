@@ -207,7 +207,7 @@ export function AppShell() {
           <div className="flex-1 min-w-0 flex flex-col">
             <div className="sticky top-0 z-20">
               {!focusMode && <TopHud />}
-              {!state.onboardingAudience && <GuestAccountReminder suppressed={focusMode} />}
+              {state.completedLessonIds.length > 0 && <GuestAccountReminder suppressed={focusMode} />}
             </div>
 
             {!focusMode && state.hearts === 0 && (

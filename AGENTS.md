@@ -115,3 +115,50 @@ Lokalizacja skarbca: `C:\Users\mateu\SecondBrain`
 2. **`browser.*` (45 narzędzi opencode) NIE działa w T3 Code** — to mostek desktopowy opencode 2.3.2, który wymaga klienta wysyłającego `attach.started`. T3 Code 0.1.10 go nie implementuje, więc wynikiem jest zawsze `[browser.disconnected]`, **niezależnie od modelu i providera** (Antigravity, Codex, Claude czy OpenCode — bez różnicy). Nie ponawiać wywołań `browser.*`; od razu używać `preview_*`.
 3. **Fallback poza T3** (CI, sesje bez MCP, modele bez `preview_*`): `npm run shot -- <url> --size 390x844 [--out plik.png] [--full] [--json] [--net]` — `scripts/shot.mjs` steruje lokalnym Chrome/Edge po CDP bez zależności npm; zwraca PNG, `horizontalOverflow`, listę elementów wystających poza viewport, błędy konsoli i żądania 4xx/5xx.
 4. **Wątek pomocniczy dla Antigravity (Hydrogen):** harness `antigravity-acp` nie wystawia `preview_open`, `preview_navigate` ani `preview_act` (wstrzykuje 61 z 71 narzędzi MCP `t3-code`). Pracując na modelach Antigravity, zlecaj testy w wewnętrznej przeglądarce T3 przez `t3_thread_send` → `t3_thread_wait` → `t3_thread_read` do stałego wątku **OpenCode (`opencode/deepseek-v4.1-flash-free`)**: `threadId: mcp:3f6b8c5a-c096-416a-804a-4c708b307d81:fork` (`QA Przeglądarka (OpenCode)`). Wątek pomocniczy służy wyłącznie do testów i podglądu w przeglądarce (bez edycji kodu).
+
+---
+
+## 8. Zasady Orkiestracji: Planista i Wykonawcy (T3 Code)
+
+### 8.1 Podział ról
+- **Planista (`Gemini 4 Neon` / `Orchestrator (Neon)`)**:
+  - Analizuje wymagania, dzieli pracę na **logiczne, niezależne jednostki** (np. backend / frontend / testy / audyt) i pilnuje, żeby zadania równoległe nie wchodziły sobie w te same pliki.
+  - Trywialne, jednoplikowe poprawki wykonuje sam od ręki. Większe lub niezależne bloki deleguje do wykonawców.
+- **Wykonawcy**: realizują dokładnie przydzielony wycinek pracy w podanym zakresie plików i zwracają zwięzły raport ze zmian oraz wyników testów.
+
+### 8.2 Dobór Skilli (Obowiązkowy krok przed delegacją)
+1. **Najpierw sprawdź lokalne skille** w `C:\Users\mateu\.agents\skills\` (np. `frontend-ui-engineering`, `ui-taste`, `refactoring-ui`, `vercel-react-best-practices`, `debugging-and-error-recovery`, `test-driven-development`, `security-and-hardening`, `code-review-and-quality`, `performance-optimization`, `accessibility`).
+2. **Brakuje skilla do danej technologii lub problemu?** Użyj skilla **`find-skills`** (`npx skills find <temat>` / `skills.sh`), zweryfikuj wiarygodność (liczba instalacji, źródło, gwiazdki GitHub) i zaproponuj instalację lub doinstaluj przed delegacją.
+3. **Przekazuj skille wykonawcom wprost (tylko ścieżki):**
+   - W treści zadania delegowanego podaj **dokładne ścieżki do `SKILL.md`**, z których wykonawca ma skorzystać (np. *"Najpierw przeczytaj i zastosuj `C:\Users\mateu\.agents\skills\ui-taste\SKILL.md`"*), ponieważ modele zewnętrzne (OpenCode / Mistral Vibe) mogą nie mieć tych skilli w swoim kontekście startowym.
+   - Nie wklejaj całych treści plików `SKILL.md` do promptu i nie dołączaj skilli przy trywialnych zadaniach.
+
+### 8.3 Autonomiczny dobór modelu (Routing Wykonawców)
+Planista sam dobiera model i jego poziom rozumowania do trudności podzadania:
+- **Poziom 1 — Proste i szybkie zadania** (odczyt/przegląd plików, proste skrypty, drobne poprawki, testy jednostkowe, formatowanie):
+  - `providerInstanceId: "opencode"`, `model: "opencode/deepseek-v4.1-flash-free"` (z `options: {"variant": "low"}` dla trywialnych zmian lub `"high"` przy logice).
+- **Poziom 2 — Średnie / wieloplikowe wdrożenia** (nowe komponenty UI, logika w kilku plikach, integracje):
+  - `providerInstanceId: "opencode"`, `model: "openrouter/z-ai/glm-5.3-prime"` **lub** `providerInstanceId: "acpRegistry_mistral_vibe"`, `model: "mistral-large-4-0"`.
+- **Poziom 3 — Trudny kod, krytyczna logika i złożone bugi**:
+  - `providerInstanceId: "codex"`, `model: "gpt-6.2-sol"` **lub** `providerInstanceId: "antigravity"`, `model: "gemini-4-neon"`.
+
+### 8.4 Jak delegować technicznie w T3
+- Wywołuj `delegate_task` z `mode: "async"` i unikalnym `clientRequestId`.
+- Jeśli `delegate_task` nie jest widoczne na liście narzędzi MCP, ale `T3_ACP_MCP_NODE` jest ustawione — użyj fallbacku przez `cmd /c` z `acp-mcp-call delegate_task` (bez pola `toolSummary` w JSON-ie).
+- Przy uruchamianiu **wielu zadań jednocześnie**:
+  - Przydzielaj im **rozłączne pliki** albo ustawiaj izolację w osobnym `worktree`.
+  - **Nie odpytuj w pętli** (`task_status` / `sleep`) — zakończ turę i poczekaj na automatyczne wybudzenie przez T3.
+
+### 8.5 Weryfikacja i Code Review
+- Po zakończeniu pracy przez wykonawcę Planista zawsze weryfikuje rezultat (`git diff --stat`, wynik testów lub stan UI).
+- **Dla trudniejszych i wieloplikowych zadań obowiązkowe jest Review:**
+  - Planista wykonuje pełne review zmian (albo deleguje osobny task review do mocniejszego modelu — np. `gpt-6.2-sol` lub `gemini-4-neon` — ze wskazaniem skilla `code-review-and-quality`).
+  - Jeśli review wykryje błędy lub braki, Planista odsyła poprawki (małe naprawia sam, większe zwraca do wykonawcy) aż do czystego przejścia testów.
+
+### 8.6 Optymalizacja zużycia tokenów
+1. **Krótki kontrakt odpowiedzi od wykonawcy:** W każdym `delegate_task` wymagaj zwrotu maksymalnie 5–8 linijek: lista zmienionych plików, krótkie podsumowanie zmian i wynik testów (bez wklejania całych plików ani długich logów).
+2. **Konkretne ścieżki zamiast szukania od zera:** Jeśli Planista zna już docelowe pliki/funkcje, podaje je wprost w prompcie delegacji.
+3. **Grupowanie mikro-zadań:** Zamiast kilku osobnych delegacji na drobiazgi w tym samym module, łącz powiązane poprawki w jedno spójne zadanie.
+4. **Skalowanie myślenia:** Planista używa `medium` / `high` na co dzień, a `xhigh` zachowuje na trudną architekturę i ciężkie debugowanie.
+5. **Oszczędna weryfikacja:** Używaj cichych flag w testach/komendach (`--quiet`, `-q`, `git diff --stat`), a w wbudowanym Preview preferuj `preview_evaluate` zamiast częstych `preview_snapshot` z obrazkami (`includeImage: true`).
+6. **Higiena wątku:** Po domknięciu większego etapu użyj `/compact` albo otwórz świeży wątek Planisty, zamiast ciągnąć długą historię starych iteracji.

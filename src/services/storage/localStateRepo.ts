@@ -12,6 +12,7 @@ import {
   MAX_HEARTS,
   MAX_VAULT_FIFO_SIZE,
 } from '../../lib/gamification';
+import { isValidAgeBracket, isValidLegalConsentRecord } from '../../lib/legalAgeGate';
 import { getWarsawPlayerDay } from '../../lib/playerDay';
 
 export const STORAGE_KEY = 'jasne-e8-app:state';
@@ -35,6 +36,7 @@ export function createInitialAppState(now: Date = new Date()): AppState {
     nickname: 'BłyskLogiki',
     studyStage: 'grade8',
     activeSubject: 'math',
+    preferredSubjects: ['math', 'polish', 'english'],
     dailyGoalMinutes: 10,
     theme: 'dark',
     sfxEnabled: true,
@@ -180,8 +182,16 @@ export class LocalAppStateRepository implements IAppStateRepository {
         throw new Error('Corrupted state shape');
       }
 
+      const sanitized: AppState = {
+        ...parsed,
+        ageBracket: isValidAgeBracket(parsed.ageBracket) ? parsed.ageBracket : undefined,
+        legalConsent: isValidLegalConsentRecord(parsed.legalConsent)
+          ? parsed.legalConsent
+          : undefined,
+      };
+
       return {
-        state: parsed,
+        state: sanitized,
         wasCorruptedOrReset: false,
       };
     } catch {

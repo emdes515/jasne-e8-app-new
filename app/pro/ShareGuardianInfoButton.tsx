@@ -8,10 +8,10 @@ export function ShareGuardianInfoButton() {
   const [copied, setCopied] = useState(false);
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/pro#opiekunowie`;
+    const shareUrl = `${window.location.origin}/prywatnosc#wiek`;
     const shareData = {
-      title: 'JASNE E8 — Informacje dla opiekunów',
-      text: 'Informacje o bezpłatnej nauce do egzaminu ósmoklasisty z matematyki w aplikacji JASNE E8.',
+      title: 'JASNE E8 — zasady dla uczniów i opiekunów',
+      text: 'Zasady korzystania z JASNE E8 dla uczniów i opiekunów: matematyka jest gotowa teraz, język polski i angielski w przygotowaniu. Bez ukrytych opłat, reklam i nakłaniania do zakupów.',
       url: shareUrl,
     };
 
