@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAppState } from '../../context/AppStateContext';
-import { findMathLesson } from '../../data/mathLessonMock';
+import { contentRegistry, useContentRegistryVersion } from '../../services/content/contentRegistry';
 import { BentoTheoryTabs } from './BentoTheoryTabs';
 import { TaskRunner } from './TaskRunner';
 import { LessonSummaryModal } from './LessonSummaryModal';
@@ -18,8 +18,10 @@ export function LessonView() {
     lastSessionSummary,
   } = useAppState();
 
+  useContentRegistryVersion();
+
   if (lessonViewStage === 'theory') {
-    const lesson = findMathLesson(selectedLessonId);
+    const lesson = contentRegistry.getLessonById(selectedLessonId);
     if (!lesson) return null;
     return (
       <BentoTheoryTabs

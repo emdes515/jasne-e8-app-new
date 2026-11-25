@@ -50,11 +50,19 @@ import {
   STREAK_SHIELD_PRICE,
   validateNickname,
 } from '../lib/gamification';
-import { ALL_TASKS_BY_ID } from '../data/mathExamMock';
 import { useCloudAuthUser } from '../components/auth/useCloudAuthUser';
 import { getFirebaseAuthClient } from '../lib/firebase';
 import { getRescueTaskIds } from '../lib/rescueMission';
-import { findMathLesson, getLessonAttempt, getRecommendedMathLesson, MATH_LESSON_1_1 } from '../data/mathLessonMock';
+import { getLessonAttempt, MATH_LESSON_1_1 } from '../data/mathLessonMock';
+import { contentRegistry } from '../services/content/contentRegistry';
+
+function isStarterFreeLesson(lessonId: string): boolean {
+  return (
+    lessonId === MATH_LESSON_1_1.id ||
+    lessonId === 'lesson:p1.1' ||
+    lessonId === 'lesson:e1.1'
+  );
+}
 
 
 function parkActiveLesson(state: AppState, resumedId?: string) {
@@ -362,7 +370,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }
 
     // If there was an active lesson/practice session before F5, restore view
-    const restoredTheory = current.openTheory && findMathLesson(current.openTheory.lessonId);
+    const restoredTheory =
+      current.openTheory && contentRegistry.getLessonById(current.openTheory.lessonId);
     if (current.onboardingCompleted && restoredTheory) {
       setSelectedLessonId(restoredTheory.id);
       setLessonViewStage('theory');
@@ -373,6 +382,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       }, 400);
     }
   }, [pushToast]);
+
+  // Prefetch active subject packs from Firebase Storage / IndexedDB cache
+  useEffect(() => {
+    if (!hydrated) return;
+    void contentRegistry.ensureSubjectLoaded(state.activeSubject);
+  }, [hydrated, state.activeSubject]);
 
   // Sync theme to documentElement immediately
   useEffect(() => {
@@ -606,11 +621,14 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const canOpenLesson = useCallback((lessonId: string) => {
     const currentUser = getFirebaseAuthClient()?.currentUser;
-    return lessonId === MATH_LESSON_1_1.id || Boolean(currentUser && !currentUser.isAnonymous);
+    return isStarterFreeLesson(lessonId) || Boolean(currentUser && !currentUser.isAnonymous);
   }, []);
 
   const openLessonTheory = useCallback((lessonId?: string, review = false) => {
-    const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(stateRef.current);
+    const cur = stateRef.current;
+    const lesson = lessonId
+      ? contentRegistry.getLessonById(lessonId)
+      : contentRegistry.getRecommendedLesson(cur, cur.activeSubject);
     if (!lesson) return;
     if (!canOpenLesson(lesson.id)) {
       setLessonAccountRequest({ lessonId: lesson.id, action: 'theory', review });
@@ -623,7 +641,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       activeSubject: lesson.subjectId,
       openTheory: { lessonId: lesson.id, review },
       taskSessionPaused: true,
-      theoryCards: { ...prev.theoryCards, [lesson.id]: prev.theoryCards?.[lesson.id] ?? lesson.theory[0].id },
+      theoryCards: {
+        ...prev.theoryCards,
+        [lesson.id]: prev.theoryCards?.[lesson.id] ?? lesson.theory[0]?.id ?? 'essence',
+      },
     }));
     setLessonViewStage('theory');
   }, [canOpenLesson, playSound]);
@@ -655,13 +676,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const startLessonTasks = useCallback((lessonId?: string): boolean => {
     const current = stateRef.current;
-    const lesson = lessonId ? findMathLesson(lessonId) : getRecommendedMathLesson(current);
+    const lesson = lessonId
+      ? contentRegistry.getLessonById(lessonId)
+      : contentRegistry.getRecommendedLesson(current, current.activeSubject);
     if (!lesson) return false;
     if (!canOpenLesson(lesson.id)) {
       setLessonAccountRequest({ lessonId: lesson.id, action: 'tasks' });
       return false;
     }
-    if (lesson.id !== MATH_LESSON_1_1.id && current.hearts <= 0) {
+    if (!isStarterFreeLesson(lesson.id) && current.hearts <= 0) {
       playSound('wrong');
       setRescueModalOpen(true);
       return false;
@@ -754,7 +777,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           if (filterSubject !== 'all' && entry.subjectId !== filterSubject) {
             continue;
           }
-          if (!seenKeys.has(entry.key) && ALL_TASKS_BY_ID[entry.taskId]) {
+          if (!seenKeys.has(entry.key) && contentRegistry.getTaskById(entry.taskId)) {
             seenKeys.add(entry.key);
             taskIds.push(entry.taskId);
           }
@@ -768,7 +791,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (reviewTaskIds) {
-        taskIds.push(...new Set(reviewTaskIds.filter((id) => ALL_TASKS_BY_ID[id])));
+        taskIds.push(...new Set(reviewTaskIds.filter((id) => Boolean(contentRegistry.getTaskById(id)))));
       } else if (source === 'saved') {
         addEntries(cur.savedTasks);
       } else if (source === 'bank') {
@@ -849,7 +872,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     }) => {
       const cur = stateRef.current;
       const session = cur.activeSession;
-      const task = ALL_TASKS_BY_ID[params.taskId];
+      const task = contentRegistry.getTaskById(params.taskId);
       const nowMs = Date.now();
 
       if (!session || session.sessionId !== params.sessionId || session.taskIds[session.currentIndex] !== params.taskId || session.answers[params.taskId] || !task) {
@@ -990,7 +1013,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      const isFirstLesson = session.source === 'lesson' && session.contentId === MATH_LESSON_1_1.id;
+      const isFirstLesson = session.source === 'lesson' && isStarterFreeLesson(session.contentId);
       const zeroHeartsReached =
         !isFirstLesson && params.outcome === 'wrong' && nextHearts <= 0 && session.source !== 'rescue';
 
@@ -1129,7 +1152,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     for (const taskId of session.taskIds) {
       const answer = session.answers[taskId];
       if (answer?.outcome === 'ungraded') continue;
-      const isOpen = ALL_TASKS_BY_ID[taskId]?.type === 'open';
+      const isOpen = contentRegistry.getTaskById(taskId)?.type === 'open';
       pointsPossible += isOpen ? 2 : 1;
       pointsEarned += isOpen ? (answer?.aiScore ?? 0) : Number(answer?.outcome === 'correct');
     }
@@ -1155,7 +1178,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       const rewardRes = computeCompletionRewards({
         playerDay: today,
         contentId: session.contentId,
-        baseCoins: findMathLesson(session.contentId)?.rewardCoins ?? MATH_LESSON_1_1.rewardCoins,
+        baseCoins: contentRegistry.getLessonById(session.contentId)?.rewardCoins ?? MATH_LESSON_1_1.rewardCoins,
         rawSessionXp,
         rewardLedger: cur.rewardLedger,
       });
@@ -1560,7 +1583,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
         // Only outcome === 'wrong' (0/2 on open, wrong option/number) enters Mistake Bank (AC-X5)
         if (ans.outcome === 'wrong') {
-          const task = ALL_TASKS_BY_ID[taskId];
+          const task = contentRegistry.getTaskById(taskId);
           if (task) {
             const key = `${task.id}:${task.subjectId}`;
             const idx = nextMistakeBank.findIndex((m) => m.key === key);
@@ -1627,7 +1650,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       ).length;
 
       const hasOpenSolved = entries.some(([tid, a]) => {
-        const t = ALL_TASKS_BY_ID[tid];
+        const t = contentRegistry.getTaskById(tid);
         return (
           t?.type === 'open' &&
           (a.outcome === 'correct' || a.outcome === 'partial')
@@ -1651,7 +1674,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         id: 'exam-' + nowMs,
         completedAt: nowMs,
         playerDay: today,
-        subjectId: 'math',
+        subjectId: cur.activeSubject,
         scorePercent,
         pointsEarned,
         pointsMax,
@@ -1706,7 +1729,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const visibleLessonId = requestedLessonStage === 'theory' ? selectedLessonId :
     requestedLessonStage === 'tasks' ? state.activeSession?.reviewLessonId ??
       (state.activeSession?.source === 'lesson' ? state.activeSession.contentId : undefined) : undefined;
-  const lessonViewStage = visibleLessonId && visibleLessonId !== MATH_LESSON_1_1.id && !hasStudentAccount
+  const lessonViewStage = visibleLessonId && !isStarterFreeLesson(visibleLessonId) && !hasStudentAccount
     ? 'none' : requestedLessonStage;
   const lessonAccountRequired = lessonAccountRequest !== null;
 

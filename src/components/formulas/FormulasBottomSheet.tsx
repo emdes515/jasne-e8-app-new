@@ -4,8 +4,7 @@ import React, { useId, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { BookOpen, Info, Search, Sparkles, X } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
-import { ALL_TASKS_BY_ID } from '../../data/mathExamMock';
-import { findMathLesson } from '../../data/mathLessonMock';
+import { contentRegistry } from '../../services/content/contentRegistry';
 import {
   MATH_FORMULAS_CATALOG,
   resolveFormulaCategoryForContext,
@@ -42,10 +41,10 @@ function FormulasBottomSheetContent() {
       lessonViewStage === 'tasks' && session
         ? session.taskIds[session.currentIndex]
         : undefined;
-    const activeTask = activeTaskId ? ALL_TASKS_BY_ID[activeTaskId] : undefined;
+    const activeTask = activeTaskId ? contentRegistry.getTaskById(activeTaskId) : undefined;
     const activeLesson =
       lessonViewStage !== 'none' && selectedLessonId
-        ? findMathLesson(selectedLessonId)
+        ? contentRegistry.getLessonById(selectedLessonId)
         : undefined;
 
     const combinedText = [

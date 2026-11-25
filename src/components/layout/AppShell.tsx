@@ -3,7 +3,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react';
 import { useAppState } from '../../context/AppStateContext';
-import { findMathLesson } from '../../data/mathLessonMock';
+import { contentRegistry } from '../../services/content/contentRegistry';
 import { OnboardingFlow, ProductTourModal } from '../onboarding/OnboardingFlow';
 import { CloudAccountModal } from '../auth/CloudAccountModal';
 import { GuestAccountReminder } from '../auth/GuestAccountReminder';
@@ -132,7 +132,7 @@ export function AppShell() {
         const lessonTitle =
           lessonViewStage === 'tasks' && state.activeSession?.title
             ? state.activeSession.title
-            : findMathLesson(selectedLessonId)?.title ?? 'Lekcja matematyki E8';
+            : contentRegistry.getLessonById(selectedLessonId)?.title ?? 'Lekcja E8';
         queueMicrotask(() => {
           if (!cancelled) setLessonTransitionTitle(lessonTitle);
         });

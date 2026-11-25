@@ -85,7 +85,14 @@ export interface LumiLoadout {
   playerTitle: PlayerTitleId;
 }
 
-export type TaskType = 'abcd' | 'true_false' | 'numeric' | 'open';
+export type TaskType =
+  | 'abcd'
+  | 'true_false'
+  | 'true_false_multi'
+  | 'dual_choice'
+  | 'choice_with_reason'
+  | 'numeric'
+  | 'open';
 
 export type TaskEvalOutcome = 'correct' | 'partial' | 'wrong' | 'ungraded';
 
@@ -102,6 +109,11 @@ export interface OpenTaskRubric {
 
 import type { TaskVisualAsset } from './contentPacks';
 
+export interface TaskStatement {
+  id: string;
+  text: string;
+}
+
 export interface TaskDefinition {
   id: string;
   subjectId: SubjectId;
@@ -110,7 +122,10 @@ export interface TaskDefinition {
   prompt: string;
   visual?: TaskVisualAsset;
   options?: TaskOption[];
-  correctAnswer: string; // option id for abcd/true_false, numeric string for numeric, expectedResult for open
+  statements?: TaskStatement[];
+  reasons?: TaskOption[];
+  maxPoints?: number;
+  correctAnswer: string; // option id for abcd/true_false, PF string for true_false_multi, pair for dual_choice/choice_with_reason, numeric string, expectedResult for open
   rubric?: OpenTaskRubric;
   explanation: string;
   explanationSteps?: string[];
