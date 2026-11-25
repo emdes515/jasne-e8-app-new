@@ -100,12 +100,15 @@ export interface OpenTaskRubric {
   resultOnly: boolean;
 }
 
+import type { TaskVisualAsset } from './contentPacks';
+
 export interface TaskDefinition {
   id: string;
   subjectId: SubjectId;
   type: TaskType;
   topicTag: string;
   prompt: string;
+  visual?: TaskVisualAsset;
   options?: TaskOption[];
   correctAnswer: string; // option id for abcd/true_false, numeric string for numeric, expectedResult for open
   rubric?: OpenTaskRubric;

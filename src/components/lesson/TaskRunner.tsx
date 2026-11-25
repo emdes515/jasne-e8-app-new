@@ -25,6 +25,7 @@ import { SPRING_BOUNCY } from '../../lib/motionPresets';
 import { formatHeartCountdown } from '../../lib/lumiCopy';
 import { LumiMascot } from '../mascot/LumiMascot';
 import { MathText } from '../ui/MathText';
+import { TaskVisualBox } from '../ui/TaskVisualBox';
 import { TactileButton } from '../ui/TactileButton';
 import { TactileHeartIcon } from '../ui/TactileHeartIcon';
 import { BottomSheet } from '../ui/BottomSheet';
@@ -560,6 +561,7 @@ function TaskRunnerQuestion() {
                   <div className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-relaxed">
                     <MathText text={currentTask.prompt} />
                   </div>
+                  <TaskVisualBox visual={currentTask.visual} />
                 </div>
 
                 {/* Task Type 1: ABCD or True/False */}
