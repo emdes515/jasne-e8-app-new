@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { BookOpen, Check, ChevronRight, Lock, Flag, Play, RotateCcw, Timer } from 'lucide-react';
+import { BookOpen, Check, Lock, Flag, Play, RotateCcw, Timer } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { getLessonAttempt, getRecommendedMathLesson, MATH_CHAPTERS_MAP, MATH_LESSONS, type ChapterMeta } from '../../data/mathLessonMock';
 import { TactileButton } from '../ui/TactileButton';
@@ -105,14 +105,46 @@ export function LearnPathView() {
         })}
       </ol>
 
-      <section aria-labelledby="coming-chapters" className="space-y-3">
-        <h2 id="coming-chapters" className="text-lg font-extrabold">Kolejne działy</h2>
-        <div className="study-panel divide-y divide-[var(--border-subtle)]">
+      <section aria-labelledby="coming-chapters" className="space-y-3.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 id="coming-chapters" className="text-lg font-extrabold tracking-tight text-[var(--text-primary)]">
+            Kolejne działy
+          </h2>
+          <span className="text-xs font-semibold text-[var(--text-secondary)]">
+            Działy 2–7 · w przygotowaniu
+          </span>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
           {MATH_CHAPTERS_MAP.slice(1).map((chapter) => (
-            <button key={chapter.chapterNumber} type="button" className="study-link" onClick={() => setPreviewChapter(chapter)}>
-              <Lock size={16} aria-hidden="true" />
-              <span>{chapter.title}</span>
-              <ChevronRight size={16} aria-hidden="true" />
+            <button
+              key={chapter.chapterNumber}
+              type="button"
+              onClick={() => setPreviewChapter(chapter)}
+              className="study-panel group flex items-start gap-3.5 p-4 text-left transition-all hover:border-[var(--accent-primary)]/45 hover:bg-[var(--bg-elevated)] active:translate-y-[1px] cursor-pointer"
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-canvas)] font-display text-sm font-black tabular-nums text-[var(--accent-text)] transition-colors group-hover:border-[var(--accent-primary)]/40"
+              >
+                {String(chapter.chapterNumber).padStart(2, '0')}
+              </span>
+
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-[15px] font-extrabold leading-snug text-[var(--text-primary)]">
+                    {chapter.title}
+                  </h3>
+                  <Lock
+                    size={15}
+                    aria-hidden="true"
+                    className="mt-0.5 shrink-0 text-[var(--text-secondary)] opacity-75 transition-opacity group-hover:opacity-100"
+                  />
+                </div>
+                <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {chapter.subtitle}
+                </p>
+              </div>
             </button>
           ))}
         </div>
@@ -121,7 +153,7 @@ export function LearnPathView() {
         open={previewChapter !== null}
         onClose={() => setPreviewChapter(null)}
         title={previewChapter?.title ?? 'Kolejny dział'}
-        subtitle="Dział w przygotowaniu."
+        subtitle={previewChapter ? `Matematyka · Dział ${previewChapter.chapterNumber} z 7 · w przygotowaniu` : 'Dział w przygotowaniu.'}
       >
         <p className="mb-4 text-sm text-[var(--text-secondary)]">{previewChapter?.subtitle}</p>
         <TactileButton variant="secondary" onClick={() => setActiveTab('exam')}>
